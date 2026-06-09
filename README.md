@@ -1,42 +1,32 @@
-# 🦅 ReconClaw - Autonomous AI Security & OSINT Agent
+# 🦅 ReconClaw V1.0 - Otonom Keşif ve Zafiyet Tarama Sistemi
 
-> "Sadece zafiyet bulmaz; düşünür, analiz eder ve çözüm üretir."
+ReconClaw, modern mikroservis mimarisi kullanılarak sıfırdan geliştirilmiş, yüksek performanslı ve otonom bir siber güvenlik (Pentest) aracıdır. Sistem; dış dünyayla iletişimi ve veritabanı yönetimini sağlayan **Python (FastAPI)** tabanlı bir "Beyin" ile, saniyeler içinde binlerce porta eşzamanlı saldırı yapabilen **Rust (Tokio)** tabanlı bir "Kas Gücünden" oluşmaktadır.
 
-ReconClaw, otonom siber güvenlik taramaları ve Açık Kaynak İstihbaratı (OSINT) süreçleri için tasarlanmış yeni nesil bir yapay zeka ajanıdır. Klasik güvenlik araçlarının aksine, bulguları yorumlar ve yöneticiler için stratejik raporlara dönüştürür.
+## 🚀 Öne Çıkan Özellikler
 
-## 🚀 Temel Mimari ve Teknolojiler
+* **Asenkron Tarama Motoru:** Rust ve `tokio` kütüphanesi sayesinde, hedeflenen portlar sırayla değil, asenkron (eşzamanlı) olarak taranır. Bu sayede Nmap hızında performans elde edilir.
+* **Akıllı Radar (DNS Çözümleme):** Hedef olarak sadece IP adresi değil, `scanme.nmap.org` gibi alan adları (domain) girilebilir. Sistem, hedefin gerçek IP adresini arka planda otonom olarak çözer.
+* **Merkezi Kontrol Paneli:** Kaba saba komut satırları yerine; taramaların başlatılabileceği, sonuçların ve portların anlık izlenebileceği şık, HTML/JS tabanlı bir siber güvenlik arayüzü sunar.
+* **Kalıcı Hafıza (SQLite):** Yapılan her tarama, tarihi, hedefi ve bulunan açık portlarıyla birlikte sistemin dahili veritabanına kaydedilir. `/api/history` rotası ile geçmişe dönük analiz yapılabilir.
+* **Mikroservis Mimarisi:** Frontend, Backend ve Core-Engine birbirlerinden tamamen bağımsız ancak kusursuz bir uyum içinde çalışır.
 
-Sistem, maksimum performans ve akıllı analiz için çift motorlu bir yapı üzerine inşa edilmiştir:
+## 🛠️ Kullanılan Teknolojiler
 
-*   **Motor 1 (Hız ve Ağ - Rust):** Ağ taramaları, port kontrolleri ve bellek güvenliği gerektiren ağır işlemler için yüksek performanslı çekirdek.
-*   **Motor 2 (Zeka ve Mantık - Python):** Rust'tan gelen verileri işleyen, Büyük Dil Modelleri (LLM) ile entegre çalışan ve sohbet (ChatOps) yeteneğini sağlayan analiz beyni.
+**AI-Brain (Sinir Sistemi):**
+* Python 3.x
+* FastAPI & Uvicorn
+* SQLite (Veritabanı)
 
-## 💡 Öne Çıkan Özellikler
+**Core-Engine (Kas Gücü):**
+* Rust
+* Tokio (Asenkron işlemler)
+* Serde & Clap (JSON ayrıştırma ve Argüman yönetimi)
 
-*   **Sohbet Tabanlı Operasyon (ChatOps):** Sisteme doğal dille komut vererek hedef taraması başlatma ve sonuçları sohbet ekranında alma.
-*   **Akıllı Raporlama:** Teknik bulguları, kurum yöneticilerinin anlayabileceği seviyede, risk bazlı (kırmızı/sarı/yeşil) PDF raporlarına dönüştürme.
-*   **Otonom Çözüm (Auto-Remediation):** Tespit edilen karmaşık zafiyetleri kapatmak için hazır komut dosyaları ve yama tavsiyeleri üretme.
-*   **Kişiselleştirilebilir Çalışma Alanı:** Gelişmiş arayüz seçenekleri ile kullanıcıya özel arka plan ve tema (Dark Mode/Custom) yönetimi.
+## ⚙️ Kurulum ve Çalıştırma
 
-## 💎 Paketler ve Özellik Sınırları (SaaS Modeli)
+Sistemi Kali Linux veya herhangi bir Linux dağıtımında çalıştırmak için:
 
-*   **Free Katman:** 
-    * Sınırsız arayüz erişimi ve temel yazma işlemleri.
-    * Aylık 15 temel analiz sohbeti.
-    * Temel port ve OSINT taraması.
-*   **Pro Katman:** 
-    * Aylık 100 "Akıllı Sohbet" limiti (Derin analiz ve çıkarım).
-    * Sınırsız otonom arka plan taraması.
-    * Kapsamlı zafiyet ve sızmış veri analizi.
-*   **Ultra Katman:** 
-    * Aylık 300 "Akıllı Sohbet" limiti.
-    * 7/24 sürekli hedef izleme ve anlık Slack/Discord alarmı.
-    * Auto-Remediation (Otomatik Çözüm) kod üretim desteği.
-    * Kurum logosu ile özel raporlama yetenekleri.
-
-## 🛠️ Kurulum ve Geliştirme
-
-*Proje şu an aktif geliştirme aşamasındadır. Kurulum talimatları, Rust motoru (v0.1) tamamlandığında eklenecektir.*
-
----
-**Geliştirici:** Burak Özdemir
+1. Depoyu klonlayın:
+```bash
+git clone [https://github.com/Pireburak/ReconClaw.git](https://github.com/Pireburak/ReconClaw.git)
+cd ReconClaw
