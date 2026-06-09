@@ -1,0 +1,3 @@
+mkdir ai-brain
+cd ai-brain
+python -m venv venv
