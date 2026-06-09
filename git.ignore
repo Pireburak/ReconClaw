@@ -1,0 +1,33 @@
+# Güvenlik & Çevresel Değişkenler
+.env
+.env.*
+*.pem
+secrets/
+
+# İşletim Sistemi Dosyaları
+.DS_Store
+Thumbs.db
+
+# --- RUST MOTORU ---
+# Cargo tarafından üretilen derleme dosyaları
+target/
+**/*.rs.bk
+Cargo.lock
+
+# --- PYTHON MOTORU ---
+# Önbellek ve derlenmiş dosyalar
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Sanal Ortamlar (Virtual Environments)
+venv/
+env/
+.venv/
+Pipfile.lock
+
+# IDE ve Editör Dosyaları
+.vscode/
+.idea/
+*.swp
