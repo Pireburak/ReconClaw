@@ -1,0 +1,26 @@
+use clap::Parser;
+
+/// 🦅 ReconClaw Core Engine - Autonomous Scanner
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Taranacak hedef IP veya Domain
+    #[arg(short, long)]
+    target: String,
+}
+
+#[tokio::main]
+async fn main() {
+    let args = Args::parse();
+    
+    println!("🦅 ReconClaw Çekirdek Motoru Başlatıldı!");
+    println!("🔍 Hedef taranıyor: {}", args.target);
+    println!("--------------------------------------------------");
+    
+    // Şimdilik sistemin çalıştığını görmek için simülasyon çıktıları
+    println!("[+] Port 80 AÇIK (Simülasyon)");
+    println!("[+] Port 443 AÇIK (Simülasyon)");
+    
+    println!("--------------------------------------------------");
+    println!("✅ Tarama Tamamlandı. Veriler AI Beynine (Python) gönderilmeye hazır.");
+}
