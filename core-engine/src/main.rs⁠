@@ -1,26 +1,36 @@
 use clap::Parser;
+use serde::Serialize;
+use serde_json::json;
 
-/// 🦅 ReconClaw Core Engine - Autonomous Scanner
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Taranacak hedef IP veya Domain
     #[arg(short, long)]
     target: String,
+}
+
+// JSON olarak dışa aktarılacak veri yapısı
+#[derive(Serialize)]
+struct ScanResult {
+    target: String,
+    status: String,
+    open_ports: Vec<u16>,
 }
 
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
     
-    println!("🦅 ReconClaw Çekirdek Motoru Başlatıldı!");
-    println!("🔍 Hedef taranıyor: {}", args.target);
-    println!("--------------------------------------------------");
+    // Simülasyon: Tarama yapılmış ve bu portlar açık bulunmuş gibi yapıyoruz
+    let simulated_open_ports = vec![80, 443, 8080];
     
-    // Şimdilik sistemin çalıştığını görmek için simülasyon çıktıları
-    println!("[+] Port 80 AÇIK (Simülasyon)");
-    println!("[+] Port 443 AÇIK (Simülasyon)");
-    
-    println!("--------------------------------------------------");
-    println!("✅ Tarama Tamamlandı. Veriler AI Beynine (Python) gönderilmeye hazır.");
+    let result = ScanResult {
+        target: args.target,
+        status: "success".to_string(),
+        open_ports: simulated_open_ports,
+    };
+
+    // Veriyi JSON'a çevir ve sadece JSON'u ekrana bas (Python buradan okuyacak)
+    let json_output = json!(result);
+    println!("{}", json_output.to_string());
 }
