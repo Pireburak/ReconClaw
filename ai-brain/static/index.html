@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>ReconClaw - Merkezi Kontrol</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>[ ReconClaw - Otonom Tarama Sistemi ]</h1>
+        <p class="log">>> Durum: Motorlar aktif, bağlantı stabil.</p>
+        <div>
+            <input type="text" id="target" placeholder="Hedef IP veya Domain" value="scanme.nmap.org">
+            <input type="number" id="limit" placeholder="Port Limiti" value="100">
+            <button onclick="startScan()">>> SİSTEMİ ATEŞLE</button>
+        </div>
+        <div id="results">
+            <p>> Emir bekleniyor...</p>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
