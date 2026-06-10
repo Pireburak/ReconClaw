@@ -1,52 +1,52 @@
-# 🦅 ReconClaw V1.0 - Otonom Keşif ve Zafiyet Tarama Sistemi
+# 🦅 ReconClaw V2.0 | Otonom Zafiyet & Asenkron Port Tarama Motoru
 
-ReconClaw, modern mikroservis mimarisi kullanılarak sıfırdan geliştirilmiş, yüksek performanslı ve otonom bir siber güvenlik (Pentest) aracıdır. Bu proje, ağ keşfi ve port tarama süreçlerini otomatize etmek, hızlandırmak ve sonuçları kalıcı olarak kayıt altına almak amacıyla tasarlanmıştır.
+![Version](https://img.shields.io/badge/Version-2.0.1-brightgreen?style=for-the-badge)
+![Architecture](https://img.shields.io/badge/Architecture-Microservices-purple?style=for-the-badge)
+![Python](https://img.shields.io/badge/API_Gateway-FastAPI-blue?style=for-the-badge&logo=python)
+![Rust](https://img.shields.io/badge/Core_Engine-Rust_Tokio-orange?style=for-the-badge&logo=rust)
+![Frontend](https://img.shields.io/badge/UI%2FUX-Neon_Design-ff69b4?style=for-the-badge)
 
-Sistem iki ana omurgadan oluşur: Dış dünyayla iletişimi ve veritabanı yönetimini sağlayan **Python (FastAPI)** tabanlı bir "Sinir Sistemi" ve saniyeler içinde binlerce porta eşzamanlı saldırı yapabilen **Rust (Tokio)** tabanlı bir "Kas Gücü".
+ReconClaw, hedef ağlar ve sistemler üzerinde milisaniyeler seviyesinde port keşfi, servis tespiti ve otonom DNS çözünürlüğü yapabilen yeni nesil bir siber güvenlik aracıdır. Geleneksel ardışık (sequential) tarama betiklerinin aksine ReconClaw, gücünü modern asenkron algoritmalardan ve mikroservis mimarisinden alır. 
 
----
-
-## 🚀 Öne Çıkan Özellikler
-
-* **⚡ Asenkron Tarama Motoru:** Rust ve `tokio` kütüphanesi sayesinde, hedeflenen portlar sırayla değil, asenkron (eşzamanlı) olarak taranır. Geleneksel tarayıcılara göre muazzam bir hız artışı sağlar.
-* **🎯 Akıllı Radar (DNS Çözümleme):** Hedef olarak sadece IP adresi değil, `scanme.nmap.org` gibi alan adları (domain) girilebilir. Python motoru, hedefin gerçek IP adresini OSINT teknikleriyle arka planda otonom olarak çözer.
-* **🖥️ Merkezi Kontrol Paneli (UI):** Kaba saba komut satırları yerine; taramaların başlatılabileceği, sonuçların ve portların anlık izlenebileceği siyah/neon-yeşil temalı HTML/JS tabanlı bir siber güvenlik arayüzü sunar.
-* **🧠 Kalıcı Hafıza (SQLite):** Yapılan her tarama; tarihi, hedefi (Domain + IP) ve bulunan açık portlarıyla birlikte sistemin dahili veritabanına otomatik kaydedilir.
-* **🧩 Mikroservis Mimarisi:** Frontend, Backend ve Core-Engine birbirlerinden izole edilmiş, kendi içlerinde bağımsız ancak API'ler aracılığıyla kusursuz bir uyum içinde çalışır.
+Son kullanıcıya hitap eden reaktif web arayüzü sayesinde, operasyonel süreçleri terminal ekranından çıkarıp profesyonel bir kontrol paneline taşır.
 
 ---
 
-## 🛠️ Sistem Mimarisi ve Teknoloji Yığını
+## 🧠 Algoritmik Çekirdek & Mimari Tasarım
 
-**AI-Brain (Yönetim ve İletişim Katmanı):**
-* **Dil:** Python 3.x
-* **Framework:** FastAPI & Uvicorn (Yüksek performanslı asenkron web sunucusu)
-* **Veritabanı:** SQLite3 (Lokal ve hafif veri depolama)
-* **Ağ İşlemleri:** Yerleşik `socket` kütüphanesi (DNS çözümleme)
+ReconClaw'un kalbinde, kaynak tüketimini (CPU/RAM) optimize eden ve tarama hızını maksimize eden iki ana katman bulunur:
 
-**Core-Engine (Tarama ve Analiz Katmanı):**
-* **Dil:** Rust
-* **Eşzamanlılık:** Tokio (Asenkron runtime)
-* **Veri İşleme:** Serde & Serde_json (JSON serileştirme)
-* **CLI Yönetimi:** Clap (Argüman ayrıştırma)
+### 1. Asenkron Tarama Algoritması (Rust & Tokio Motoru)
+Geleneksel tarayıcılar (örneğin standart Nmap betikleri) her port için TCP Three-Way Handshake (Üçlü El Sıkışma) işlemini sırayla bekler. ReconClaw V2.0 ise **Non-Blocking I/O (Engellemesiz Girdi/Çıktı)** algoritmasını kullanır:
+*   **Green Threading:** Tokio çalışma zamanı (runtime) kullanılarak, aynı anda binlerce port sorgusu işletim sistemini yormadan hafif iş parçacıklarına (green threads) bölünür.
+*   **Event Loop (Olay Döngüsü):** Gönderilen SYN paketlerinin cevapları asenkron olarak dinlenir. Zaman aşımına (Timeout) uğrayan veya `Connection Refused` dönen paketler anında düşürülür (drop), böylece ağ üzerinde gereksiz trafik yaratılmaz ve tespit hızı artırılır.
 
----
-
-## 📡 API Uç Noktaları (Endpoints)
-
-ReconClaw'un sinir sistemi, dış modüllerin entegre olabilmesi için aşağıdaki RESTful API yapısını kullanır:
-
-* `GET /` : Merkezi HTML kontrol panelini (Arayüzü) render eder.
-* `POST /api/scan` : Hedef IP/Domain ve port limitini JSON olarak alır, Rust motorunu tetikler ve tarama sonucunu veritabanına yazarak döndürür.
-* `GET /api/history` : SQLite veritabanındaki en son yapılan 10 taramanın detaylı geçmişini JSON formatında listeler.
+### 2. API Gateway & İstemci İletişimi (FastAPI)
+Rust motorunun elde ettiği ham veriler, Python tabanlı FastAPI katmanına iletilir. 
+*   Burası sistemin beyni (ai-brain) olarak çalışır. Gelen istekleri doğrular (Validation), hatalı hedefleri filtreler ve sonuçları JSON formatında standardize ederek ön yüze (Client) asenkron olarak basar.
 
 ---
 
-## ⚙️ Kurulum ve Çalıştırma Rehberi
+## 🚀 V2.0 Öne Çıkan Özellikleri
 
-Sistemi Kali Linux veya herhangi bir Debian tabanlı Linux dağıtımında çalıştırmak için aşağıdaki adımları sırasıyla uygulayın:
+*   **⚡ Otonom Asenkron Tarama:** Hedefin durumuna göre tarama hızını dinamik olarak ayarlayan Rust çekirdeği.
+*   **🌐 Reaktif Arayüz (UI/UX):** Terminal zorunluluğunu bitiren, hedef kilitlenme animasyonlarına, canlı terminal imlecine ve hata yönetimine sahip neon tasarımlı kontrol paneli.
+*   **📊 Kurumsal Raporlama (CSV Export):** Taraması biten hedeflerin açık port verilerini ve durum analizlerini tek tıkla kurumsal formata uygun Excel/CSV raporuna dönüştürme modülü.
+*   **🛡️ Güvenli Mikroservis Yapısı:** Ön yüz (HTML/JS) ile asıl tarama motoru arasına çekilen FastAPI duvarı sayesinde izole edilmiş ve güvenli veri akışı.
 
-**1. Depoyu Klonlayın:**
+---
+
+## 🛠️ Kurulum & Sistemin Ateşlenmesi
+
+Sistemi lokal ortamınızda (Kali Linux / Ubuntu / macOS) ayağa kaldırmak için aşağıdaki adımları izleyin:
+
 ```bash
+# 1. Kaynak Kodları Klonlayın
 git clone [https://github.com/Pireburak/ReconClaw.git](https://github.com/Pireburak/ReconClaw.git)
-cd ReconClaw
+cd ReconClaw/ai-brain
+
+# 2. Gerekli Bağımlılıkları Yükleyin (FastAPI & Uvicorn)
+pip install fastapi uvicorn
+
+# 3. API Geçidini ve Sunucuyu Başlatın
+uvicorn main:app --reload
