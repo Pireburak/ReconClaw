@@ -1,4 +1,4 @@
-# 🦅 ReconClaw v3.0 Ultimate
+# 🦅 ReconClaw v4.0 Ultimate
 
 ### *AI Destekli Ağ Keşfi ve Güvenlik Analiz Platformu*
 
