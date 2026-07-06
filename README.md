@@ -1,190 +1,275 @@
-```markdown
-# 🛣️ ReconClaw Gelişim Yol Haritası (Roadmap)
+# 🦅 ReconClaw v3.0 Ultimate
 
-ReconClaw projesi; yalnızca bir port tarama aracı olmayı hedeflememiş, uzun vadede yapay zekâ destekli, modüler ve kurumsal ölçekte kullanılabilecek profesyonel bir siber güvenlik platformu olarak tasarlanmıştır. Her sürüm, önceki sürüm üzerine inşa edilerek performans, güvenlik, kullanılabilirlik ve analiz kabiliyetleri açısından geliştirilmektedir.
+### *AI Destekli Ağ Keşfi ve Güvenlik Analiz Platformu*
 
----
+<p align="center">
 
-# 🟢 ReconClaw v1.0 — Foundation Release
+![Version](https://img.shields.io/badge/Version-v3.0%20Ultimate-success?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge\&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge\&logo=fastapi)
+![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge\&logo=sqlite)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
+![License](https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge)
 
-ReconClaw'ın ilk sürümü, TCP tabanlı temel port tarama işlemlerini gerçekleştirebilen hafif ve modüler bir Python uygulaması olarak geliştirilmiştir. Bu sürüm, gelecekte geliştirilecek kapsamlı güvenlik platformunun temel mimarisini oluşturmuştur.
-
-## Başlıca Özellikler
-
-- TCP Connect tabanlı port tarama
-- IPv4 desteği
-- Tek hedef tarama
-- Python Socket API kullanımı
-- Açık/Kapalı port ayrımı
-- Terminal tabanlı kullanım
-- JSON rapor oluşturma
-- Basit hata yönetimi
-- Düşük bellek tüketimi
-- Modüler proje yapısı
-- İlk CLI desteği
-- Temel log sistemi
-
-## Kullanılan Teknolojiler
-
-- Python 3
-- Socket
-- JSON
-- Threading
+</p>
 
 ---
 
-# 🌑 ReconClaw v2.0 — Dark Edition
+# 🚀 ReconClaw Nedir?
 
-İkinci sürüm ile birlikte ReconClaw yalnızca bir port tarayıcısı olmaktan çıkarılmış; modern kullanıcı arayüzü, servis analizleri ve geliştirilmiş raporlama sistemiyle daha profesyonel bir yapıya kavuşturulmuştur.
+ReconClaw; yetkili ağ keşfi (Reconnaissance), port analizi, servis tespiti ve güvenlik değerlendirmesi amacıyla geliştirilen modern bir siber güvenlik platformudur.
 
-## Yeni Özellikler
+Sistem yalnızca açık portları listelemek yerine;
 
-- Dark Mode Arayüz
-- Neon Terminal Tasarımı
-- Port → Servis Eşleştirme
-- Çoklu hedef desteği
-- Timeout optimizasyonları
-- Performans iyileştirmeleri
-- Gelişmiş JSON çıktıları
-- Risk değerlendirme sistemi
-- Kod optimizasyonu
-- Hata toleransı
-- Daha hızlı tarama motoru
-- Daha okunabilir terminal çıktıları
+* Servis analizi yapar
+* Risk puanı hesaplar
+* DNS çözümlemesi gerçekleştirir
+* Sonuçları JSON olarak raporlar
+* Taramaları SQLite veritabanına kaydeder
+* Web Dashboard üzerinden canlı olarak gösterir
 
 ---
 
-# 🚀 ReconClaw v3.0 Ultimate
+# 📊 Risk Analiz Modeli
 
-ReconClaw 3.0, projenin bugüne kadar geliştirilen en kapsamlı sürümüdür. Tarama motoru yeniden tasarlanmış, FastAPI tabanlı modern web paneli geliştirilmiş ve yapay zekâ destekli analiz altyapısı sisteme entegre edilmiştir.
+```text
+                ███████████████
+             ███               ███
+          ███     ████████       ███
+         ██      ██      ██        ██
+        ██      ██  78%   ██        ██
+        ██      ██ HIGH   ██        ██
+         ██      ██      ██        ██
+          ███     ████████       ███
+             ███             ███
+                █████████████
+```
 
-## Öne Çıkan Yenilikler
-
-- FastAPI Web Sunucusu
-- AI Brain Analiz Merkezi
-- Risk Score Engine
-- Canlı Dashboard
-- Gerçek Zamanlı Terminal
-- DNS Resolver
-- SQLite Veritabanı
-- Tarama Geçmişi
-- REST API
-- JSON API
-- Responsive Web Arayüzü
-- Risk Çemberi (Circular Risk Meter)
-- CSS Animasyonları
-- Gelişmiş Servis Analizi
-- Hata Toleransı
-- Kodun yeniden yapılandırılması
-- Daha düşük CPU kullanımı
-- Daha hızlı tarama algoritmaları
+> Ortalama örnek risk seviyesi (%78)
 
 ---
 
-# 🚀 ReconClaw v4.0 — Planlanan Özellikler
+# 🏗️ Sistem Mimarisi
 
-ReconClaw 4.0 ile birlikte proje yalnızca port taraması yapan bir araç olmaktan çıkarılarak kapsamlı bir güvenlik analiz platformuna dönüştürülmesi hedeflenmektedir.
-
-## Planlanan Özellikler
-
-- UDP Port Tarama
-- Banner Grabbing
-- Service Detection
-- Version Detection
-- OS Fingerprinting
-- SSL Sertifika Analizi
-- TLS Yapılandırma Analizi
-- HTTP Security Header Kontrolü
-- Reverse DNS
-- Whois Sorgulama
-- ASN Lookup
-- GeoIP Analizi
-- Subdomain Enumeration
-- Directory Enumeration
-- PDF Raporlama
-- HTML Raporlama
-- CSV Export
-- XML Export
-- Docker Desteği
-- Docker Compose
-- JWT Authentication
-- Kullanıcı Yönetim Sistemi
-- Dashboard İstatistikleri
-- Grafikler ve Analitik Paneller
-- CVE Database Entegrasyonu
-- MITRE ATT&CK Mapping
-- OWASP Top 10 Kontrolleri
-- REST API Authentication
-- Scheduled Scan
-- Email Bildirimleri
-- Telegram Bildirimleri
-- Discord Bildirimleri
-- API Token Sistemi
-- Plugin Desteği
+```text
+           🌐 Web Dashboard
+                   │
+                   ▼
+            FastAPI REST API
+                   │
+                   ▼
+              🧠 AI Brain
+        ┌────────┼────────┐
+        ▼        ▼        ▼
+   DNS Resolver Risk AI SQLite
+        │
+        ▼
+     ⚡ Core Scanner
+        │
+        ▼
+    TCP / Socket Engine
+```
 
 ---
 
-# 🌌 ReconClaw v5.0 — Uzun Vadeli Vizyon
+# ⚡ Temel Özellikler
 
-ReconClaw 5.0 ile hedeflenen vizyon; yapay zekâ destekli, kurumsal ölçekte kullanılabilecek, modüler ve sürekli geliştirilebilir profesyonel bir siber güvenlik platformu oluşturmaktır.
-
-## Vizyon
-
-- AI Pentest Assistant
-- Machine Learning Risk Prediction
-- Otonom Keşif Motoru
-- Cloud Security
-- AWS Güvenlik Analizi
-- Microsoft Azure Analizi
-- Google Cloud Platform Analizi
-- Kubernetes Güvenlik Taraması
-- Docker Security
-- Container Escape Detection
-- Threat Intelligence
-- CVE Intelligence
-- SIEM Integration
-- Splunk Integration
-- Elastic Integration
-- IBM QRadar Integration
-- Attack Surface Management
-- Dark Web Monitoring
-- Secrets Detection
-- Compliance Engine
-- ISO 27001 Kontrolleri
-- NIST Framework Kontrolleri
-- CIS Controls
-- OWASP ASVS
-- Red Team Workspace
-- Blue Team Workspace
-- Purple Team Workspace
-- Çok Kullanıcılı Yönetim Paneli
-- Eklenti Pazaryeri (Plugin Marketplace)
-- Yapay Zekâ Destekli Pentest Raporu
-- Etkileşimli Ağ Haritası
-- Gerçek Zamanlı Güvenlik Skoru
-- Sürekli İzleme (Continuous Monitoring)
+| Özellik       | Durum |
+| ------------- | ----- |
+| TCP Port Scan | ✅     |
+| DNS Resolver  | ✅     |
+| Risk Engine   | ✅     |
+| FastAPI       | ✅     |
+| SQLite        | ✅     |
+| Dashboard     | ✅     |
+| JSON Export   | ✅     |
+| CLI           | ✅     |
+| AI Brain      | ✅     |
+| Responsive UI | ✅     |
 
 ---
 
-# ⚖️ Yasal Uyarı ve Sorumluluk Reddi
+# 🧠 AI Brain
 
-ReconClaw Framework; yalnızca yetkili sızma testleri (Penetration Testing), güvenlik araştırmaları, laboratuvar ortamları, eğitim faaliyetleri ve yazılı izin alınmış sistemler üzerinde kullanılmak üzere geliştirilmiştir.
+AI Brain modülü;
 
-Bu yazılımın; üçüncü taraf sistemlere, kamu kurumlarına, özel şirketlere, kişisel sunuculara veya herhangi bir dijital altyapıya gerekli yasal izinler olmaksızın uygulanması; bulunduğunuz ülkenin yürürlükte bulunan bilişim suçları, elektronik haberleşme ve kişisel verilerin korunmasına ilişkin mevzuatlarına aykırılık teşkil edebilir.
+* Risk puanı üretir
+* Servisleri sınıflandırır
+* Portları analiz eder
+* Kritik servisleri önceliklendirir
+* Dashboard verisini hazırlar
+* JSON çıktısını oluşturur
 
-ReconClaw geliştiricisi; yazılımın kötü niyetli kullanımı, izinsiz ağ taramaları, veri ihlalleri, hizmet kesintileri, maddi veya manevi zararlar, idari yaptırımlar ya da hukuki sonuçlardan hiçbir şekilde sorumlu tutulamaz.
+---
 
-Yazılımı kullanan kişi, gerçekleştirdiği tüm işlemlerin yalnızca kendi sorumluluğunda olduğunu kabul etmiş sayılır.
+# ⚡ Core Engine
 
-ReconClaw herhangi bir saldırı aracı olarak değil; savunma odaklı güvenlik analizlerini kolaylaştırmak, sistem yöneticilerine teknik görünürlük sağlamak ve güvenlik açıklarının erken tespit edilmesine yardımcı olmak amacıyla geliştirilmiştir.
+Core Engine;
+
+* TCP Socket kullanır
+* Hızlı timeout uygular
+* Çok düşük RAM tüketir
+* Asenkron mimariye hazırdır
+* JSON raporu üretir
+
+---
+
+# 📂 Proje Yapısı
+
+```text
+ReconClaw/
+
+├── ai-brain/
+├── core/
+├── static/
+├── templates/
+├── reports/
+├── database/
+├── assets/
+├── README.md
+└── requirements.txt
+```
+
+---
+
+# 📈 Geliştirme Durumu
+
+```text
+v1.0  ████████████████████ 100%
+
+v2.0  ████████████████████ 100%
+
+v3.0  ████████████████████ 100%
+
+v4.0  ███████████░░░░░░░░░ 55%
+
+v5.0  █████░░░░░░░░░░░░░░░ 20%
+```
+
+---
+
+# 🛣️ Yol Haritası
+
+## ✅ v1.0
+
+* İlk TCP Scanner
+* JSON Çıktısı
+* CLI
+
+---
+
+## ✅ v2.0
+
+* Dark Theme
+* Servis Tanımlama
+* Performans İyileştirmesi
+
+---
+
+## ✅ v3.0
+
+* AI Brain
+* Dashboard
+* FastAPI
+* SQLite
+* Risk Motoru
+* Canlı Terminal
+
+---
+
+## 🚀 v4.0
+
+* UDP Scan
+* Banner Grabbing
+* Version Detection
+* SSL Analizi
+* CVE Database
+* MITRE ATT&CK
+* GeoIP
+* Whois
+* ASN Lookup
+* PDF Rapor
+* HTML Export
+* Docker
+* JWT Authentication
+* Plugin Sistemi
+
+---
+
+## 🌌 v5.0
+
+* AI Pentest Assistant
+* Machine Learning
+* Cloud Scanner
+* AWS
+* Azure
+* Kubernetes
+* SIEM Integration
+* Continuous Monitoring
+* Attack Surface Management
+* Threat Intelligence
+* Compliance Engine
+* OWASP Top 10
+* ISO 27001
+* NIST
+* Plugin Marketplace
+
+---
+
+# 🖼️ Dashboard Önizleme
+
+```text
+┌─────────────────────────────────────┐
+│ TARGET : example.com                │
+│ STATUS : SCANNING...                │
+│ OPEN PORTS : 7                      │
+│ RISK SCORE : 78/100                 │
+│ ████████████████████████            │
+└─────────────────────────────────────┘
+```
+
+---
+
+# 💾 Veritabanı
+
+| Tablo        | Açıklama       |
+| ------------ | -------------- |
+| scan_history | Tarama geçmişi |
+| target       | Hedef          |
+| open_ports   | Açık portlar   |
+| risk_score   | Risk puanı     |
+| scan_time    | Tarama zamanı  |
+
+---
+
+# ⚖️ Yasal Uyarı
+
+ReconClaw yalnızca **yetkili**, **izinli** ve **etik** güvenlik testleri amacıyla geliştirilmiştir.
+
+Herhangi bir kurum, kuruluş, sunucu veya kişiye ait sistemlerin yazılı izin olmaksızın taranması; bulunduğunuz ülkenin bilişim suçları, kişisel verilerin korunması ve elektronik haberleşme mevzuatlarına aykırılık oluşturabilir.
+
+Bu yazılım savunma odaklı geliştirilmiştir. Geliştirici; yazılımın kötü niyetli kullanımı, yetkisiz ağ taramaları, veri ihlalleri, hizmet kesintileri veya oluşabilecek hukuki sonuçlardan sorumlu değildir.
+
+Yazılımı kullanan herkes, gerçekleştirdiği tüm işlemlerin hukuki sorumluluğunu kabul etmiş sayılır.
 
 ---
 
 # ✍️ Geliştirici
 
-**Architected, Engineered and Developed with ☕ by Pireburak**
+```text
+██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗
+██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║
+██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
+██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
+██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
 
-**ReconClaw Framework**
+Engineered with ☕ by
 
-**© 2026 Pireburak. Tüm hakları saklıdır.**
+Pireburak
+
+ReconClaw Framework
+
+© 2026
+Tüm Hakları Saklıdır.
 ```
