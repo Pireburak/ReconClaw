@@ -32,17 +32,74 @@ Sistem yalnızca açık portları listelemek yerine;
 
 # 📊 Risk Analiz Modeli
 
+```````markdown
+# 📊 Risk Değerlendirme Modeli
+
+ReconClaw, gerçekleştirilen her tarama sonucunda yalnızca açık portları listelemekle kalmaz; aynı zamanda çalışan servisleri analiz ederek hedef sistem için dinamik bir **Risk Skoru** oluşturur. Bu skor, servislerin kritiklik seviyesine, olası saldırı yüzeyine ve güvenlik etkilerine göre hesaplanır.
+
+## 🎯 Risk Seviyeleri
+
+| Risk Seviyesi | Zafiyet Oranı | Durum | Açıklama |
+|:--------------|:-------------:|:-----:|----------|
+| 🟢 Düşük Risk | **0% - 25%** | Güvenli | Kritik seviyede herhangi bir güvenlik riski bulunmamaktadır. |
+| 🟡 Orta Risk | **26% - 50%** | İzlenmeli | Yapılandırma iyileştirmeleri önerilir. Düzenli güvenlik kontrolleri yapılmalıdır. |
+| 🟠 Yüksek Risk | **51% - 75%** | Riskli | Açık servisler saldırı yüzeyini artırmaktadır. Güvenlik önlemleri güçlendirilmelidir. |
+| 🔴 Kritik Risk | **76% - 100%** | Kritik | Kritik servisler veya yüksek öneme sahip zafiyetler tespit edilmiştir. Acil aksiyon alınması önerilir. |
+
+---
+
+## 📌 Örnek Risk Analizi
+
 ```text
-                ███████████████
-             ███               ███
-          ███     ████████       ███
-         ██      ██      ██        ██
-        ██      ██  78%   ██        ██
-        ██      ██ HIGH   ██        ██
-         ██      ██      ██        ██
-          ███     ████████       ███
-             ███             ███
-                █████████████
+═══════════════════════════════════════════════════════
+
+Target             : example.com
+Resolved IP        : 192.168.1.10
+
+───────────────────────────────────────────────────────
+
+Open Ports
+
+22      SSH
+80      HTTP
+443     HTTPS
+3306    MySQL
+
+───────────────────────────────────────────────────────
+
+Toplam Risk Skoru  : 78 / 100
+
+Risk Seviyesi      : 🔴 Kritik Risk
+
+───────────────────────────────────────────────────────
+
+AI Security Recommendation
+
+✔ Gereksiz servisleri devre dışı bırakın.
+✔ Güvenlik duvarı kurallarını güncelleyin.
+✔ Servis sürümlerini güncel tutun.
+✔ Güçlü parola ve MFA kullanın.
+✔ Düzenli güvenlik taraması gerçekleştirin.
+
+═══════════════════════════════════════════════════════
+```
+
+### 🧠 Risk Hesaplama Kriterleri
+
+- 🔹 Açık port sayısı
+- 🔹 Servis türü
+- 🔹 Servisin kritikliği
+- 🔹 Olası saldırı yüzeyi
+- 🔹 Bilinen güvenlik riskleri
+- 🔹 Güvenlik yapılandırması
+- 🔹 Gelecekte CVE ve MITRE ATT&CK analiz desteği
+
+> **Not:** Risk puanı yalnızca ön değerlendirme amacıyla hesaplanır. Kesin güvenlik analizi yerine sistem yöneticilerine hızlı karar desteği sunmayı hedefler.
+
+---
+````
+
+              
 ```
 
 > Ortalama örnek risk seviyesi (%78)
