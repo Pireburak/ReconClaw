@@ -4,7 +4,7 @@
 
 <p align="center">
 
-![Version](https://img.shields.io/badge/Version-v3.0%20Ultimate-success?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v4.0%20Ultimate-success?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge\&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge\&logo=fastapi)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge\&logo=sqlite)
