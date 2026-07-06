@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>ReconClaw v4.0 Phantom</title>
+    <style>
+        :root { --bg: #000205; --panel: #0a0d14; --neon: #00ffcc; --alert: #ff0055; --warn: #ffaa00; --grid: rgba(0, 255, 204, 0.05); }
+        body { background: var(--bg); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 40px 40px; color: #fff; font-family: 'Courier New', Courier, monospace; padding: 20px; margin: 0; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        h1 { color: var(--neon); text-align: center; text-shadow: 0 0 15px var(--neon); letter-spacing: 4px; border-bottom: 1px dashed var(--neon); padding-bottom: 15px; }
+        .control-box { background: rgba(10, 13, 20, 0.9); border: 1px solid var(--neon); padding: 25px; border-radius: 8px; display: flex; gap: 15px; margin-bottom: 30px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.1) inset; }
+        input { background: #000; color: var(--neon); border: 1px solid var(--neon); padding: 15px; font-size: 1.1em; border-radius: 4px; font-family: inherit; }
+        button { background: var(--neon); color: #000; font-weight: bold; font-size: 1.1em; padding: 15px 30px; border: none; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #fff; box-shadow: 0 0 20px var(--neon); }
+        .dashboard { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; }
+        .panel { background: rgba(10, 13, 20, 0.9); border: 1px solid #003333; padding: 25px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .terminal { background: #000; height: 450px; padding: 20px; border-left: 4px solid var(--neon); overflow-y: auto; font-size: 1.05em; line-height: 1.5; }
+        .radar-container { display: flex; justify-content: center; align-items: center; margin: 20px 0; }
+        .progress-circle { position: relative; width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--neon) 0deg, #111 0deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(0,0,0,0.6); transition: background 0.8s; }
+        .progress-circle::before { content: ""; position: absolute; width: 150px; height: 150px; background: var(--panel); border-radius: 50%; }
+        .progress-val { position: relative; z-index: 2; font-size: 3em; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.95em; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0, 255, 204, 0.2); }
+        th { color: #fff; background: rgba(0, 255, 204, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>[ RECONCLAW v4.0 PHANTOM ]</h1>
+        <div class="control-box">
+            <input type="text" id="target" placeholder="Hedef Sistem IP/Domain" style="flex: 3;">
+            <input type="number" id="max_port" value="1024" style="flex: 1;">
+            <button id="scanBtn" onclick="baslatScan()">ASENKRON MOTORU ATEŞLE</button>
+        </div>
+        <div class="dashboard">
+            <div class="panel">
+                <h3 style="color:var(--neon); margin-top:0;">>_ İSTİHBARAT TERMİNALİ</h3>
+                <div class="terminal" id="terminal-screen"><div><span style="color:#555;">[SYS] Phantom Asenkron Motor Hazır.</span></div></div>
+            </div>
+            <div class="panel">
+                <h3 style="color:var(--neon); margin-top:0;">📡 HEDEF PROFİLİ & SÜRÜM KEŞFİ</h3>
+                <div class="radar-container"><div class="progress-circle" id="progress-circle"><div class="progress-val" id="progress-text">0%</div></div></div>
+                <table id="resultsTable"><tr><th>Port</th><th>Servis</th><th>Sürüm / Banner İstihbaratı</th><th>Risk</th></tr></table>
+            </div>
+        </div>
+    </div>
+<script>
+    function addLog(msg, color) {
+        const term = document.getElementById('terminal-screen');
+        term.innerHTML += `<div><span style="color: ${color};">${msg}</span></div>`;
+        term.scrollTop = term.scrollHeight;
+    }
+    async function baslatScan() {
+        const target = document.getElementById('target').value.trim();
+        const max_port = document.getElementById('max_port').value;
+        const btn = document.getElementById('scanBtn');
+        const radar = document.getElementById('progress-circle');
+        
+        if(!target) return;
+        btn.disabled = true; btn.innerText = "IŞIK HIZINDA TARANIYOR..."; btn.style.background = "#fff";
+        
+        document.getElementById('resultsTable').innerHTML = `<tr><th>Port</th><th>Servis</th><th>Sürüm / Banner İstihbaratı</th><th>Risk</th></tr>`;
+        radar.style.background = `conic-gradient(#fff 180deg, #111 0deg)`;
+        document.getElementById('progress-text').innerText = "ASYNC";
+        
+        addLog(`[+] Asenkron görevler başlatıldı: ${target}`, "#fff");
+        
+        try {
+            const res = await fetch('/api/scan', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({target: target, max_port: parseInt(max_port)}) });
+            const data = await res.json();
+            
+            if(data.success) {
+                addLog(`[✓] Çözümlenen IP: ${data.resolved_ip}`, "var(--neon)");
+                let pColor = data.overall_risk >= 75 ? 'var(--alert)' : data.overall_risk >= 50 ? 'var(--warn)' : 'var(--neon)';
+                radar.style.background = `conic-gradient(${pColor} ${(data.overall_risk / 100) * 360}deg, #111 0deg)`;
+                document.getElementById('progress-text').innerText = data.overall_risk + '%';
+                
+                let tHTML = "<tr><th>Port</th><th>Servis</th><th>Sürüm / Banner İstihbaratı</th><th>Risk</th></tr>";
+                if(data.total_open > 0) {
+                    data.analysis.forEach(i => {
+                        let rColor = i.risk_percentage >= 75 ? 'var(--alert)' : i.risk_percentage >= 50 ? 'var(--warn)' : 'var(--neon)';
+                        tHTML += `<tr><td style="color:var(--neon); font-weight:bold;">${i.port}</td><td>${i.service}</td><td style="color:#aaa; font-style:italic;">${i.banner}</td><td style="color:${rColor};">%${i.risk_percentage}</td></tr>`;
+                    });
+                } else { tHTML += `<tr><td colspan="4" style="text-align:center; color:var(--neon);">Güvenli.</td></tr>`; }
+                
+                document.getElementById('resultsTable').innerHTML = tHTML;
+            }
+        } catch(e) { addLog(`[!] ASYNC BAĞLANTI KOPTU!`, "var(--alert)"); }
+        btn.disabled = false; btn.innerText = "ASENKRON MOTORU ATEŞLE"; btn.style.background = "var(--neon)";
+    }
+</script>
+</body>
+</html>
