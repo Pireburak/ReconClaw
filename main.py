@@ -11,14 +11,14 @@ from pydantic import BaseModel
 import uvicorn
 
 # ==============================================================================
-# 1. BÖLÜM: MODELLER (Hata vermemesi için en başta tanımlıyoruz)
+# 1. BÖLÜM: MODELLER
 # ==============================================================================
 class ScanRequest(BaseModel):
     target: str
     tcp_ports: List[int] = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]
 
 # ==============================================================================
-# 2. BÖLÜM: TERMİNAL RENKLERİ VE SQLITE VERİTABANI
+# 2. BÖLÜM: SQLITE VERİTABANI
 # ==============================================================================
 class Colors:
     GREEN = '\033[92m'
@@ -48,23 +48,36 @@ def init_db():
 init_db()
 
 # ==============================================================================
-# 3. BÖLÜM: CORE SCANNER ENGINE & AI BRAIN (Siber İstihbarat Motoru)
+# 3. BÖLÜM: CORE SCANNER ENGINE (Cloudflare Uyumlu - Anti Freeze)
 # ==============================================================================
 class AsyncScanner:
     def __init__(self, target: str, timeout: float = 1.2):
         self.target = target
         self.timeout = timeout
-        try: self.ip = socket.gethostbyname(target)
-        except socket.gaierror: self.ip = None
+        self.ip = None
 
-    def get_osint_data(self):
-        if not self.ip: return {"country": "Bilinmiyor", "isp": "Bilinmiyor", "city": "Bilinmiyor"}
+    async def resolve_dns(self):
+        """DNS çözümlemesini sistemi dondurmadan ayrı Thread'de yapar"""
+        loop = asyncio.get_running_loop()
         try:
-            req = urllib.request.Request(f"http://ip-api.com/json/{self.ip}", headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=3) as response:
-                data = json.loads(response.read().decode())
-                if data.get("status") == "success": return data
-        except: pass
+            self.ip = await loop.run_in_executor(None, socket.gethostbyname, self.target)
+        except Exception:
+            self.ip = None
+
+    async def get_osint_data(self):
+        """OSINT verisini sistemi dondurmadan ayrı Thread'de çeker"""
+        if not self.ip: return {"country": "Bilinmiyor", "isp": "Bilinmiyor", "city": "Bilinmiyor"}
+        loop = asyncio.get_running_loop()
+        
+        def fetch():
+            try:
+                req = urllib.request.Request(f"http://ip-api.com/json/{self.ip}", headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=3) as response:
+                    return json.loads(response.read().decode())
+            except: return {}
+
+        data = await loop.run_in_executor(None, fetch)
+        if data.get("status") == "success": return data
         return {"country": "Bilinmiyor", "isp": "Bilinmiyor", "city": "Bilinmiyor"}
 
     async def scan_tcp_port(self, port: int):
@@ -124,16 +137,20 @@ class AIBrain:
         return {"total_score": score, "risk_level": level, "cve_alerts": cve_alerts, "recommendations": recommendations, "processed_ports": open_ports}
 
 # ==============================================================================
-# 🚀 BÖLÜM 4: FASTAPI VE EN AFİLLİ MATRIX ARAYÜZÜ (HTML)
+# 4. BÖLÜM: FASTAPI & MATRIX ARAYÜZÜ
 # ==============================================================================
 app = FastAPI(title="ReconClaw v4.0 Ultimate", docs_url=None, redoc_url=None) 
 
 @app.post("/api/v4/scan")
 async def start_scan(req: ScanRequest):
     scanner = AsyncScanner(target=req.target, timeout=1.5)
+    
+    # Asenkron DNS Çözümleme (Sunucuyu dondurmaz!)
+    await scanner.resolve_dns()
     if not scanner.ip: raise HTTPException(status_code=400, detail="DNS Çözümlenemedi!")
     
-    osint_data = scanner.get_osint_data()
+    # Asenkron OSINT ve Port Tarama
+    osint_data = await scanner.get_osint_data()
     raw_results = await scanner.run_scan(tcp_ports=req.tcp_ports)
     analysis = AIBrain.analyze(raw_results)
 
@@ -164,48 +181,34 @@ PROFESSIONAL_MATRIX_HTML = """
         :root { --primary: #0f0; --bg: #030303; --panel: rgba(0, 15, 0, 0.75); --danger: #ff003c; --warning: #ffb000; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Share Tech Mono', monospace; }
         body { background-color: var(--bg); color: var(--primary); overflow-x: hidden; }
-
-        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: var(--primary); }
-
-        /* MATRIX BG */
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.25; }
-
-        /* BOOT SCREEN */
         #loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s; }
         .radar { width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--primary); position: relative; background: repeating-radial-gradient(transparent, transparent 20px, rgba(0,255,0,0.1) 20px, rgba(0,255,0,0.1) 22px); box-shadow: 0 0 30px rgba(0, 255, 0, 0.4); margin-bottom: 30px; }
         .radar::before { content: ''; position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; background: linear-gradient(45deg, var(--primary) 0%, transparent 60%); transform-origin: top left; animation: scan 1.5s linear infinite; }
         @keyframes scan { 100% { transform: rotate(360deg); } }
         .glitch-text { font-size: 2rem; letter-spacing: 5px; text-shadow: 2px 2px var(--danger), -2px -2px #00f; animation: glitch 0.5s infinite; }
         @keyframes glitch { 0% { transform: translate(0) } 20% { transform: translate(-2px, 2px) } 40% { transform: translate(-2px, -2px) } 60% { transform: translate(2px, 2px) } 80% { transform: translate(2px, -2px) } 100% { transform: translate(0) } }
-
-        /* MAIN DASHBOARD */
         .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; display: none; }
         header { text-align: center; margin-bottom: 40px; border-bottom: 1px dashed var(--primary); padding-bottom: 20px; }
         header h1 { font-size: 3.5rem; text-shadow: 0 0 15px var(--primary); letter-spacing: 2px; }
         header p { color: #88ff88; font-size: 1.2rem; margin-top: 10px; }
-
         .panel { background: var(--panel); border: 1px solid var(--primary); padding: 25px; margin-bottom: 25px; box-shadow: 0 0 20px rgba(0,255,0,0.1); backdrop-filter: blur(8px); position: relative; }
         .panel::before { content:''; position:absolute; top:0; left:0; width:15px; height:15px; border-top:2px solid var(--primary); border-left:2px solid var(--primary); }
         .panel::after { content:''; position:absolute; bottom:0; right:0; width:15px; height:15px; border-bottom:2px solid var(--primary); border-right:2px solid var(--primary); }
         .panel h2 { border-bottom: 1px dashed var(--primary); padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; font-size: 1.3rem; }
-
         .input-group { display: flex; gap: 15px; margin-bottom: 20px; }
         input[type="text"] { flex: 1; background: #000; border: 1px solid var(--primary); color: var(--primary); padding: 15px; font-size: 1.3rem; outline: none; box-shadow: inset 0 0 10px rgba(0,255,0,0.2); transition: 0.3s; }
         input[type="text"]:focus { box-shadow: inset 0 0 20px rgba(0,255,0,0.6); }
         button { background: var(--primary); color: #000; border: none; padding: 0 35px; font-size: 1.3rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
         button:hover { background: #fff; box-shadow: 0 0 25px var(--primary); }
         button:disabled { background: #222; color: #555; cursor: not-allowed; box-shadow: none; }
-
-        /* LIVE TERMINAL */
         .terminal { background: #000; padding: 15px; border: 1px solid #333; height: 180px; overflow-y: auto; font-size: 1.1rem; }
         .terminal p { margin: 5px 0; }
         .t-time { color: #555; margin-right: 10px; }
         .t-msg { color: #0ff; } .t-warn { color: var(--warning); } .t-err { color: var(--danger); text-shadow: 0 0 5px var(--danger); } .t-succ { color: var(--primary); font-weight: bold; }
-
-        /* RESULTS AREA */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         .score-box { text-align: center; display: flex; flex-direction: column; justify-content: center; transition: 0.5s; }
         .score-box h1 { font-size: 5.5rem; margin: 10px 0; text-shadow: 0 0 20px var(--primary); }
@@ -213,12 +216,10 @@ PROFESSIONAL_MATRIX_HTML = """
         .critical-text { color: var(--danger) !important; text-shadow: 0 0 20px var(--danger) !important; }
         .high { border-color: var(--warning) !important; box-shadow: inset 0 0 30px rgba(255,176,0,0.1) !important; }
         .high-text { color: var(--warning) !important; text-shadow: 0 0 20px var(--warning) !important; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #0f0; padding: 12px; text-align: left; }
         th { background: rgba(0,255,0,0.2); font-size: 1.1rem; }
         tr:hover { background: rgba(0,255,0,0.1); }
-        
         .vuln-box { border-left: 4px solid var(--danger); background: rgba(255,0,60,0.1); padding: 15px; margin-top: 20px; }
         .rec-box { border-left: 4px solid #0ff; background: rgba(0,255,255,0.05); padding: 15px; margin-top: 20px; }
         ul { margin-left: 20px; }
@@ -247,7 +248,7 @@ PROFESSIONAL_MATRIX_HTML = """
                 <button id="scanBtn" onclick="executeScan()">START SCANNING</button>
             </div>
             <div class="terminal" id="terminal">
-                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Waiting for parameters...</span></p>
+                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Ready for Cloudflare Tunneling...</span></p>
             </div>
         </div>
 
@@ -258,7 +259,6 @@ PROFESSIONAL_MATRIX_HTML = """
                     <h1 id="riskScore">0</h1>
                     <h2 id="riskLevel">SECURE</h2>
                 </div>
-
                 <div class="panel">
                     <h2>> OSINT_FOOTPRINT</h2>
                     <p style="margin-bottom:15px;"><strong style="color:#888;">RESOLVED IP :</strong> <span id="r-ip" style="font-size:1.3rem;"></span></p>
@@ -266,7 +266,6 @@ PROFESSIONAL_MATRIX_HTML = """
                     <p><strong style="color:#888;">DATACENTER  :</strong> <span id="r-isp" style="font-size:1.3rem;"></span></p>
                 </div>
             </div>
-
             <div class="panel">
                 <h2>> DETECTED_OPEN_PORTS</h2>
                 <table>
@@ -274,7 +273,6 @@ PROFESSIONAL_MATRIX_HTML = """
                     <tbody id="portTable"></tbody>
                 </table>
             </div>
-
             <div class="grid" id="ai-blocks">
                 <div class="panel vuln-box">
                     <h2 style="color:var(--danger); border-color:var(--danger);">🔴 CRITICAL THREATS (CVE)</h2>
@@ -289,7 +287,6 @@ PROFESSIONAL_MATRIX_HTML = """
     </div>
 
     <script>
-        // MATRIX BACKGROUND EFFECT
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -309,7 +306,6 @@ PROFESSIONAL_MATRIX_HTML = """
             }
         }, 33);
 
-        // BOOT SCREEN LOGIC
         function bootSequence() {
             const texts = ["ANALYZING NETWORK TOPOLOGY...", "INITIALIZING AI THREAT ENGINE...", "SYSTEM READY."];
             let i = 0;
@@ -326,7 +322,6 @@ PROFESSIONAL_MATRIX_HTML = """
             }, 900);
         }
 
-        // TERMINAL LOGGER
         function logTerm(msg, type="msg") {
             const term = document.getElementById('terminal');
             const time = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -334,7 +329,6 @@ PROFESSIONAL_MATRIX_HTML = """
             term.scrollTop = term.scrollHeight;
         }
 
-        // EXECUTE SCAN API CALL
         async function executeScan() {
             const target = document.getElementById('target').value.trim();
             if(!target) return alert("System Error: Target Field Cannot Be Empty!");
@@ -345,33 +339,33 @@ PROFESSIONAL_MATRIX_HTML = """
             document.getElementById('terminal').innerHTML = '';
             
             logTerm(`Target defined: ${target}`, 'warn');
-            logTerm(`Resolving DNS & Extracting OSINT footprints...`, 'msg');
+            logTerm(`Resolving DNS & Extracting OSINT footprints asynchronously...`, 'msg');
             
-            setTimeout(() => logTerm(`Deploying Asynchronous TCP Socket Engine...`, 'msg'), 800);
-            setTimeout(() => logTerm(`Sending probes for Banner Grabbing...`, 'msg'), 1600);
+            setTimeout(() => logTerm(`Deploying Async TCP Socket Engine...`, 'msg'), 500);
+            setTimeout(() => logTerm(`Sending probes for Banner Grabbing...`, 'msg'), 1000);
 
             try {
                 const res = await fetch('/api/v4/scan', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({target: target, tcp_ports: [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]})
                 });
-                const data = await res.json();
                 
+                if(!res.ok) throw new Error("Connection dropped or Backend Error!");
+                const data = await res.json();
                 if(data.detail) throw new Error(data.detail);
 
                 logTerm(`Scan Complete! Found ${data.port_details.length} open ports.`, 'succ');
                 logTerm(`AI Risk analysis Engine finished processing.`, 'succ');
-                
                 populateResults(data);
 
             } catch (err) {
                 logTerm(`CRITICAL ERROR: ${err.message}`, 'err');
+                logTerm(`Cloudflare Timeout or Invalid Domain Detected.`, 'err');
             } finally {
                 btn.disabled = false; btn.innerText = "START SCANNING";
             }
         }
 
-        // RESULTS POPULATOR
         function populateResults(data) {
             document.getElementById('r-ip').innerText = data.target_info.resolved_ip;
             document.getElementById('r-loc').innerText = data.target_info.location;
@@ -419,9 +413,8 @@ def serve_gui():
 
 if __name__ == "__main__":
     print(f"\n{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (MATRIX EDITION) AKTİF!{Colors.RESET}")
+    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (TUNNEL OPTIMIZED) AKTİF!{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" 👉 {Colors.BOLD}Lütfen şov için tarayıcıdan doğrudan şu adrese gidin:{Colors.RESET}")
-    print(f" 🌐 {Colors.GREEN}{Colors.BOLD}http://127.0.0.1:8000{Colors.RESET}")
+    print(f" 👉 {Colors.BOLD}Cloudflare tünel adresinizden projeye girebilirsiniz.{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}\n")
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="error")
