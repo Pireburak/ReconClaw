@@ -4,13 +4,13 @@ import sqlite3
 import json
 import urllib.request
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
 # ==============================================================================
-# 🎨 BÖLÜM 0: TERMİNAL RENKLERİ (CLI)
+# 🎨 BÖLÜM 1: TERMİNAL RENKLERİ (CLI GÖRSELLİĞİ İÇİN)
 # ==============================================================================
 class Colors:
     GREEN = '\033[92m'
@@ -21,12 +21,12 @@ class Colors:
     BOLD = '\033[1m'
 
 # ==============================================================================
-# 🗄️ BÖLÜM 1: SQLITE VERİTABANI MOTORU
+# 🗄️ BÖLÜM 2: SQLITE VERİTABANI MOTORU
 # ==============================================================================
 DB_NAME = "reconclaw.db"
 
 def init_db():
-    """Uygulama ilk kez başlatıldığında veritabanını ve tabloları kurar."""
+    """Uygulama ilk kez başlatıldığında veritabanını ve tabloları otomatik kurar."""
     try:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -59,14 +59,13 @@ def init_db():
         
         conn.commit()
         conn.close()
-        print(f"[{Colors.GREEN}+{Colors.RESET}] SQLite Veritabanı hazır (reconclaw.db).")
-    except Exception as e:
-        print(f"[{Colors.RED}-{Colors.RESET}] Veritabanı başlatılırken hata oluştu: {e}")
+    except Exception:
+        pass
 
 init_db()
 
 # ==============================================================================
-# ⚡ BÖLÜM 2: CORE SCANNER ENGINE (Asenkron TCP, UDP, OSINT & Banner)
+# ⚡ BÖLÜM 3: CORE SCANNER ENGINE (Asenkron TCP, UDP, OSINT & Banner Grabbing)
 # ==============================================================================
 class AsyncScanner:
     def __init__(self, target: str, timeout: float = 1.2):
@@ -74,7 +73,6 @@ class AsyncScanner:
         self.timeout = timeout
         try:
             self.ip = socket.gethostbyname(target)
-            print(f"[{Colors.BLUE}i{Colors.RESET}] Hedef {Colors.BOLD}{target}{Colors.RESET} çözümlendi -> {Colors.BOLD}{self.ip}{Colors.RESET}")
         except socket.gaierror:
             self.ip = None
 
@@ -128,7 +126,6 @@ class AsyncScanner:
                             banner = decoded_data.split('\n')[0][:80]
                     else:
                         banner = decoded_data.split('\n')[0][:80]
-
             except Exception:
                 pass 
             finally:
@@ -171,8 +168,7 @@ class AsyncScanner:
         if not self.ip:
             return []
         
-        print(f"[{Colors.YELLOW}*{Colors.RESET}] Asenkron Tarama Başlıyor... (TCP: {len(tcp_ports)}, UDP: {len(udp_ports)})")
-        
+        # Concurrency: Bütün portları aynı anda asenkron tara
         tcp_tasks = [self.scan_tcp_port(port) for port in tcp_ports]
         udp_tasks = [self.scan_udp_port(port) for port in udp_ports]
         
@@ -182,7 +178,7 @@ class AsyncScanner:
         return [res for res in results if res is not None]
 
 # ==============================================================================
-# 🧠 BÖLÜM 3: AI BRAIN (Risk Analizi, CVE Motoru)
+# 🧠 BÖLÜM 4: AI BRAIN (Risk Analizi ve CVE Zafiyet Motoru)
 # ==============================================================================
 class AIBrain:
     CRITICAL_PORTS = {
@@ -213,7 +209,6 @@ class AIBrain:
             protocol = item.get('protocol', 'TCP')
             banner = item.get('banner', '').lower()
             
-            # Risk Puanlaması
             if port in cls.CRITICAL_PORTS:
                 score += cls.CRITICAL_PORTS[port]['risk']
                 item['service'] = cls.CRITICAL_PORTS[port]['service']
@@ -225,17 +220,16 @@ class AIBrain:
             if "openssh" in banner:
                 if any(v in banner for v in [" 4.", " 5.", " 6."]):
                     score += 30
-                    cve_alerts.append(f"Port {port}: Eski SSH Sürümü! (CVE-2016-10009 RCE riski).")
+                    cve_alerts.append(f"Port {port}: Eski SSH Sürümü tespit edildi (CVE-2016-10009 RCE riski).")
             
             if "apache/2.4.49" in banner or "apache/2.4.50" in banner:
                 score += 50
-                cve_alerts.append(f"Port {port}: Kritik Apache Path Traversal Zafiyeti! (CVE-2021-41773). Acil Yama!")
+                cve_alerts.append(f"Port {port}: Kritik Apache Path Traversal Zafiyeti tespit edildi (CVE-2021-41773). Acil Yama!")
 
             if "iis/6.0" in banner:
                 score += 40
                 cve_alerts.append(f"Port {port}: Çok eski IIS sürümü tespit edildi! (CVE-2017-7269).")
 
-            # Mantıksal Hata ve Yapılandırma Uyarısı
             if port in [3306, 5432, 1433]:
                 recommendations.append(f"Kritik: Veritabanı portu ({port}) dış ağa açık bırakılmış. Sadece iç ağa (LAN) izole edin.")
             
@@ -247,7 +241,6 @@ class AIBrain:
 
         score = min(100, score)
 
-        # Risk Seviyesi Ataması
         if score == 0 and not open_ports: level = "🟢 Güvenli (Açık Port Yok)"
         elif score <= 25: level = "🟢 Düşük Risk"
         elif score <= 50: level = "🟡 Orta Risk"
@@ -266,7 +259,7 @@ class AIBrain:
         }
 
 # ==============================================================================
-# 🚀 BÖLÜM 4: FASTAPI (RestAPI)
+# 🚀 BÖLÜM 5: FASTAPI (REST API VE SUNUCU)
 # ==============================================================================
 app = FastAPI(
     title="ReconClaw v4.0 Ultimate API", 
@@ -286,12 +279,11 @@ async def start_scan(req: ScanRequest):
     if not scanner.ip:
         raise HTTPException(status_code=400, detail="Hedef adres çözümlenemedi (DNS Hatası).")
 
-    # Tarama ve Analiz Adımları
     osint_data = scanner.get_osint_data()
     raw_results = await scanner.run_scan(tcp_ports=req.tcp_ports, udp_ports=req.udp_ports)
     analysis = AIBrain.analyze(raw_results)
 
-    # Veritabanına Kaydet
+    # Taramayı Veritabanına Kaydet
     try:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -311,17 +303,8 @@ async def start_scan(req: ScanRequest):
             
         conn.commit()
         conn.close()
-    except Exception as e:
-        print(f"[{Colors.RED}-{Colors.RESET}] Veritabanı yazma hatası: {e}")
-
-    # Terminale Sonucu Bas
-    print(f"[{Colors.GREEN}+{Colors.RESET}] Tarama Tamamlandı! Açık Port: {len(raw_results)}")
-    if analysis['total_score'] > 75:
-        print(f"[{Colors.RED}!{Colors.RESET}] Risk Seviyesi: {Colors.RED}{analysis['risk_level']}{Colors.RESET} ({analysis['total_score']}/100)")
-    elif analysis['total_score'] > 50:
-        print(f"[{Colors.YELLOW}!{Colors.RESET}] Risk Seviyesi: {Colors.YELLOW}{analysis['risk_level']}{Colors.RESET} ({analysis['total_score']}/100)")
-    else:
-        print(f"[{Colors.GREEN}✓{Colors.RESET}] Risk Seviyesi: {Colors.GREEN}{analysis['risk_level']}{Colors.RESET} ({analysis['total_score']}/100)")
+    except Exception:
+        pass
 
     return {
         "status": "success",
@@ -345,7 +328,7 @@ async def start_scan(req: ScanRequest):
 
 @app.get("/api/v4/history", tags=["Database"])
 def get_history():
-    """Önceki taramaları getirir"""
+    """Önceki taramaları (logları) SQLite'dan getirir"""
     try:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
@@ -356,15 +339,9 @@ def get_history():
         history = []
         for row in rows:
             history.append({
-                "id": row[0],
-                "target": row[1],
-                "ip": row[2],
-                "country": row[3],
-                "isp": row[4],
-                "open_ports": row[5],
-                "risk_score": row[6],
-                "risk_level": row[7],
-                "date": row[8]
+                "id": row[0], "target": row[1], "ip": row[2],
+                "country": row[3], "isp": row[4], "open_ports": row[5],
+                "risk_score": row[6], "risk_level": row[7], "date": row[8]
             })
         return {"history": history}
     except Exception as e:
@@ -378,14 +355,14 @@ if __name__ == "__main__":
     print(f"\n{Colors.BLUE}{'='*55}{Colors.RESET}")
     print(f" {Colors.BOLD}🦅 ReconClaw v4.0 Ultimate Başlatılıyor...{Colors.RESET}")
     print(f"{Colors.BLUE}{'='*55}{Colors.RESET}")
-    print(f" [{Colors.GREEN}✓{Colors.RESET}] SQLite Veritabanı Modülü Aktif")
-    print(f" [{Colors.GREEN}✓{Colors.RESET}] Async TCP & UDP Scanner Aktif")
+    print(f" [{Colors.GREEN}✓{Colors.RESET}] SQLite Veritabanı Aktif")
+    print(f" [{Colors.GREEN}✓{Colors.RESET}] Asenkron TCP & UDP Motoru Aktif")
     print(f" [{Colors.GREEN}✓{Colors.RESET}] OSINT (GeoIP/ASN) Engine Aktif")
-    print(f" [{Colors.GREEN}✓{Colors.RESET}] AI Risk Engine (CVE Destekli) Aktif")
+    print(f" [{Colors.GREEN}✓{Colors.RESET}] AI Risk & CVE Motoru Aktif")
     print(f"{Colors.BLUE}{'='*55}{Colors.RESET}")
     print(f" 👉 {Colors.BOLD}TEST PANELİ:{Colors.RESET} http://127.0.0.1:8000/docs ")
     print(f" 👉 {Colors.BOLD}TARAMA GEÇMİŞİ:{Colors.RESET} http://127.0.0.1:8000/api/v4/history ")
     print(f"{Colors.BLUE}{'='*55}{Colors.RESET}\n")
     
-    # Gereksiz uvicorn loglarını gizleyerek temiz bir konsol ekranı sunar
+    # Gereksiz logları kapatarak temiz ekran sunar
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="error")
