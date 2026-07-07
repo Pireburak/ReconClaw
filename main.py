@@ -126,7 +126,6 @@ class AIBrain:
 # ==============================================================================
 # 🚀 BÖLÜM 4: FASTAPI VE EN AFİLLİ MATRIX ARAYÜZÜ (HTML)
 # ==============================================================================
-# /docs kapatıldı, sadece havalı arayüz var!
 app = FastAPI(title="ReconClaw v4.0 Ultimate", docs_url=None, redoc_url=None) 
 
 @app.post("/api/v4/scan")
@@ -230,7 +229,6 @@ PROFESSIONAL_MATRIX_HTML = """
 
     <canvas id="matrixCanvas"></canvas>
 
-    <!-- PRO BOOT SCREEN -->
     <div id="loader">
         <div class="radar"></div>
         <div class="glitch-text" id="bootText">SYSTEM INITIALIZING...</div>
@@ -255,14 +253,12 @@ PROFESSIONAL_MATRIX_HTML = """
 
         <div id="resultsArea" style="display: none; animation: fadeIn 1s;">
             <div class="grid">
-                <!-- RISK PANEL -->
                 <div class="panel score-box" id="scorePanel">
                     <h2 style="border:none;">AI RISK ASSESSMENT</h2>
                     <h1 id="riskScore">0</h1>
                     <h2 id="riskLevel">SECURE</h2>
                 </div>
 
-                <!-- TARGET INTEL PANEL -->
                 <div class="panel">
                     <h2>> OSINT_FOOTPRINT</h2>
                     <p style="margin-bottom:15px;"><strong style="color:#888;">RESOLVED IP :</strong> <span id="r-ip" style="font-size:1.3rem;"></span></p>
@@ -271,7 +267,6 @@ PROFESSIONAL_MATRIX_HTML = """
                 </div>
             </div>
 
-            <!-- PORT TABLE -->
             <div class="panel">
                 <h2>> DETECTED_OPEN_PORTS</h2>
                 <table>
@@ -280,7 +275,6 @@ PROFESSIONAL_MATRIX_HTML = """
                 </table>
             </div>
 
-            <!-- AI ALERTS -->
             <div class="grid" id="ai-blocks">
                 <div class="panel vuln-box">
                     <h2 style="color:var(--danger); border-color:var(--danger);">🔴 CRITICAL THREATS (CVE)</h2>
