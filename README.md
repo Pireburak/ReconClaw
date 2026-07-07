@@ -186,4 +186,48 @@ v5.0  █████░░░░░░░░░░░░░░░ 20%
 │ STATUS : SCANNING...                │
 │ OPEN PORTS : 7                      │
 │ RISK SCORE : 78/100                 │
-│ ████████████
+│ ████████████████████████            │
+└─────────────────────────────────────┘
+```
+
+---
+
+# 💾 Veritabanı
+
+Program çalıştığında otomatik oluşan veritabanı yapısı:
+
+| Tablo        | Açıklama       |
+| ------------ | -------------- |
+| scan_history | Tarama geçmişi |
+| target       | Hedef          |
+| open_ports   | Açık portlar   |
+| risk_score   | Risk puanı     |
+| scan_time    | Tarama zamanı  |
+
+---
+
+# ⚖️ Yasal Uyarı
+
+ReconClaw yalnızca **yetkili**, **izinli** ve **etik** güvenlik testleri amacıyla geliştirilmiştir. Yasadışı ve izinsiz kullanımlardan geliştirici sorumlu tutulamaz. Yazılımı kullanan herkes hukuki sorumluluğu kabul etmiş sayılır.
+
+---
+
+# ✍️ Geliştirici
+
+```text
+██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗
+██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║
+██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
+██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
+██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
+
+Engineered with ☕ by
+
+Pireburak
+
+ReconClaw Framework
+
+© 2026
+Tüm Hakları Saklıdır.
+```
