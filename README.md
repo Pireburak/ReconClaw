@@ -3,19 +3,19 @@
 ### *AI Destekli Ağ Keşfi ve Güvenlik Analiz Platformu*
 
 <p align="center">
-<img src="[https://img.shields.io/badge/Version-v4.0%20Ultimate-success?style=for-the-badge](https://img.shields.io/badge/Version-v4.0%20Ultimate-success?style=for-the-badge)" alt="Version">
-<img src="[https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)" alt="Python">
-<img src="[https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi](https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi)" alt="FastAPI">
-<img src="[https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite)" alt="SQLite">
-<img src="[https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)" alt="Status">
-<img src="[https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge](https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge)" alt="License">
+<img src="https://img.shields.io/badge/Version-v4.0%20Ultimate-success?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python" alt="Python">
+<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi" alt="FastAPI">
+<img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite" alt="SQLite">
+<img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
+<img src="https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge" alt="License">
 </p>
 
 ---
 
 # 🚀 ReconClaw Nedir?
 
-ReconClaw; yetkili ağ keşfi (Reconnaissance), port analizi, servis tespiti ve güvenlik değerlendirmesi amacıyla geliştirilen modern bir siber güvenlik platformudur.
+ReconClaw; yetkili ağ keşfi (Reconnaissance), port analizi, servis tespiti ve güvenlik değerlendirmesi amacıyla geliştirilen modern bir siber gelecek platformudur.
 
 Sistem yalnızca açık portları listelemek yerine;
 
@@ -220,14 +220,4 @@ ReconClaw yalnızca **yetkili**, **izinli** ve **etik** güvenlik testleri amac�
 ██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
 ██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
 ██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
-╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
-
-Engineered with ☕ by
-
-Pireburak
-
-ReconClaw Framework
-
-© 2026
-Tüm Hakları Saklıdır.
-```
+╚═╝  ╚═╝╚══════╝ ╚
