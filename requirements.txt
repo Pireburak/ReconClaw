@@ -1,1 +1,9 @@
-
+fastapi
+uvicorn
+requests
+python-dotenv
+sqlalchemy
+pydantic
+jinja2
+python-multipart
+aiofiles
