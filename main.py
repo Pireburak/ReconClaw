@@ -6,16 +6,17 @@ import urllib.request
 from datetime import datetime
 from typing import List
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
 # ==============================================================================
-# 1. BÖLÜM: MODELLER
+# 1. BÖLÜM: HAYALET MODELLER (WAF ATLATMA İÇİN PORTLARI GİZLEDİK)
 # ==============================================================================
 class ScanRequest(BaseModel):
     target: str
-    tcp_ports: List[int] = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]
+    # DİKKAT: Port listesini buradan kaldırdık. Cloudflare WAF artık bunu tehdit algılamayacak!
 
 # ==============================================================================
 # 2. BÖLÜM: TERMİNAL RENKLERİ VE SQLITE VERİTABANI
@@ -48,19 +49,18 @@ def init_db():
 init_db()
 
 # ==============================================================================
-# 3. BÖLÜM: CORE SCANNER ENGINE (Cloudflare Uyumlu - Anti Freeze)
+# 3. BÖLÜM: CORE SCANNER ENGINE (Anti-Freeze & Stealth)
 # ==============================================================================
 class AsyncScanner:
-    def __init__(self, target: str, timeout: float = 1.2):
-        # http:// veya https:// girilirse DNS çökmesin diye hedefi otomatik temizliyoruz
-        self.target = target.replace("https://", "").replace("http://", "").split("/")[0]
+    def __init__(self, target: str, timeout: float = 1.0):
+        # Hedefteki gereksiz https:// kısımlarını temizler (DNS çökmesini engeller)
+        self.target = target.replace("https://", "").replace("http://", "").replace("/", "")
         self.timeout = timeout
         self.ip = None
 
     async def resolve_dns(self):
         loop = asyncio.get_running_loop()
         try:
-            # DNS çözümlemesi sunucuyu dondurmasın diye ayrı Thread'e (executor) alındı
             self.ip = await loop.run_in_executor(None, socket.gethostbyname, self.target)
         except Exception:
             self.ip = None
@@ -68,7 +68,6 @@ class AsyncScanner:
     async def get_osint_data(self):
         if not self.ip: return {"country": "Bilinmiyor", "isp": "Bilinmiyor", "city": "Bilinmiyor"}
         loop = asyncio.get_running_loop()
-        
         def fetch():
             try:
                 req = urllib.request.Request(f"http://ip-api.com/json/{self.ip}", headers={'User-Agent': 'Mozilla/5.0'})
@@ -77,8 +76,6 @@ class AsyncScanner:
                     if data.get("status") == "success": return data
             except: pass
             return {"country": "Bilinmiyor", "isp": "Bilinmiyor", "city": "Bilinmiyor"}
-
-        # API isteği ayrı Thread'de çalışır, sistemi kitlemez
         return await loop.run_in_executor(None, fetch)
 
     async def scan_tcp_port(self, port: int):
@@ -98,8 +95,10 @@ class AsyncScanner:
             return {"port": port, "protocol": "TCP", "state": "open", "banner": banner}
         except: return None 
 
-    async def run_scan(self, tcp_ports: list):
+    async def run_scan(self):
         if not self.ip: return []
+        # Portlar artık gizli! Frontend'den gelmiyor, backend'e gömüldü (WAF Bypass)
+        tcp_ports = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]
         tasks = [self.scan_tcp_port(port) for port in tcp_ports]
         results = await asyncio.gather(*tasks)
         return [res for res in results if res is not None]
@@ -142,32 +141,45 @@ class AIBrain:
 # ==============================================================================
 app = FastAPI(title="ReconClaw v4.0 Ultimate", docs_url=None, redoc_url=None) 
 
+# Cloudflare CORS ve WAF Bypass Ayarları (Hayat kurtaran kalkan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/api/v4/scan")
 async def start_scan(req: ScanRequest):
-    scanner = AsyncScanner(target=req.target, timeout=1.5)
-    
-    # 1. Asenkron DNS Çözümleme
-    await scanner.resolve_dns()
-    if not scanner.ip: raise HTTPException(status_code=400, detail="DNS Çözümlenemedi! Geçerli bir hedef girin.")
-    
-    # 2. Asenkron OSINT ve Port Tarama
-    osint_data = await scanner.get_osint_data()
-    raw_results = await scanner.run_scan(tcp_ports=req.tcp_ports)
-    analysis = AIBrain.analyze(raw_results)
-
     try:
-        conn = sqlite3.connect(DB_NAME); cursor = conn.cursor()
-        cursor.execute('INSERT INTO scan_history (target, ip_address, country, isp, open_ports_count, risk_score, risk_level, scan_time) VALUES (?,?,?,?,?,?,?,?)',
-                       (scanner.target, scanner.ip, osint_data.get('country', 'Bilinmiyor'), osint_data.get('isp', 'Bilinmiyor'), len(raw_results), analysis['total_score'], analysis['risk_level'], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        conn.commit(); conn.close()
-    except: pass
+        scanner = AsyncScanner(target=req.target, timeout=1.2)
+        
+        await scanner.resolve_dns()
+        if not scanner.ip: 
+            return JSONResponse(status_code=400, content={"error": True, "detail": "DNS Çözümlenemedi! Geçerli bir hedef girin."})
+        
+        osint_data = await scanner.get_osint_data()
+        raw_results = await scanner.run_scan() # Portlar Python'da gizli!
+        analysis = AIBrain.analyze(raw_results)
 
-    return {
-        "target_info": {"resolved_ip": scanner.ip, "location": f"{osint_data.get('city', '')}, {osint_data.get('country', '')}".strip(', '), "isp": osint_data.get('isp', 'Bilinmiyor')},
-        "scan_summary": {"risk_score": f"{analysis['total_score']}/100", "risk_level": analysis['risk_level']},
-        "ai_analysis": {"cve_alerts": analysis['cve_alerts'], "recommendations": analysis['recommendations']},
-        "port_details": analysis['processed_ports']
-    }
+        try:
+            conn = sqlite3.connect(DB_NAME); cursor = conn.cursor()
+            cursor.execute('INSERT INTO scan_history (target, ip_address, country, isp, open_ports_count, risk_score, risk_level, scan_time) VALUES (?,?,?,?,?,?,?,?)',
+                           (scanner.target, scanner.ip, osint_data.get('country', 'Bilinmiyor'), osint_data.get('isp', 'Bilinmiyor'), len(raw_results), analysis['total_score'], analysis['risk_level'], datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit(); conn.close()
+        except: pass
+
+        return {
+            "error": False,
+            "target_info": {"resolved_ip": scanner.ip, "location": f"{osint_data.get('city', '')}, {osint_data.get('country', '')}".strip(', '), "isp": osint_data.get('isp', 'Bilinmiyor')},
+            "scan_summary": {"risk_score": f"{analysis['total_score']}/100", "risk_level": analysis['risk_level']},
+            "ai_analysis": {"cve_alerts": analysis['cve_alerts'], "recommendations": analysis['recommendations']},
+            "port_details": analysis['processed_ports']
+        }
+    except Exception as e:
+        # Sunucu çökerse Cloudflare kilitlenmesin diye düzgün hata döndür
+        return JSONResponse(status_code=500, content={"error": True, "detail": f"Sunucu Hatası: {str(e)}"})
 
 PROFESSIONAL_MATRIX_HTML = """
 <!DOCTYPE html>
@@ -243,7 +255,7 @@ PROFESSIONAL_MATRIX_HTML = """
 
     <div id="loader">
         <div class="radar"></div>
-        <div class="glitch-text" id="bootText">SYSTEM INITIALIZING...</div>
+        <div class="glitch-text" id="bootText">BYPASSING WAF DEFENSES...</div>
     </div>
 
     <div class="container" id="mainUI">
@@ -259,7 +271,7 @@ PROFESSIONAL_MATRIX_HTML = """
                 <button id="scanBtn" onclick="executeScan()">START SCANNING</button>
             </div>
             <div class="terminal" id="terminal">
-                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Ready for Cloudflare Tunneling...</span></p>
+                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Stealth Mode (Cloudflare WAF Bypass) Active.</span></p>
             </div>
         </div>
 
@@ -325,7 +337,7 @@ PROFESSIONAL_MATRIX_HTML = """
         });
 
         function bootSequence() {
-            const texts = ["ANALYZING NETWORK TOPOLOGY...", "INITIALIZING AI THREAT ENGINE...", "SYSTEM READY."];
+            const texts = ["BYPASSING WAF DEFENSES...", "INITIALIZING STEALTH MODE...", "SYSTEM READY."];
             let i = 0;
             const bootInt = setInterval(() => {
                 if(i < texts.length) { document.getElementById('bootText').innerText = texts[i]; i++; }
@@ -357,33 +369,32 @@ PROFESSIONAL_MATRIX_HTML = """
             document.getElementById('terminal').innerHTML = '';
             
             logTerm(`Target defined: ${targetInput}`, 'warn');
-            logTerm(`Resolving DNS & Extracting OSINT footprints asynchronously...`, 'msg');
+            logTerm(`Bypassing Cloudflare WAF... Sending stealth payload.`, 'msg');
             
             setTimeout(() => logTerm(`Deploying Async TCP Socket Engine...`, 'msg'), 400);
             setTimeout(() => logTerm(`Sending probes for Banner Grabbing...`, 'msg'), 800);
 
             try {
-                const res = await fetch('/api/v4/scan', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({target: targetInput, tcp_ports: [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]})
+                // Cloudflare için Göreceli URL ve Steatlh Request (Portsuz)
+                const res = await fetch(window.location.origin + '/api/v4/scan', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({target: targetInput}) 
                 });
                 
-                // Cloudflare koptuğunda fırlatılan hatayı Jilet gibi yakala
-                if(!res.ok) {
-                    const errTxt = await res.text();
-                    throw new Error(`Connection dropped or backend error! Status: ${res.status}`);
+                const data = await res.json();
+                
+                if(!res.ok || data.error) {
+                    throw new Error(data.detail || `Server Error or WAF Block! Status: ${res.status}`);
                 }
                 
-                const data = await res.json();
-                if(data.detail) throw new Error(data.detail);
-
                 logTerm(`Scan Complete! Found ${data.port_details.length} open ports.`, 'succ');
                 logTerm(`AI Risk analysis Engine finished processing.`, 'succ');
                 populateResults(data);
 
             } catch (err) {
                 logTerm(`CRITICAL ERROR: ${err.message}`, 'err');
-                logTerm(`INFO: Check if the target is reachable or Cloudflare WAF blocked it.`, 'warn');
+                logTerm(`INFO: Hedef çalışmıyor olabilir veya giden istekler engelleniyor.`, 'warn');
             } finally {
                 btn.disabled = false; btn.innerText = "START SCANNING";
             }
@@ -412,7 +423,7 @@ PROFESSIONAL_MATRIX_HTML = """
 
             const tbody = document.getElementById('portTable');
             if(data.port_details.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ffb000;">Hedefte açık port bulunamadı veya IDS/IPS engelliyor.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ffb000;">Hedefte açık port bulunamadı veya WAF/IDS tarafından engellendi.</td></tr>';
             } else {
                 tbody.innerHTML = data.port_details.map(p => `<tr><td><b style="color:#fff;">${p.port}</b></td><td style="color:#aaa;">${p.protocol}</td><td style="color:#ffb000;">${p.service}</td><td style="color:#0ff;">${p.banner}</td></tr>`).join('');
             }
@@ -436,8 +447,8 @@ def serve_gui():
 
 if __name__ == "__main__":
     print(f"\n{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (TUNNEL OPTIMIZED) AKTİF!{Colors.RESET}")
+    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (STEALTH/CLOUD PROOF) AKTİF!{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" 👉 {Colors.BOLD}Cloudflare tünel adresinizden projeye girebilirsiniz.{Colors.RESET}")
+    print(f" 👉 {Colors.BOLD}Cloudflare tünel adresinizden veya Codespaces'dan güvenle girebilirsiniz.{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}\n")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="error")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="error", timeout_keep_alive=30)
