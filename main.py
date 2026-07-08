@@ -12,15 +12,11 @@ from pydantic import BaseModel
 import uvicorn
 
 # ==============================================================================
-# 1. BÖLÜM: HAYALET MODELLER (WAF ATLATMA İÇİN PORTLARI GİZLEDİK)
+# 1. BÖLÜM: HAYALET MODELLER (Chrome ve WAF Atlatma)
 # ==============================================================================
 class ScanRequest(BaseModel):
     target: str
-    # DİKKAT: Port listesini buradan kaldırdık. Cloudflare WAF artık bunu tehdit algılamayacak!
 
-# ==============================================================================
-# 2. BÖLÜM: TERMİNAL RENKLERİ VE SQLITE VERİTABANI
-# ==============================================================================
 class Colors:
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
@@ -49,11 +45,10 @@ def init_db():
 init_db()
 
 # ==============================================================================
-# 3. BÖLÜM: CORE SCANNER ENGINE (Anti-Freeze & Stealth)
+# 2. BÖLÜM: CORE SCANNER ENGINE (Cloudflare Timeout Engelleme)
 # ==============================================================================
 class AsyncScanner:
-    def __init__(self, target: str, timeout: float = 1.0):
-        # Hedefteki gereksiz https:// kısımlarını temizler (DNS çökmesini engeller)
+    def __init__(self, target: str, timeout: float = 0.8): # HIZLANDIRILDI: Cloudflare kopmasın diye 0.8 saniye
         self.target = target.replace("https://", "").replace("http://", "").replace("/", "")
         self.timeout = timeout
         self.ip = None
@@ -71,7 +66,7 @@ class AsyncScanner:
         def fetch():
             try:
                 req = urllib.request.Request(f"http://ip-api.com/json/{self.ip}", headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req, timeout=3) as response:
+                with urllib.request.urlopen(req, timeout=2) as response:
                     data = json.loads(response.read().decode())
                     if data.get("status") == "success": return data
             except: pass
@@ -86,7 +81,7 @@ class AsyncScanner:
                 if port in [80, 443, 8080]: writer.write(b"HEAD / HTTP/1.1\r\nHost: " + self.ip.encode() + b"\r\n\r\n")
                 else: writer.write(b"\r\n")
                 await writer.drain()
-                data = await asyncio.wait_for(reader.read(1024), timeout=0.8)
+                data = await asyncio.wait_for(reader.read(1024), timeout=0.5)
                 if data: banner = data.decode('utf-8', errors='ignore').strip().split('\n')[0][:80]
             except: pass 
             finally:
@@ -97,7 +92,6 @@ class AsyncScanner:
 
     async def run_scan(self):
         if not self.ip: return []
-        # Portlar artık gizli! Frontend'den gelmiyor, backend'e gömüldü (WAF Bypass)
         tcp_ports = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 5432, 8080]
         tasks = [self.scan_tcp_port(port) for port in tcp_ports]
         results = await asyncio.gather(*tasks)
@@ -137,11 +131,11 @@ class AIBrain:
         return {"total_score": score, "risk_level": level, "cve_alerts": cve_alerts, "recommendations": recommendations, "processed_ports": open_ports}
 
 # ==============================================================================
-# 4. BÖLÜM: FASTAPI & MATRIX ARAYÜZÜ
+# 3. BÖLÜM: FASTAPI & CHROME BYPASS ARAYÜZÜ
 # ==============================================================================
 app = FastAPI(title="ReconClaw v4.0 Ultimate", docs_url=None, redoc_url=None) 
 
-# Cloudflare CORS ve WAF Bypass Ayarları (Hayat kurtaran kalkan)
+# KESİN CORS İZNİ: Chrome'un "Access-Control-Allow-Origin" engelini yıkar
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -150,17 +144,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/api/v4/scan")
+# ENDPOINT GİZLENDİ: /scan yerine /probe yazdık, AdBlocker'lar bunu yakalayamaz!
+@app.post("/api/v4/probe")
 async def start_scan(req: ScanRequest):
     try:
-        scanner = AsyncScanner(target=req.target, timeout=1.2)
+        scanner = AsyncScanner(target=req.target)
         
         await scanner.resolve_dns()
         if not scanner.ip: 
             return JSONResponse(status_code=400, content={"error": True, "detail": "DNS Çözümlenemedi! Geçerli bir hedef girin."})
         
         osint_data = await scanner.get_osint_data()
-        raw_results = await scanner.run_scan() # Portlar Python'da gizli!
+        raw_results = await scanner.run_scan() 
         analysis = AIBrain.analyze(raw_results)
 
         try:
@@ -178,10 +173,10 @@ async def start_scan(req: ScanRequest):
             "port_details": analysis['processed_ports']
         }
     except Exception as e:
-        # Sunucu çökerse Cloudflare kilitlenmesin diye düzgün hata döndür
         return JSONResponse(status_code=500, content={"error": True, "detail": f"Sunucu Hatası: {str(e)}"})
 
-PROFESSIONAL_MATRIX_HTML = """
+
+CHROME_BYPASS_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -255,7 +250,7 @@ PROFESSIONAL_MATRIX_HTML = """
 
     <div id="loader">
         <div class="radar"></div>
-        <div class="glitch-text" id="bootText">BYPASSING WAF DEFENSES...</div>
+        <div class="glitch-text" id="bootText">BYPASSING CHROME & WAF DEFENSES...</div>
     </div>
 
     <div class="container" id="mainUI">
@@ -271,7 +266,7 @@ PROFESSIONAL_MATRIX_HTML = """
                 <button id="scanBtn" onclick="executeScan()">START SCANNING</button>
             </div>
             <div class="terminal" id="terminal">
-                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Stealth Mode (Cloudflare WAF Bypass) Active.</span></p>
+                <p><span class="t-time">[SYS]</span><span class="t-msg"> ReconClaw Scanner v4.0 is online. Chrome Defense Bypass Active.</span></p>
             </div>
         </div>
 
@@ -337,7 +332,7 @@ PROFESSIONAL_MATRIX_HTML = """
         });
 
         function bootSequence() {
-            const texts = ["BYPASSING WAF DEFENSES...", "INITIALIZING STEALTH MODE...", "SYSTEM READY."];
+            const texts = ["BYPASSING CHROME WAF...", "ESTABLISHING SECURE TUNNEL...", "SYSTEM READY."];
             let i = 0;
             const bootInt = setInterval(() => {
                 if(i < texts.length) { document.getElementById('bootText').innerText = texts[i]; i++; }
@@ -369,23 +364,27 @@ PROFESSIONAL_MATRIX_HTML = """
             document.getElementById('terminal').innerHTML = '';
             
             logTerm(`Target defined: ${targetInput}`, 'warn');
-            logTerm(`Bypassing Cloudflare WAF... Sending stealth payload.`, 'msg');
+            logTerm(`Bypassing Chrome CORS/Mixed Content restrictions...`, 'msg');
             
             setTimeout(() => logTerm(`Deploying Async TCP Socket Engine...`, 'msg'), 400);
-            setTimeout(() => logTerm(`Sending probes for Banner Grabbing...`, 'msg'), 800);
 
             try {
-                // Cloudflare için Göreceli URL ve Steatlh Request (Portsuz)
-                const res = await fetch(window.location.origin + '/api/v4/scan', {
+                // CHROME KESİN ÇÖZÜM: window.location.origin ile dinamik istek, ve gizli (/probe) endpoint.
+                const apiUrl = window.location.origin + '/api/v4/probe';
+                
+                const res = await fetch(apiUrl, {
                     method: 'POST', 
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({target: targetInput}) 
                 });
                 
                 const data = await res.json();
                 
                 if(!res.ok || data.error) {
-                    throw new Error(data.detail || `Server Error or WAF Block! Status: ${res.status}`);
+                    throw new Error(data.detail || `HTTP Error: ${res.status}`);
                 }
                 
                 logTerm(`Scan Complete! Found ${data.port_details.length} open ports.`, 'succ');
@@ -393,8 +392,8 @@ PROFESSIONAL_MATRIX_HTML = """
                 populateResults(data);
 
             } catch (err) {
-                logTerm(`CRITICAL ERROR: ${err.message}`, 'err');
-                logTerm(`INFO: Hedef çalışmıyor olabilir veya giden istekler engelleniyor.`, 'warn');
+                logTerm(`CHROME FETCH ERROR: ${err.message}`, 'err');
+                logTerm(`İpucu: Chrome Güvenli (HTTPS) kalkanı isteği kesti veya Hedef yanıt vermedi.`, 'warn');
             } finally {
                 btn.disabled = false; btn.innerText = "START SCANNING";
             }
@@ -443,12 +442,12 @@ PROFESSIONAL_MATRIX_HTML = """
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def serve_gui():
-    return PROFESSIONAL_MATRIX_HTML
+    return CHROME_BYPASS_HTML
 
 if __name__ == "__main__":
     print(f"\n{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (STEALTH/CLOUD PROOF) AKTİF!{Colors.RESET}")
+    print(f" {Colors.BOLD}🦅 RECONCLAW v4.0 ULTIMATE (CHROME BYPASS) AKTİF!{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}")
-    print(f" 👉 {Colors.BOLD}Cloudflare tünel adresinizden veya Codespaces'dan güvenle girebilirsiniz.{Colors.RESET}")
+    print(f" 👉 {Colors.BOLD}Cloudflare tünel adresinizden Chrome ile güvenle girebilirsiniz.{Colors.RESET}")
     print(f"{Colors.GREEN}{'='*55}{Colors.RESET}\n")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="error", timeout_keep_alive=30)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="error", timeout_keep_alive=30)
