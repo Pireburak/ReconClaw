@@ -1,9 +1,9 @@
-<h1 align="center">🦅 ReconClaw v4.0 Phantom</h1>
+<h1 align="center">🦅 ReconClaw v5.0 Nebula</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v4.0%20Phantom-success?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v5.0%20Nebula-success?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
@@ -11,11 +11,13 @@
 </p>
 
 <p align="center">
+<a href="#-v50-nebula-yenilikleri">Yenilikler</a> •
 <a href="#-kurulum">Kurulum</a> •
 <a href="#-kullanım">Kullanım</a> •
 <a href="#-api">API</a> •
 <a href="#-eklentiler">Eklentiler</a> •
 <a href="#-risk-değerlendirme-modeli">Risk Modeli</a> •
+<a href="#-alan-adında-yayınlama-https">Yayınlama</a> •
 <a href="#-yol-haritası">Yol Haritası</a>
 </p>
 
@@ -33,7 +35,24 @@ Yalnızca açık portları listelemekle kalmaz:
 - 🔴 Bilinen zafiyetli sürümleri **CVE imzalarıyla** eşleştirir
 - ✅ Her bulgu için **somut güvenlik önerileri** üretir
 - 💾 Tüm taramaları **SQLite** veritabanına kaydeder ve geçmişi gösterir
-- 🖥️ Sonuçları canlı terminal görünümlü **web dashboard** üzerinde sunar
+- 🖥️ Sonuçları siber-operasyon merkezi görünümlü **web dashboard** üzerinde sunar
+- 🔐 **E-posta/parola** veya **Google, GitHub, Microsoft, Apple** hesabıyla giriş
+- 🌗 **Aydınlık / karanlık tema** ve telefonda da çalışan duyarlı tasarım
+
+---
+
+## ✨ v5.0 Nebula Yenilikleri
+
+| # | Özellik | Açıklama |
+|---|---------|----------|
+| 1 | 🛰️ **Operations Center paneli** | Yan menülü yeni arayüz: tarana alan adı, zafiyet, kritik bulgu, yüksek riskli hedef, aktif tarama ve veritabanı durumu kartları; tehdit değerlendirme halkaları, **canlı güvenlik olay akışı**, zafiyet trend grafiği, en çok açık port grafiği, hedef risk tablosu, UTC saati ve çalışma süresi |
+| 2 | 🌗 **Aydınlık / karanlık tema** | Üst çubuktaki butonla anında geçiş; Ayarlar'dan *Karanlık / Aydınlık / Sistem* seçimi. Tercih tarayıcıda saklanır |
+| 3 | 🔐 **Kullanıcı girişi** | E-posta + parola ile kayıt/giriş (scrypt ile hash'lenir), **Google, GitHub, Microsoft ve Apple** ile tek tıkla giriş (OAuth 2.0 / OpenID Connect). Her kullanıcı yalnızca kendi taramalarını görür |
+| 4 | ⇄ **Tarama karşılaştırma (Scan Diff)** | Aynı hedefin iki taramasını karşılaştırır: yeni açılan / kapanan portlar, sürümü değişen servisler, yeni ve çözülen bulgular/CVE'ler, risk değişimi |
+| 5 | ◎ **Ağ haritası** | Hedefi ve açık servisleri riske göre renklenen bir topoloji grafiği olarak çizer; CVE'li bağlantılar kırmızı yanıp söner |
+| 6 | 🖨️ **PDF & CSV rapor** | Yönetici özetli, yazdırılabilir rapor sayfası (tarayıcıdan *PDF olarak kaydet*) ve Excel'de açılabilen CSV dışa aktarımı |
+| 7 | 🔑 **API anahtarı & hesap güvenliği** | Ayarlar'dan kişisel API anahtarı (`Authorization: Bearer rc_...`), parola değiştirme, diğer cihazlardan çıkış, geçmişi/hesabı silme |
+| 8 | 🌐 **Alan adında yayın** | Docker + Caddy ile tek komutla otomatik HTTPS; iç ağ tarama engeli, tarama/giriş hız sınırı, güvenlik başlıkları (CSP, HSTS, X-Frame-Options) |
 
 ---
 
@@ -48,7 +67,10 @@ Yalnızca açık portları listelemekle kalmaz:
 | Yaygın Port / Aralık Taraması  |  ✅   | Otomatik Testler (pytest)   |  ✅   |
 | Eklenti Sistemi                |  ✅   | TLS Sertifika Kontrolü      |  ✅   |
 | HTTP Güvenlik Başlığı Kontrolü |  ✅   | JSON Rapor İndirme          |  ✅   |
-| UDP Tarama                     |  🔜   | Docker Desteği              |  🔜   |
+| Kullanıcı Girişi & OAuth       |  ✅   | Aydınlık / Karanlık Tema    |  ✅   |
+| Tarama Karşılaştırma           |  ✅   | Ağ Haritası                 |  ✅   |
+| PDF / CSV Rapor                |  ✅   | API Anahtarı                |  ✅   |
+| Docker + Otomatik HTTPS        |  ✅   | UDP Tarama                  |  🔜   |
 
 ---
 
@@ -80,13 +102,18 @@ uvicorn main:app --reload
 
 Ardından tarayıcıda **http://127.0.0.1:8000** adresini açın.
 
-1. Hedef IP adresini veya alan adını girin (`https://site.com/yol` gibi girdiler otomatik temizlenir).
+0. **Kayıt Ol** sekmesinden e-posta ve parola ile hesap açın (veya yapılandırdıysanız Google/GitHub/Microsoft/Apple ile girin). Kimlik doğrulama gelmeden önce yapılmış eski taramalar, ilk açılan hesaba otomatik aktarılır.
+1. Sol menüden **[01] NEW_SCAN** sayfasına geçip hedef IP adresini veya alan adını girin (`https://site.com/yol` gibi girdiler otomatik temizlenir).
 2. Port kapsamını seçin:
    - **Yaygın portlar** → güvenlik açısından kritik 27 port (FTP, SSH, SMB, RDP, veritabanları…)
    - **1 → Maks. port** → belirttiğiniz sınıra kadar tüm portlar (en fazla 65535)
 3. **Eklentiler** kutusu işaretliyse açık web/TLS portlarında ek güvenlik kontrolleri de çalışır.
 4. **TARAMAYI BAŞLAT** butonuna basın; sonuçlar, CVE uyarıları, eklenti bulguları ve öneriler anında ekrana gelir.
-5. **⬇ JSON İndir** ile raporu dosya olarak kaydedin; **Tarama Geçmişi**'nde bir satıra tıklayarak eski bir taramanın raporunu tekrar açın.
+5. **[02] SCAN_RESULTS** sayfasında raporu **JSON / CSV / PDF** olarak indirin, **Önceki ile karşılaştır** veya **Ağ haritası** butonlarını kullanın.
+6. **[03] SCAN_HISTORY**'de arama yapın, iki taramayı işaretleyip karşılaştırın; **[00] SYS_OVERVIEW** tüm taramalarınızın özetini gösterir.
+7. Sağ üstteki 🌙/☀️ butonu ile temayı değiştirin; **[06] SETTINGS**'te tarama varsayılanları, parola ve API anahtarı ayarlanır.
+
+Ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yapılır (`cp .env.example .env`). Tüm seçenekler `.env.example` içinde açıklamalıdır.
 
 > 💡 Yasal ve güvenli test için Nmap'in resmi test sunucusu `scanme.nmap.org` kullanılabilir.
 
@@ -96,10 +123,13 @@ Ardından tarayıcıda **http://127.0.0.1:8000** adresini açın.
 
 Etkileşimli API dokümantasyonu: **http://127.0.0.1:8000/docs**
 
+Tüm `/api/*` uç noktaları oturum ister. Tarayıcıda giriş çerezi, script/curl için **Ayarlar → API_ACCESS**'ten oluşturulan anahtar kullanılır.
+
 ### `POST /api/scan`
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/scan \
+     -H "Authorization: Bearer rc_ANAHTARINIZ" \
      -H "Content-Type: application/json" \
      -d '{"target": "scanme.nmap.org"}'
 ```
@@ -147,9 +177,20 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 
 | Uç Nokta                    | Açıklama                                               |
 | --------------------------- | ------------------------------------------------------ |
-| `GET /api/history?limit=20` | Son taramaların özet listesi (en yeniden eskiye)       |
+| `GET /api/history?limit=20&q=` | Son taramaların özet listesi (en yeniden eskiye, `q` ile hedef/IP araması) |
 | `GET /api/scans/{id}`       | Kayıtlı bir taramanın tam raporu (`/api/scan` yanıtı ile aynı yapı) |
+| `DELETE /api/scans/{id}`    | Bir taramayı siler (`DELETE /api/scans` tüm geçmişi siler) |
+| `GET /api/scans/{id}/csv`   | Raporu CSV olarak indirir                               |
+| `GET /reports/{id}`         | Yazdırılabilir / PDF'e kaydedilebilir rapor sayfası     |
+| `GET /api/compare?old=1&new=2` | İki tarama arasındaki fark                           |
+| `GET /api/stats`            | Dashboard istatistikleri, trend, olay akışı            |
 | `GET /api/plugins`          | Mevcut eklentiler, çalıştıkları portlar ve etkin olup olmadıkları |
+| `GET /api/me`, `PATCH /api/me` | Profil bilgisi / ad güncelleme                       |
+| `POST /api/me/password`     | Parola değiştir / belirle                               |
+| `POST /api/me/token`        | Yeni API anahtarı (`DELETE` ile iptal)                  |
+| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | E-posta ile kayıt, giriş, çıkış |
+| `GET /auth/{google\|github\|microsoft\|apple}/login` | Sosyal giriş             |
+| `GET /api/health`           | Sağlık kontrolü (oturum gerektirmez)                   |
 
 ---
 
@@ -233,13 +274,58 @@ Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır
 
 ---
 
+## 🌐 Alan Adında Yayınlama (HTTPS)
+
+Bir alan adı (ör. `alanadiniz.com`) ve bir sunucu (VPS) aldığınızda ReconClaw'ı tek komutla HTTPS üzerinden yayınlayabilirsiniz. [Caddy](https://caddyserver.com) Let's Encrypt'ten **ücretsiz SSL sertifikasını otomatik** alır ve yeniler.
+
+```bash
+# 1) DNS: alan adınızın (veya reconclaw.alanadiniz.com alt alanının) A kaydını sunucunun IP'sine yönlendirin
+# 2) Sunucuda:
+git clone https://github.com/Pireburak/ReconClaw.git && cd ReconClaw
+cp .env.example .env
+nano .env        # DOMAIN=reconclaw.alanadiniz.com
+                 # PUBLIC_URL=https://reconclaw.alanadiniz.com
+                 # ALLOW_PRIVATE_TARGETS=false   <- internete açık sunucuda mutlaka
+docker compose up -d --build
+```
+
+Site `https://reconclaw.alanadiniz.com` adresinde açılır. İlk hesabınızı oluşturduktan sonra yabancıların kayıt olmasını istemiyorsanız `.env` içinde `ALLOW_SIGNUP=false` yapıp `docker compose up -d` ile yeniden başlatın.
+
+### 🔐 Sosyal girişi açmak
+
+Her sağlayıcıda bir "OAuth uygulaması" oluşturup verilen ID/secret değerlerini `.env` dosyasına yazmanız yeterli; doldurulmayan sağlayıcıların butonu pasif görünür.
+
+| Sağlayıcı | Nereden alınır | Yönlendirme (callback) adresi | `.env` |
+|-----------|----------------|-------------------------------|--------|
+| Google    | [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials) → *OAuth client ID (Web)* | `https://ALANADI/auth/google/callback` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| GitHub    | [GitHub → Settings → Developer settings → OAuth Apps](https://github.com/settings/developers) | `https://ALANADI/auth/github/callback` | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+| Microsoft | [Microsoft Entra → App registrations](https://entra.microsoft.com) (*Web* platformu) | `https://ALANADI/auth/microsoft/callback` | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` |
+| Apple     | [Apple Developer](https://developer.apple.com/account/resources) → *Services ID* + *Sign in with Apple* anahtarı (.p8) — ücretli geliştirici hesabı gerekir | `https://ALANADI/auth/apple/callback` | `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY_PATH` |
+
+> 💡 Google ve GitHub, yerel geliştirmede `http://127.0.0.1:8000/auth/.../callback` adresini de kabul eder; alan adı almadan önce deneyebilirsiniz. Apple yalnızca HTTPS alan adlarıyla çalışır.
+
+### 🛡️ Güvenlik önlemleri
+
+- Parolalar **scrypt** (tuzlu) ile saklanır; oturum anahtarları veritabanında yalnızca SHA-256 özetiyle tutulur, çerezler `HttpOnly` + `SameSite=Lax` (+ HTTPS'te `Secure`).
+- OAuth akışında tek kullanımlık `state` (CSRF koruması) ve Google/Microsoft için **PKCE**; sosyal hesap, var olan bir hesaba yalnızca sağlayıcı e-postayı **doğrulamışsa** bağlanır (hesap ele geçirme koruması).
+- Giriş denemeleri IP başına (10 / 5 dk), taramalar kullanıcı başına (`SCAN_RATE_LIMIT` / dk) sınırlandırılır.
+- `ALLOW_PRIVATE_TARGETS=false` ile ziyaretçilerin sunucunuzun iç ağını (127.0.0.1, 10.x, 192.168.x) taraması engellenir.
+- Arayüz; CSP, HSTS, X-Frame-Options, X-Content-Type-Options ve Referrer-Policy başlıklarını gönderir — yani ReconClaw'ın kendi `http_headers` eklentisinden temiz geçer.
+- CSV dışa aktarımında Excel formül enjeksiyonuna karşı hücreler temizlenir.
+
+---
+
 ## 🏗️ Sistem Mimarisi
 
 ```text
-        🌐 Web Dashboard (templates + static)
-                     │  fetch /api/scan
+   🔐 Giriş (e-posta / Google / GitHub / Microsoft / Apple)
+                     │  oturum çerezi / API anahtarı
                      ▼
-            ⚙️  FastAPI (main.py)
+        🌐 Web Dashboard (templates + static)
+                     │  fetch /api/*
+                     ▼
+            ⚙️  FastAPI (main.py)  ── core/auth.py, core/oauth.py
+                     │                 core/insights.py (istatistik, karşılaştırma)
                      │
         ┌────────────┼──────────────┐
         ▼            ▼              ▼
@@ -254,8 +340,12 @@ Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır
 
 ```text
 ReconClaw/
-├── main.py               # FastAPI uygulaması ve API uç noktaları
+├── main.py               # FastAPI uygulaması, sayfalar ve API uç noktaları
 ├── core/
+│   ├── config.py         # .env / ortam değişkeni ayarları
+│   ├── auth.py           # Kullanıcılar, parola hash'leme, oturumlar, API anahtarı
+│   ├── oauth.py          # Google / GitHub / Microsoft / Apple girişi
+│   ├── insights.py       # Dashboard istatistikleri + tarama karşılaştırma
 │   ├── engine.py         # AsyncScanner + RiskAnalyzer
 │   ├── db_manager.py     # SQLite bağlantısı, tablolar, kayıt işlemleri
 │   └── plugins/          # Eklenti sistemi
@@ -263,14 +353,21 @@ ReconClaw/
 │       ├── http_headers.py
 │       └── tls_cert.py
 ├── templates/
-│   └── index.html        # Dashboard şablonu
+│   ├── index.html        # Operations Center paneli
+│   ├── login.html        # Giriş / kayıt sayfası
+│   └── report.html       # Yazdırılabilir (PDF) rapor
 ├── static/
-│   ├── css/style.css     # Arayüz stilleri
-│   └── js/app.js         # Arayüz mantığı
+│   ├── css/style.css     # Arayüz stilleri (aydınlık + karanlık tema)
+│   └── js/               # app.js, login.js, theme.js, report.js
 ├── tests/
 │   ├── test_engine.py    # Tarayıcı ve risk motoru testleri
 │   ├── test_plugins.py   # Eklenti testleri
-│   └── test_api.py       # API ve veritabanı testleri
+│   ├── test_api.py       # API ve veritabanı testleri
+│   ├── test_auth.py      # Giriş, oturum, OAuth testleri
+│   └── test_insights.py  # İstatistik ve karşılaştırma testleri
+├── deploy/Caddyfile      # HTTPS ters vekil ayarı
+├── Dockerfile, docker-compose.yml
+├── .env.example          # Tüm ayarlar (kopyalayıp .env yapın)
 ├── data/                 # reconclaw_v4.db (otomatik oluşturulur)
 ├── plugins               # Etkin eklentiler listesi
 ├── requirements.txt
@@ -288,6 +385,12 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 | `scans`      | `id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor) |
 | `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
 | `findings`   | `id`, `scan_id`, `plugin`, `port`, `severity`, `title`, `detail`                 |
+| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `created_at`, `last_login` |
+| `identities` | `id`, `user_id`, `provider` (google/github/…), `subject`                          |
+| `sessions`   | `token_hash`, `user_id`, `created_at`, `expires_at`, `user_agent`                |
+| `oauth_states` | `state`, `provider`, `verifier`, `created_at` (10 dk geçerli, tek kullanımlık) |
+
+`scans` tablosuna v5.0'da `user_id` sütunu eklenmiştir; eski veritabanları açılışta otomatik güncellenir.
 
 ---
 
@@ -307,17 +410,28 @@ pytest
 - Koyu tema, servis tanımlama, performans iyileştirmeleri
 - Dashboard, FastAPI, SQLite, risk motoru, canlı terminal
 
-**🚀 v4.0 Phantom** *(mevcut sürüm)*
+**🚀 v4.0 Phantom**
 - [x] Modüler mimari (`core/`, `templates/`, `static/`)
 - [x] Asenkron, eşzamanlılık sınırlı tarama motoru
 - [x] Banner grabbing & sürüm tespiti
 - [x] CVE imza uyarı sistemi ve öneri motoru
 - [x] Tarama geçmişi, geçmiş rapor görüntüleme ve JSON dışa aktarma
 - [x] Eklenti sistemi (HTTP güvenlik başlıkları, TLS sertifika analizi)
-- [ ] UDP tarama
-- [ ] JWT kimlik doğrulama & Docker desteği
 
-**🌌 v5.0**
+**🌌 v5.0 Nebula** *(mevcut sürüm)*
+- [x] Operations Center paneli (istatistik kartları, olay akışı, trend ve port grafikleri)
+- [x] Aydınlık / karanlık tema
+- [x] E-posta + Google / GitHub / Microsoft / Apple ile giriş, kullanıcıya özel geçmiş
+- [x] Tarama karşılaştırma, ağ haritası, PDF / CSV rapor
+- [x] API anahtarı, hız sınırı, güvenlik başlıkları
+- [x] Docker + Caddy ile alan adında otomatik HTTPS
+
+**🔭 Sonraki adımlar**
+- [ ] UDP tarama
+- [ ] Zamanlanmış (periyodik) taramalar ve e-posta bildirimi
+- [ ] İki adımlı doğrulama (TOTP)
+
+**🌠 v6.0**
 - [ ] Yapay zekâ destekli pentest asistanı
 - [ ] Makine öğrenmesi ile anomali tespiti
 - [ ] Bulut tarama (AWS, Azure, Kubernetes)

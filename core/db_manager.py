@@ -56,22 +56,54 @@ def init_db():
                 title    TEXT NOT NULL,
                 detail   TEXT
             );
+            CREATE TABLE IF NOT EXISTS users (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                email         TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                name          TEXT NOT NULL,
+                password_hash TEXT,
+                avatar_url    TEXT,
+                api_token     TEXT UNIQUE,
+                created_at    TEXT NOT NULL,
+                last_login    TEXT
+            );
+            CREATE TABLE IF NOT EXISTS identities (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                provider TEXT NOT NULL,
+                subject  TEXT NOT NULL,
+                UNIQUE (provider, subject)
+            );
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                user_agent TEXT
+            );
+            CREATE TABLE IF NOT EXISTS oauth_states (
+                state      TEXT PRIMARY KEY,
+                provider   TEXT NOT NULL,
+                verifier   TEXT NOT NULL,
+                created_at REAL NOT NULL
+            );
         ''')
-        # v4.0 ilk sürümünde tam rapor sütunu yoktu
+        # v4.0 ilk sürümünde tam rapor sütunu, v5.0 öncesinde kullanıcı sütunu yoktu
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(scans)")}
         if "report" not in columns:
             conn.execute("ALTER TABLE scans ADD COLUMN report TEXT")
+        if "user_id" not in columns:
+            conn.execute("ALTER TABLE scans ADD COLUMN user_id INTEGER")
 
 
-def save_scan(report):
+def save_scan(report, user_id=None):
     """Tamamlanan bir tarama raporunu (API yanıtı) kaydeder, kayıt id'sini döndürür."""
     with closing(get_db_connection()) as conn, conn:
         cur = conn.execute(
-            "INSERT INTO scans (target, ip_address, open_count, risk_score, risk_level, duration, scan_time, report) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO scans (target, ip_address, open_count, risk_score, risk_level, duration, scan_time, report, user_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (report["target"], report["resolved_ip"], report["total_open"], report["overall_risk"],
              report["risk_level"]["label"], report["duration"], report["scan_time"],
-             json.dumps(report, ensure_ascii=False)),
+             json.dumps(report, ensure_ascii=False), user_id),
         )
         scan_id = cur.lastrowid
         conn.executemany(
@@ -85,26 +117,63 @@ def save_scan(report):
         return scan_id
 
 
-def get_recent_scans(limit=20):
-    """Son taramaları en yeniden eskiye doğru döndürür."""
+def get_recent_scans(limit=20, user_id=None, query=""):
+    """Kullanıcının son taramalarını en yeniden eskiye doğru döndürür."""
     with closing(get_db_connection()) as conn:
         rows = conn.execute(
             "SELECT id, target, ip_address, open_count, risk_score, risk_level, duration, scan_time, "
-            "report IS NOT NULL AS has_report FROM scans ORDER BY id DESC LIMIT ?",
-            (limit,),
+            "report IS NOT NULL AS has_report FROM scans WHERE user_id IS ? "
+            "AND (target LIKE ? OR ip_address LIKE ?) ORDER BY id DESC LIMIT ?",
+            (user_id, f"%{query}%", f"%{query}%", limit),
         ).fetchall()
         return [dict(r) for r in rows]
 
 
-def get_scan_report(scan_id):
-    """Kayıtlı bir taramanın tam raporunu döndürür; yoksa None."""
+def get_scan_report(scan_id, user_id=None):
+    """Kullanıcıya ait kayıtlı bir taramanın tam raporunu döndürür; yoksa None."""
     with closing(get_db_connection()) as conn:
-        row = conn.execute("SELECT report FROM scans WHERE id = ?", (scan_id,)).fetchone()
+        row = conn.execute(
+            "SELECT report FROM scans WHERE id = ? AND user_id IS ?", (scan_id, user_id)
+        ).fetchone()
     if row is None or row["report"] is None:
         return None
     report = json.loads(row["report"])
     report["scan_id"] = scan_id
     return report
+
+
+def get_user_reports(user_id, limit=200):
+    """İstatistikler için kullanıcının son tam raporlarını (eskiden yeniye) döndürür."""
+    with closing(get_db_connection()) as conn:
+        rows = conn.execute(
+            "SELECT id, report FROM scans WHERE user_id IS ? AND report IS NOT NULL ORDER BY id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    reports = []
+    for row in reversed(rows):
+        report = json.loads(row["report"])
+        report["scan_id"] = row["id"]
+        reports.append(report)
+    return reports
+
+
+def delete_scans(user_id, scan_id=None):
+    """Kullanıcının bir taramasını (scan_id verilirse) ya da tüm geçmişini siler; silinen sayısını döndürür."""
+    with closing(get_db_connection()) as conn, conn:
+        if scan_id is None:
+            cur = conn.execute("DELETE FROM scans WHERE user_id IS ?", (user_id,))
+        else:
+            cur = conn.execute("DELETE FROM scans WHERE id = ? AND user_id IS ?", (scan_id, user_id))
+        return cur.rowcount
+
+
+def db_ok():
+    try:
+        with closing(get_db_connection()) as conn:
+            conn.execute("SELECT 1").fetchone()
+        return True
+    except sqlite3.Error:
+        return False
 
 
 # Dosya doğrudan çalıştırılırsa tabloları oluştur
