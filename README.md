@@ -1,225 +1,287 @@
-# 🦅 ReconClaw v4.0 Ultimate
+<h1 align="center">🦅 ReconClaw v4.0 Phantom</h1>
 
-### *AI Destekli Ağ Keşfi ve Güvenlik Analiz Platformu*
+<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v4.0%20Ultimate-success?style=for-the-badge" alt="Version">
-<img src="https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python" alt="Python">
-<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi" alt="FastAPI">
-<img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite" alt="SQLite">
-<img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" alt="Status">
+<img src="https://img.shields.io/badge/Version-v4.0%20Phantom-success?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+<img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
 <img src="https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge" alt="License">
+</p>
+
+<p align="center">
+<a href="#-kurulum">Kurulum</a> •
+<a href="#-kullanım">Kullanım</a> •
+<a href="#-api">API</a> •
+<a href="#-risk-değerlendirme-modeli">Risk Modeli</a> •
+<a href="#-yol-haritası">Yol Haritası</a>
 </p>
 
 ---
 
-# 🚀 ReconClaw Nedir?
+## 🚀 ReconClaw Nedir?
 
-ReconClaw; yetkili ağ keşfi (Reconnaissance), port analizi, servis tespiti ve güvenlik değerlendirmesi amacıyla geliştirilen modern bir siber gelecek platformudur.
+ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti ve ön güvenlik değerlendirmesi için geliştirilmiş, web arayüzlü bir siber güvenlik aracıdır.
 
-Sistem yalnızca açık portları listelemek yerine;
+Yalnızca açık portları listelemekle kalmaz:
 
-* Servis analizi yapar ve versiyonları çeker (Banner Grabbing)
-* Risk puanı hesaplar ve AI destekli uyarılar verir
-* DNS çözümlemesi gerçekleştirir
-* Sonuçları JSON olarak raporlar
-* Taramaları otomatik olarak yerleşik SQLite veritabanına kaydeder
-* Asenkron (çok yüksek hızlı) TCP soket motoru kullanır
-* Web Dashboard üzerinden canlı olarak gösterir
-
----
-
-# 📊 Risk Değerlendirme Modeli
-
-ReconClaw, gerçekleştirilen her tarama sonucunda yalnızca açık portları listelemekle kalmaz; aynı zamanda çalışan servisleri analiz ederek hedef sistem için dinamik bir **Risk Skoru** oluşturur. Bu skor, servislerin kritiklik seviyesine, olası saldırı yüzeyine ve güvenlik etkilerine göre hesaplanır.
-
-## 🎯 Risk Seviyeleri
-
-| Risk Seviyesi | Zafiyet Oranı | Durum | Açıklama |
-|:--------------|:-------------:|:-----:|----------|
-| 🟢 Düşük Risk | **0% - 25%** | Güvenli | Kritik seviyede herhangi bir güvenlik riski bulunmamaktadır. |
-| 🟡 Orta Risk | **26% - 50%** | İzlenmeli | Yapılandırma iyileştirmeleri önerilir. Düzenli güvenlik kontrolleri yapılmalıdır. |
-| 🟠 Yüksek Risk | **51% - 75%** | Riskli | Açık servisler saldırı yüzeyini artırmaktadır. Güvenlik önlemleri güçlendirilmelidir. |
-| 🔴 Kritik Risk | **76% - 100%** | Kritik | Kritik servisler veya yüksek öneme sahip zafiyetler tespit edilmiştir. Acil aksiyon alınması önerilir. |
+- ⚡ **Asenkron TCP motoru** ile yüzlerce portu aynı anda, saniyeler içinde tarar
+- 🔍 **Banner grabbing** ile çalışan servisin sürüm bilgisini yakalar
+- 🧠 Açık servislerden **0–100 arası risk skoru** hesaplar
+- 🔴 Bilinen zafiyetli sürümleri **CVE imzalarıyla** eşleştirir
+- ✅ Her bulgu için **somut güvenlik önerileri** üretir
+- 💾 Tüm taramaları **SQLite** veritabanına kaydeder ve geçmişi gösterir
+- 🖥️ Sonuçları canlı terminal görünümlü **web dashboard** üzerinde sunar
 
 ---
 
-## 📌 Örnek Risk Analizi
+## ⚡ Özellikler
 
-```text
-═══════════════════════════════════════════════════════
-
-Target             : example.com
-Resolved IP        : 192.168.1.10
-
-───────────────────────────────────────────────────────
-Open Ports
-
-22      SSH
-80      HTTP
-443     HTTPS
-3306    MySQL (Dışa Açık)
-───────────────────────────────────────────────────────
-
-Toplam Risk Skoru  : 78 / 100
-Risk Seviyesi      : 🔴 Kritik Risk
-
-───────────────────────────────────────────────────────
-AI Security Recommendation
-
-✔ [CVE-2016-10009] OpenSSH sürümünüz eski, RCE riski var.
-✔ 3306 (MySQL) portunu dış ağa kapatın, IP filtrelemesi uygulayın.
-✔ Gereksiz servisleri devre dışı bırakın.
-✔ Güvenlik duvarı kurallarını güncelleyin.
-✔ Düzenli güvenlik taraması gerçekleştirin.
-
-═══════════════════════════════════════════════════════
-```
-
-### 🧠 Risk Hesaplama Kriterleri
-
-- 🔹 Açık port sayısı
-- 🔹 Servis türü ve versiyonu
-- 🔹 Servisin kritikliği (RDP, Veritabanı vb.)
-- 🔹 Olası saldırı yüzeyi
-- 🔹 Bilinen güvenlik riskleri (CVE Kontrolü)
-- 🔹 Güvenlik yapılandırması
-- 🔹 Gelecekte MITRE ATT&CK analiz desteği
-
-> **Not:** Risk puanı yalnızca ön değerlendirme amacıyla hesaplanır. Kesin güvenlik analizi yerine sistem yöneticilerine hızlı karar desteği sunmayı hedefler.
-> Ortalama örnek risk seviyesi (%78)
+| Özellik                        | Durum | Özellik                     | Durum |
+| ------------------------------ | :---: | --------------------------- | :---: |
+| Asenkron TCP Connect Tarama    |  ✅   | Web Dashboard (responsive)  |  ✅   |
+| DNS Çözümleme                  |  ✅   | REST API (JSON)             |  ✅   |
+| Banner Grabbing / Sürüm Tespiti|  ✅   | Tarama Geçmişi (SQLite)     |  ✅   |
+| Kural Tabanlı Risk Motoru      |  ✅   | CVE İmza Eşleştirme         |  ✅   |
+| Yaygın Port / Aralık Taraması  |  ✅   | Otomatik Testler (pytest)   |  ✅   |
+| UDP Tarama                     |  🔜   | SSL/TLS Analizi             |  🔜   |
 
 ---
 
-# 🏗️ Sistem Mimarisi
+## 📦 Kurulum
 
-```text
-           🌐 Web Dashboard
-                   │
-                   ▼
-            FastAPI REST API
-                   │
-                   ▼
-             🧠 AI Brain
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
-  DNS Resolver  Risk AI     SQLite
-       │
-       ▼
-    ⚡ Core Scanner (v4.0)
-       │
-       ▼
-  Async TCP / Socket Engine
+> Gereksinim: **Python 3.10+**
+
+```bash
+git clone https://github.com/Pireburak/ReconClaw.git
+cd ReconClaw
+
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+pip install -r requirements.txt
 ```
 
 ---
 
-# ⚡ Temel Özellikler
+## 🖥️ Kullanım
 
-| Özellik        | Durum | Özellik           | Durum |
-| -------------- | ----- | ----------------- | ----- |
-| TCP Port Scan  | ✅     | Dashboard         | ✅     |
-| DNS Resolver   | ✅     | JSON Export       | ✅     |
-| Risk Engine    | ✅     | CLI               | ✅     |
-| FastAPI        | ✅     | AI Brain          | ✅     |
-| SQLite         | ✅     | Version Detection | ✅     |
+Sunucuyu başlatın:
+
+```bash
+python main.py
+# veya geliştirme modunda:
+uvicorn main:app --reload
+```
+
+Ardından tarayıcıda **http://127.0.0.1:8000** adresini açın.
+
+1. Hedef IP adresini veya alan adını girin (`https://site.com/yol` gibi girdiler otomatik temizlenir).
+2. Port kapsamını seçin:
+   - **Yaygın portlar** → güvenlik açısından kritik 27 port (FTP, SSH, SMB, RDP, veritabanları…)
+   - **1 → Maks. port** → belirttiğiniz sınıra kadar tüm portlar (en fazla 65535)
+3. **TARAMAYI BAŞLAT** butonuna basın; sonuçlar, CVE uyarıları ve öneriler anında ekrana gelir.
+
+> 💡 Yasal ve güvenli test için Nmap'in resmi test sunucusu `scanme.nmap.org` kullanılabilir.
 
 ---
 
-# 📂 Proje Yapısı
+## 🔌 API
 
-*v4.0 ile birlikte proje karmaşık klasörlerden kurtulmuş ve "Tek Dosya Mimarisi"ne geçmiştir.*
+Etkileşimli API dokümantasyonu: **http://127.0.0.1:8000/docs**
+
+### `POST /api/scan`
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/scan \
+     -H "Content-Type: application/json" \
+     -d '{"target": "scanme.nmap.org"}'
+```
+
+| Alan       | Tip    | Zorunlu | Açıklama                                                     |
+| ---------- | ------ | :-----: | ------------------------------------------------------------ |
+| `target`   | string |   ✅    | IP adresi veya alan adı                                      |
+| `max_port` | int    |   —     | Verilirse `1..max_port` taranır, verilmezse yaygın portlar   |
+| `timeout`  | float  |   —     | Port başına bağlantı zaman aşımı (0.2 – 5 sn, varsayılan 1) |
+
+<details>
+<summary>Örnek yanıt</summary>
+
+```json
+{
+  "success": true,
+  "scan_id": 12,
+  "target": "example.com",
+  "resolved_ip": "192.168.1.10",
+  "scanned_ports": 27,
+  "duration": 1.04,
+  "total_open": 4,
+  "overall_risk": 72,
+  "risk_level": { "key": "high", "label": "Yüksek Risk" },
+  "cve_alerts": [
+    "[Port 22] Eski OpenSSH sürümü (CVE-2016-10009 vb.). Uzaktan kod çalıştırma riski."
+  ],
+  "recommendations": [
+    "MySQL (3306) dış ağa açık. Yalnızca iç ağdan erişilebilir olmalı, IP filtrelemesi uygulayın.",
+    "Kullanılmayan servisleri kapatın, yazılımları güncel tutun ve taramayı düzenli tekrarlayın."
+  ],
+  "analysis": [
+    { "port": 22, "protocol": "TCP", "banner": "SSH-2.0-OpenSSH_5.3", "service": "SSH", "risk": 80 }
+  ]
+}
+```
+</details>
+
+### `GET /api/history?limit=20`
+
+Son taramaları en yeniden eskiye doğru döndürür.
+
+---
+
+## 📊 Risk Değerlendirme Modeli
+
+Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır (ör. HTTPS: 2, SSH: 10, RDP: 20, Telnet / SMB / veritabanları: 25). Banner'da bilinen zafiyetli bir sürüm yakalanırsa ek puan eklenir. Toplam puan **100** ile sınırlandırılır.
+
+| Risk Seviyesi  | Skor         | Durum     | Açıklama                                                                  |
+| :------------- | :----------: | :-------: | ------------------------------------------------------------------------- |
+| 🟢 Düşük Risk  | **0 – 25**   | Güvenli   | Kritik seviyede bir güvenlik riski bulunmamaktadır.                       |
+| 🟡 Orta Risk   | **26 – 50**  | İzlenmeli | Yapılandırma iyileştirmeleri ve düzenli kontroller önerilir.              |
+| 🟠 Yüksek Risk | **51 – 75**  | Riskli    | Açık servisler saldırı yüzeyini artırıyor; önlemler güçlendirilmelidir.   |
+| 🔴 Kritik Risk | **76 – 100** | Kritik    | Kritik servisler veya bilinen zafiyetler tespit edildi; acil aksiyon alın. |
+
+**Tanınan CVE imzaları:**
+
+| Banner İmzası          | Zafiyet                                         |
+| ---------------------- | ----------------------------------------------- |
+| OpenSSH 4.x – 6.x      | CVE-2016-10009 ve benzeri eski sürüm açıkları   |
+| Apache 2.4.49 / 2.4.50 | CVE-2021-41773 / CVE-2021-42013 (Path Traversal & RCE) |
+| vsFTPd 2.3.4           | CVE-2011-2523 (arka kapı)                       |
+| ProFTPD 1.3.0 – 1.3.5  | CVE-2015-3306 (mod_copy)                        |
+| Microsoft-IIS 5 – 7    | Desteği bitmiş sürüm                            |
+
+### 📌 Örnek Analiz
+
+```text
+═══════════════════════════════════════════════════════
+ Hedef          : example.com
+ Çözümlenen IP  : 192.168.1.10
+───────────────────────────────────────────────────────
+ Açık Portlar
+   22/tcp    SSH      SSH-2.0-OpenSSH_5.3
+   80/tcp    HTTP     nginx
+   443/tcp   HTTPS
+   3306/tcp  MySQL
+───────────────────────────────────────────────────────
+ Risk Skoru     : 72 / 100
+ Risk Seviyesi  : 🟠 Yüksek Risk
+───────────────────────────────────────────────────────
+ Uyarılar & Öneriler
+ ✘ [Port 22] Eski OpenSSH sürümü (CVE-2016-10009 vb.)
+ ✔ MySQL (3306) portunu dış ağa kapatın, IP filtrelemesi uygulayın.
+ ✔ Kullanılmayan servisleri kapatın, yazılımları güncel tutun.
+═══════════════════════════════════════════════════════
+```
+
+> **Not:** Risk skoru hızlı bir **ön değerlendirmedir**; kapsamlı bir sızma testinin veya zafiyet taramasının yerini tutmaz.
+
+---
+
+## 🏗️ Sistem Mimarisi
+
+```text
+        🌐 Web Dashboard (templates + static)
+                     │  fetch /api/scan
+                     ▼
+            ⚙️  FastAPI (main.py)
+                     │
+        ┌────────────┼──────────────┐
+        ▼            ▼              ▼
+  AsyncScanner   RiskAnalyzer   db_manager
+  (DNS + TCP +   (skor, CVE,    (SQLite:
+   banner)        öneriler)      geçmiş)
+        └──────── core/engine.py ───┘
+```
+
+---
+
+## 📂 Proje Yapısı
 
 ```text
 ReconClaw/
-
-├── main.py            (Tüm sistemin kalbi)
-├── reconclaw.db       (Otomatik oluşturulur)
-├── README.md
-└── requirements.txt
+├── main.py               # FastAPI uygulaması ve API uç noktaları
+├── core/
+│   ├── engine.py         # AsyncScanner + RiskAnalyzer
+│   └── db_manager.py     # SQLite bağlantısı, tablolar, kayıt işlemleri
+├── templates/
+│   └── index.html        # Dashboard şablonu
+├── static/
+│   ├── css/style.css     # Arayüz stilleri
+│   └── js/app.js         # Arayüz mantığı
+├── tests/
+│   └── test_engine.py    # Birim testleri
+├── data/                 # reconclaw_v4.db (otomatik oluşturulur)
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-# 📈 Geliştirme Durumu
+## 💾 Veritabanı
 
-```text
-v1.0  ████████████████████ 100%
-v2.0  ████████████████████ 100%
-v3.0  ████████████████████ 100%
-v4.0  ███████████░░░░░░░░░ 55%
-v5.0  █████░░░░░░░░░░░░░░░ 20%
+Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otomatik oluşturur. Farklı bir konum için `RECONCLAW_DB` ortam değişkenini kullanabilirsiniz.
+
+| Tablo        | Alanlar                                                                          |
+| ------------ | -------------------------------------------------------------------------------- |
+| `scans`      | `id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time` |
+| `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
+
+---
+
+## 🧪 Testler
+
+```bash
+pip install pytest
+pytest
 ```
 
 ---
 
-# 🛣️ Yol Haritası
+## 🛣️ Yol Haritası
 
-## ✅ v1.0 - v3.0
-* İlk TCP Scanner, JSON Çıktısı, CLI
-* Dark Theme, Servis Tanımlama, Performans İyileştirmesi
-* AI Brain, Dashboard, FastAPI, SQLite, Risk Motoru, Canlı Terminal
+**✅ v1.0 – v3.0**
+- İlk TCP tarayıcı, JSON çıktısı, CLI
+- Koyu tema, servis tanımlama, performans iyileştirmeleri
+- Dashboard, FastAPI, SQLite, risk motoru, canlı terminal
 
-## 🚀 v4.0
-* Tek Dosya Mimarisi (Klasörsüz kolay kullanım)
-* Asenkron (Yüksek Hızlı) Tarama Motoru
-* Banner Grabbing & Version Detection
-* AI Destekli CVE Uyarı Sistemi
-* UDP Scan (Planlanıyor)
-* SSL Analizi (Planlanıyor)
-* JWT Authentication & Docker (Planlanıyor)
+**🚀 v4.0 Phantom** *(mevcut sürüm)*
+- [x] Modüler mimari (`core/`, `templates/`, `static/`)
+- [x] Asenkron, eşzamanlılık sınırlı tarama motoru
+- [x] Banner grabbing & sürüm tespiti
+- [x] CVE imza uyarı sistemi ve öneri motoru
+- [x] Tarama geçmişi
+- [ ] UDP tarama
+- [ ] SSL/TLS analizi
+- [ ] JWT kimlik doğrulama & Docker desteği
 
-## 🌌 v5.0
-* AI Pentest Assistant
-* Machine Learning
-* Cloud Scanner (AWS, Azure, Kubernetes)
-* SIEM Integration & Continuous Monitoring
-* Threat Intelligence & Compliance Engine (OWASP, ISO 27001)
-
----
-
-# 🖼️ Dashboard Önizleme
-
-```text
-┌─────────────────────────────────────┐
-│ TARGET : example.com                │
-│ STATUS : SCANNING...                │
-│ OPEN PORTS : 7                      │
-│ RISK SCORE : 78/100                 │
-│ ████████████████████████            │
-└─────────────────────────────────────┘
-```
+**🌌 v5.0**
+- [ ] Yapay zekâ destekli pentest asistanı
+- [ ] Makine öğrenmesi ile anomali tespiti
+- [ ] Bulut tarama (AWS, Azure, Kubernetes)
+- [ ] SIEM entegrasyonu & sürekli izleme
+- [ ] MITRE ATT&CK eşleştirme, OWASP / ISO 27001 uyumluluk raporları
 
 ---
 
-# 💾 Veritabanı
+## ⚖️ Yasal Uyarı
 
-Program çalıştığında otomatik oluşan veritabanı yapısı:
-
-| Tablo        | Açıklama       |
-| ------------ | -------------- |
-| scan_history | Tarama geçmişi |
-| target       | Hedef          |
-| open_ports   | Açık portlar   |
-| risk_score   | Risk puanı     |
-| scan_time    | Tarama zamanı  |
+ReconClaw yalnızca **sahibi olduğunuz** veya **yazılı izin aldığınız** sistemlerde, **eğitim** ve **etik güvenlik testi** amacıyla kullanılmalıdır. İzinsiz port taraması birçok ülkede (Türkiye'de TCK 243–245 kapsamında) suç teşkil edebilir. Yazılımın kötüye kullanımından doğan tüm hukuki sorumluluk kullanıcıya aittir.
 
 ---
 
-# ⚖️ Yasal Uyarı
+## ✍️ Geliştirici
 
-ReconClaw yalnızca **yetkili**, **izinli** ve **etik** güvenlik testleri amacıyla geliştirilmiştir. Yasadışı ve izinsiz kullanımlardan geliştirici sorumlu tutulamaz. Yazılımı kullanan herkes hukuki sorumluluğu kabul etmiş sayılır.
-
----
-
-# ✍️ Geliştirici
-
-```text
-██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗
-██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║
-██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
-██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
-██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
-╚═╝  ╚═╝╚══════╝ ╚
-
-
+<p align="center">
+<b>Burak Özdemir</b> — <a href="https://github.com/Pireburak">@Pireburak</a><br>
+<sub>ReconClaw'ı beğendiyseniz ⭐ vermeyi unutmayın!</sub>
+</p>

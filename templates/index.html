@@ -4,11 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
-<body style="background-color: #1e1e2e; color: #cdd6f4; font-family: sans-serif; text-align: center; padding-top: 100px;">
-    
-    <h1>🚀 ReconClaw v4.0 Phantom Aktif!</h1>
-    <p>FastAPI ve Jinja2 bağlantısı başarıyla kuruldu.</p>
+<body>
+<div class="container">
+    <header class="header">
+        <h1>🦅 RECONCLAW <span>v{{ version }} PHANTOM</span></h1>
+        <p>Asenkron Port Tarama &amp; Risk Analiz Platformu</p>
+    </header>
 
+    <form class="control-box" id="scanForm" autocomplete="off">
+        <label class="field grow">
+            <span>Hedef (IP / Domain)</span>
+            <input type="text" id="target" placeholder="ör. scanme.nmap.org" required>
+        </label>
+        <label class="field">
+            <span>Port Kapsamı</span>
+            <select id="mode">
+                <option value="common">Yaygın portlar (27)</option>
+                <option value="range">1 → Maks. port</option>
+            </select>
+        </label>
+        <label class="field small" id="maxPortField" hidden>
+            <span>Maks. Port</span>
+            <input type="number" id="max_port" value="1024" min="1" max="65535">
+        </label>
+        <button type="submit" id="scanBtn">TARAMAYI BAŞLAT</button>
+    </form>
+
+    <main class="dashboard">
+        <section class="panel">
+            <h3>&gt;_ İSTİHBARAT TERMİNALİ</h3>
+            <div class="terminal" id="terminal" aria-live="polite">
+                <div class="log muted">[SYS] Phantom asenkron motor hazır.</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h3>📡 HEDEF PROFİLİ</h3>
+            <div class="profile">
+                <div class="gauge" id="gauge"><div class="gauge-val" id="gaugeText">—</div></div>
+                <dl class="facts">
+                    <dt>Hedef</dt><dd id="fTarget">—</dd>
+                    <dt>IP Adresi</dt><dd id="fIp">—</dd>
+                    <dt>Açık Port</dt><dd id="fOpen">—</dd>
+                    <dt>Süre</dt><dd id="fTime">—</dd>
+                    <dt>Risk Seviyesi</dt><dd id="fLevel">—</dd>
+                </dl>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Port</th><th>Servis</th><th>Sürüm / Banner</th><th>Risk</th></tr></thead>
+                    <tbody id="results"><tr><td colspan="4" class="empty">Henüz tarama yapılmadı.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel alert-panel">
+            <h3>🔴 CVE UYARILARI</h3>
+            <ul id="cveList"><li class="muted">—</li></ul>
+        </section>
+
+        <section class="panel rec-panel">
+            <h3>🧠 ÖNERİLER</h3>
+            <ul id="recList"><li class="muted">—</li></ul>
+        </section>
+
+        <section class="panel wide">
+            <h3>🗂️ TARAMA GEÇMİŞİ</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Tarih</th><th>Hedef</th><th>IP</th><th>Açık</th><th>Skor</th><th>Seviye</th></tr></thead>
+                    <tbody id="history"><tr><td colspan="7" class="empty">Kayıt yok.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        ⚖️ Yalnızca sahibi olduğunuz veya yazılı izin aldığınız sistemleri tarayın.
+    </footer>
+</div>
+<script src="{{ url_for('static', path='js/app.js') }}"></script>
 </body>
 </html>
