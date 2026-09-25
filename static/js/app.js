@@ -1,6 +1,9 @@
 "use strict";
 
 const $ = (id) => document.getElementById(id);
+const SEVERITY = { high: "Yüksek", medium: "Orta", low: "Düşük", info: "Bilgi" };
+const SEVERITY_ORDER = ["high", "medium", "low", "info"];
+let currentReport = null;
 
 // Sunucudan gelen her metin (banner vb.) HTML'e basılmadan önce kaçışlanır
 function esc(value) {
@@ -39,7 +42,24 @@ function renderList(el, items, emptyText) {
         : `<li class="muted">${esc(emptyText)}</li>`;
 }
 
+function renderFindings(findings) {
+    const sorted = [...findings].sort((a, b) =>
+        SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) || a.port - b.port);
+    $("findings").innerHTML = sorted.length
+        ? sorted.map((f) => `
+            <tr>
+                <td><span class="badge sev-${esc(f.severity)}">${esc(SEVERITY[f.severity] || f.severity)}</span></td>
+                <td class="port">${f.port}</td>
+                <td>${esc(f.plugin)}</td>
+                <td>${esc(f.title)}</td>
+                <td class="banner">${esc(f.detail)}</td>
+            </tr>`).join("")
+        : `<tr><td colspan="5" class="empty">Eklenti bulgusu yok.</td></tr>`;
+}
+
 function renderResult(data) {
+    currentReport = data;
+    $("exportBtn").disabled = false;
     setGauge(data.overall_risk);
     $("fTarget").textContent = data.target;
     $("fIp").textContent = data.resolved_ip;
@@ -59,6 +79,44 @@ function renderResult(data) {
 
     renderList($("cveList"), data.cve_alerts, "Bilinen bir zafiyet imzası tespit edilmedi.");
     renderList($("recList"), data.recommendations, "Ek bir öneri yok.");
+    renderFindings(data.findings || []);
+    document.querySelectorAll("#history tr").forEach((tr) =>
+        tr.classList.toggle("active", Number(tr.dataset.id) === data.scan_id));
+}
+
+function exportReport() {
+    if (!currentReport) return;
+    const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `reconclaw-${currentReport.target}-${currentReport.scan_id}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+async function openScan(id) {
+    try {
+        const res = await fetch(`/api/scans/${id}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+        renderResult(data);
+        log(`Geçmiş tarama #${id} yüklendi (${data.target}, ${data.scan_time}).`, "info");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+        log(`Tarama #${id} açılamadı: ${err.message}`, "err");
+    }
+}
+
+async function loadPlugins() {
+    try {
+        const list = await (await fetch("/api/plugins")).json();
+        const active = list.filter((p) => p.enabled).map((p) => p.name);
+        $("pluginInfo").textContent = active.length
+            ? `Etkin eklentiler: ${active.join(", ")} (ayar: proje kökündeki "plugins" dosyası)`
+            : `Etkin eklenti yok. Proje kökündeki "plugins" dosyasına eklenti adı yazarak açabilirsiniz.`;
+    } catch {
+        $("pluginInfo").textContent = "";
+    }
 }
 
 async function loadHistory() {
@@ -67,7 +125,8 @@ async function loadHistory() {
         const rows = await res.json();
         $("history").innerHTML = rows.length
             ? rows.map((r) => `
-                <tr>
+                <tr class="${r.has_report ? "clickable" : ""}${currentReport?.scan_id === r.id ? " active" : ""}" data-id="${r.id}"
+                    ${r.has_report ? "" : 'title="Bu kayıt eski sürümden, detay raporu yok"'}>
                     <td>${r.id}</td>
                     <td>${esc(r.scan_time)}</td>
                     <td>${esc(r.target)}</td>
@@ -87,7 +146,7 @@ async function startScan(event) {
     const target = $("target").value.trim();
     if (!target) return;
 
-    const body = { target };
+    const body = { target, plugins: $("usePlugins").checked };
     if ($("mode").value === "range") body.max_port = parseInt($("max_port").value, 10);
 
     const btn = $("scanBtn");
@@ -115,6 +174,7 @@ async function startScan(event) {
         log(`Çözümlenen IP: ${data.resolved_ip}`, "ok");
         data.analysis.forEach((p) => log(`AÇIK  ${p.port}/tcp  ${p.service}${p.banner ? "  →  " + p.banner : ""}`, "ok"));
         data.cve_alerts.forEach((a) => log(a, "err"));
+        if (data.findings.length) log(`Eklentiler ${data.findings.length} bulgu üretti.`, "warn");
         log(`Tarama bitti: ${data.total_open} açık port, risk %${data.overall_risk}, ${data.duration} sn.`, "ok");
         renderResult(data);
         loadHistory();
@@ -130,4 +190,10 @@ async function startScan(event) {
 
 $("mode").addEventListener("change", (e) => { $("maxPortField").hidden = e.target.value !== "range"; });
 $("scanForm").addEventListener("submit", startScan);
+$("exportBtn").addEventListener("click", exportReport);
+$("history").addEventListener("click", (e) => {
+    const row = e.target.closest("tr.clickable");
+    if (row) openScan(Number(row.dataset.id));
+});
 loadHistory();
+loadPlugins();

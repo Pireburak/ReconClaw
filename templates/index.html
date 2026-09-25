@@ -29,6 +29,9 @@
             <span>Maks. Port</span>
             <input type="number" id="max_port" value="1024" min="1" max="65535">
         </label>
+        <label class="check" title="Açık portlarda HTTP başlık ve TLS sertifika kontrollerini çalıştırır">
+            <input type="checkbox" id="usePlugins" checked> Eklentiler
+        </label>
         <button type="submit" id="scanBtn">TARAMAYI BAŞLAT</button>
     </form>
 
@@ -41,7 +44,10 @@
         </section>
 
         <section class="panel">
-            <h3>📡 HEDEF PROFİLİ</h3>
+            <div class="panel-head">
+                <h3>📡 HEDEF PROFİLİ</h3>
+                <button type="button" class="ghost" id="exportBtn" disabled>⬇ JSON İndir</button>
+            </div>
             <div class="profile">
                 <div class="gauge" id="gauge"><div class="gauge-val" id="gaugeText">—</div></div>
                 <dl class="facts">
@@ -71,7 +77,18 @@
         </section>
 
         <section class="panel wide">
-            <h3>🗂️ TARAMA GEÇMİŞİ</h3>
+            <h3>🔌 EKLENTİ BULGULARI</h3>
+            <p class="muted small" id="pluginInfo">Etkin eklentiler yükleniyor...</p>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Şiddet</th><th>Port</th><th>Eklenti</th><th>Bulgu</th><th>Açıklama</th></tr></thead>
+                    <tbody id="findings"><tr><td colspan="5" class="empty">Henüz bulgu yok.</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel wide">
+            <h3>🗂️ TARAMA GEÇMİŞİ <span class="muted small">— detay için satıra tıklayın</span></h3>
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>#</th><th>Tarih</th><th>Hedef</th><th>IP</th><th>Açık</th><th>Skor</th><th>Seviye</th></tr></thead>

@@ -13,6 +13,8 @@ import socket
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
+from core.plugins import SEVERITY_WEIGHTS
+
 # Varsayılan olarak taranan, sık kullanılan ve güvenlik açısından önemli portlar
 COMMON_PORTS = [
     21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 993, 995,
@@ -180,8 +182,12 @@ class RiskAnalyzer:
     """Açık port listesinden kural tabanlı risk değerlendirmesi üretir."""
 
     @staticmethod
-    def analyze(open_ports: list) -> dict:
+    def analyze(open_ports: list, findings=()) -> dict:
         total, cve_alerts, recommendations = 0, [], []
+        # Eklenti bulgularının puanı ilgili portun riskine eklenir
+        plugin_weight = {}
+        for f in findings:
+            plugin_weight[f["port"]] = plugin_weight.get(f["port"], 0) + SEVERITY_WEIGHTS.get(f["severity"], 0)
 
         for item in open_ports:
             port, banner = item["port"], item.get("banner", "")
@@ -191,6 +197,7 @@ class RiskAnalyzer:
                 if pattern.search(banner):
                     weight += extra
                     cve_alerts.append(f"[Port {port}] {message}")
+            weight += plugin_weight.get(port, 0)
 
             item["service"] = service
             item["risk"] = min(100, weight * 2)
@@ -217,4 +224,5 @@ class RiskAnalyzer:
             "cve_alerts": cve_alerts,
             "recommendations": list(dict.fromkeys(recommendations)),
             "ports": open_ports,
+            "findings": list(findings),
         }
