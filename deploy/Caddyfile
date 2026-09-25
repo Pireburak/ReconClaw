@@ -1,0 +1,5 @@
+# DOMAIN ortam değişkeni .env dosyasından gelir (ör. reconclaw.alanadiniz.com)
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy reconclaw:8000
+}

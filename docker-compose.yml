@@ -1,0 +1,35 @@
+# Alan adınızda HTTPS ile yayın:
+#   1) Alan adınızın DNS A kaydını sunucunuzun IP adresine yönlendirin
+#   2) cp .env.example .env  ->  DOMAIN ve PUBLIC_URL'i doldurun
+#   3) docker compose up -d --build
+# Caddy, Let's Encrypt'ten otomatik ücretsiz SSL sertifikası alır ve yeniler.
+services:
+  reconclaw:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      RECONCLAW_DB: /app/data/reconclaw.db
+    volumes:
+      - reconclaw-data:/app/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [reconclaw]
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  reconclaw-data:
+  caddy-data:
+  caddy-config:
