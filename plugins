@@ -1,1 +1,10 @@
+# ReconClaw etkin eklentileri
+# ---------------------------------------------------------------
+# Her satıra bir eklenti adı yazın. Bir eklentiyi kapatmak için
+# satırın başına # koyun. Eklenti kodları: core/plugins/
+#
+#   http_headers : HTTP güvenlik başlıkları ve sürüm ifşası (80, 443, 8080...)
+#   tls_cert     : TLS sertifika geçerliliği, bitiş tarihi, zayıf protokol (443, 993...)
 
+http_headers
+tls_cert

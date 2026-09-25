@@ -14,6 +14,7 @@
 <a href="#-kurulum">Kurulum</a> •
 <a href="#-kullanım">Kullanım</a> •
 <a href="#-api">API</a> •
+<a href="#-eklentiler">Eklentiler</a> •
 <a href="#-risk-değerlendirme-modeli">Risk Modeli</a> •
 <a href="#-yol-haritası">Yol Haritası</a>
 </p>
@@ -45,7 +46,9 @@ Yalnızca açık portları listelemekle kalmaz:
 | Banner Grabbing / Sürüm Tespiti|  ✅   | Tarama Geçmişi (SQLite)     |  ✅   |
 | Kural Tabanlı Risk Motoru      |  ✅   | CVE İmza Eşleştirme         |  ✅   |
 | Yaygın Port / Aralık Taraması  |  ✅   | Otomatik Testler (pytest)   |  ✅   |
-| UDP Tarama                     |  🔜   | SSL/TLS Analizi             |  🔜   |
+| Eklenti Sistemi                |  ✅   | TLS Sertifika Kontrolü      |  ✅   |
+| HTTP Güvenlik Başlığı Kontrolü |  ✅   | JSON Rapor İndirme          |  ✅   |
+| UDP Tarama                     |  🔜   | Docker Desteği              |  🔜   |
 
 ---
 
@@ -81,7 +84,9 @@ Ardından tarayıcıda **http://127.0.0.1:8000** adresini açın.
 2. Port kapsamını seçin:
    - **Yaygın portlar** → güvenlik açısından kritik 27 port (FTP, SSH, SMB, RDP, veritabanları…)
    - **1 → Maks. port** → belirttiğiniz sınıra kadar tüm portlar (en fazla 65535)
-3. **TARAMAYI BAŞLAT** butonuna basın; sonuçlar, CVE uyarıları ve öneriler anında ekrana gelir.
+3. **Eklentiler** kutusu işaretliyse açık web/TLS portlarında ek güvenlik kontrolleri de çalışır.
+4. **TARAMAYI BAŞLAT** butonuna basın; sonuçlar, CVE uyarıları, eklenti bulguları ve öneriler anında ekrana gelir.
+5. **⬇ JSON İndir** ile raporu dosya olarak kaydedin; **Tarama Geçmişi**'nde bir satıra tıklayarak eski bir taramanın raporunu tekrar açın.
 
 > 💡 Yasal ve güvenli test için Nmap'in resmi test sunucusu `scanme.nmap.org` kullanılabilir.
 
@@ -104,6 +109,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 | `target`   | string |   ✅    | IP adresi veya alan adı                                      |
 | `max_port` | int    |   —     | Verilirse `1..max_port` taranır, verilmezse yaygın portlar   |
 | `timeout`  | float  |   —     | Port başına bağlantı zaman aşımı (0.2 – 5 sn, varsayılan 1) |
+| `plugins`  | bool   |   —     | Eklentileri çalıştır (varsayılan `true`)                     |
 
 <details>
 <summary>Örnek yanıt</summary>
@@ -112,6 +118,7 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 {
   "success": true,
   "scan_id": 12,
+  "scan_time": "2026-09-25 10:15:42",
   "target": "example.com",
   "resolved_ip": "192.168.1.10",
   "scanned_ports": 27,
@@ -126,6 +133,9 @@ curl -X POST http://127.0.0.1:8000/api/scan \
     "MySQL (3306) dış ağa açık. Yalnızca iç ağdan erişilebilir olmalı, IP filtrelemesi uygulayın.",
     "Kullanılmayan servisleri kapatın, yazılımları güncel tutun ve taramayı düzenli tekrarlayın."
   ],
+  "findings": [
+    { "plugin": "http_headers", "port": 80, "severity": "low", "title": "Sürüm ifşası: server: nginx/1.18.0", "detail": "Sunucu yapılandırmasında sürüm bilgisini gizleyin." }
+  ],
   "analysis": [
     { "port": 22, "protocol": "TCP", "banner": "SSH-2.0-OpenSSH_5.3", "service": "SSH", "risk": 80 }
   ]
@@ -133,9 +143,45 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 ```
 </details>
 
-### `GET /api/history?limit=20`
+### Diğer uç noktalar
 
-Son taramaları en yeniden eskiye doğru döndürür.
+| Uç Nokta                    | Açıklama                                               |
+| --------------------------- | ------------------------------------------------------ |
+| `GET /api/history?limit=20` | Son taramaların özet listesi (en yeniden eskiye)       |
+| `GET /api/scans/{id}`       | Kayıtlı bir taramanın tam raporu (`/api/scan` yanıtı ile aynı yapı) |
+| `GET /api/plugins`          | Mevcut eklentiler, çalıştıkları portlar ve etkin olup olmadıkları |
+
+---
+
+## 🧩 Eklentiler
+
+Port taraması bittikten sonra eklentiler, ilgilendikleri açık portlarda ek kontroller yapar. Bulguların şiddetine göre (Yüksek +15, Orta +8, Düşük +3, Bilgi 0) ilgili portun ve hedefin risk skoru artar.
+
+| Eklenti        | Portlar                          | Kontroller                                                                 |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------- |
+| `http_headers` | 80, 443, 8000, 8008, 8080, 8443, 8888 | CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy eksikliği; `Server` / `X-Powered-By` sürüm ifşası |
+| `tls_cert`     | 443, 465, 636, 993, 995, 8443    | Sertifika doğrulama (kendinden imzalı, süresi dolmuş, isim uyuşmazlığı), 30 günden az kalan süre, TLS 1.0/1.1 kullanımı |
+
+**Açma / kapatma:** Proje kökündeki `plugins` dosyasında her satır bir eklentidir. Kapatmak için satırın başına `#` koyun:
+
+```text
+http_headers
+# tls_cert     <- kapalı
+```
+
+**Yeni eklenti yazmak:** `core/plugins/` altına bir modül ekleyin, `Plugin` sınıfından türetin ve adını `plugins` dosyasına yazın:
+
+```python
+from core.plugins import Plugin
+
+class OrnekPlugin(Plugin):
+    name = "ornek"
+    description = "Örnek kontrol"
+    ports = {8080}
+
+    async def check(self, target, ip, port):
+        return [self.finding(port, "low", "Başlık", "Açıklama")]
+```
 
 ---
 
@@ -197,10 +243,9 @@ Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır
                      │
         ┌────────────┼──────────────┐
         ▼            ▼              ▼
-  AsyncScanner   RiskAnalyzer   db_manager
-  (DNS + TCP +   (skor, CVE,    (SQLite:
-   banner)        öneriler)      geçmiş)
-        └──────── core/engine.py ───┘
+  AsyncScanner ──► core/plugins ──► RiskAnalyzer ──► db_manager
+  (DNS + TCP +     (HTTP başlık,     (skor, CVE,      (SQLite:
+   banner)          TLS sertifika)    öneriler)        geçmiş, rapor)
 ```
 
 ---
@@ -212,15 +257,22 @@ ReconClaw/
 ├── main.py               # FastAPI uygulaması ve API uç noktaları
 ├── core/
 │   ├── engine.py         # AsyncScanner + RiskAnalyzer
-│   └── db_manager.py     # SQLite bağlantısı, tablolar, kayıt işlemleri
+│   ├── db_manager.py     # SQLite bağlantısı, tablolar, kayıt işlemleri
+│   └── plugins/          # Eklenti sistemi
+│       ├── __init__.py   #   Plugin temel sınıfı, yükleyici
+│       ├── http_headers.py
+│       └── tls_cert.py
 ├── templates/
 │   └── index.html        # Dashboard şablonu
 ├── static/
 │   ├── css/style.css     # Arayüz stilleri
 │   └── js/app.js         # Arayüz mantığı
 ├── tests/
-│   └── test_engine.py    # Birim testleri
+│   ├── test_engine.py    # Tarayıcı ve risk motoru testleri
+│   ├── test_plugins.py   # Eklenti testleri
+│   └── test_api.py       # API ve veritabanı testleri
 ├── data/                 # reconclaw_v4.db (otomatik oluşturulur)
+├── plugins               # Etkin eklentiler listesi
 ├── requirements.txt
 └── README.md
 ```
@@ -233,15 +285,16 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 
 | Tablo        | Alanlar                                                                          |
 | ------------ | -------------------------------------------------------------------------------- |
-| `scans`      | `id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time` |
+| `scans`      | `id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor) |
 | `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
+| `findings`   | `id`, `scan_id`, `plugin`, `port`, `severity`, `title`, `detail`                 |
 
 ---
 
 ## 🧪 Testler
 
 ```bash
-pip install pytest
+pip install pytest httpx
 pytest
 ```
 
@@ -259,9 +312,9 @@ pytest
 - [x] Asenkron, eşzamanlılık sınırlı tarama motoru
 - [x] Banner grabbing & sürüm tespiti
 - [x] CVE imza uyarı sistemi ve öneri motoru
-- [x] Tarama geçmişi
+- [x] Tarama geçmişi, geçmiş rapor görüntüleme ve JSON dışa aktarma
+- [x] Eklenti sistemi (HTTP güvenlik başlıkları, TLS sertifika analizi)
 - [ ] UDP tarama
-- [ ] SSL/TLS analizi
 - [ ] JWT kimlik doğrulama & Docker desteği
 
 **🌌 v5.0**
