@@ -81,5 +81,19 @@ $("authForm").addEventListener("submit", async (event) => {
     }
 });
 
+// Başlıkta daktilo efekti
+(function typeTitle() {
+    const el = $("typed");
+    const text = el.dataset.text;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let i = 0;
+    el.textContent = "";
+    const step = () => {
+        el.textContent = text.slice(0, ++i);
+        if (i < text.length) setTimeout(step, 55);
+    };
+    setTimeout(step, 300);
+})();
+
 // OAuth hatası sonrası adres çubuğundaki ?error= parametresini temizle
 if (window.location.search) history.replaceState(null, "", "/login");

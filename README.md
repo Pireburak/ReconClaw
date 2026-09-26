@@ -1,9 +1,9 @@
-<h1 align="center">🦅 ReconClaw v5.0 Nebula</h1>
+<h1 align="center">🦅 ReconClaw v6.0 Aurora</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v5.0%20Nebula-success?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-success?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-<a href="#-v50-nebula-yenilikleri">Yenilikler</a> •
+<a href="#-v60-aurora-yenilikleri">Yenilikler</a> •
 <a href="#-kurulum">Kurulum</a> •
 <a href="#-kullanım">Kullanım</a> •
 <a href="#-api">API</a> •
@@ -38,6 +38,27 @@ Yalnızca açık portları listelemekle kalmaz:
 - 🖥️ Sonuçları siber-operasyon merkezi görünümlü **web dashboard** üzerinde sunar
 - 🔐 **E-posta/parola** veya **Google, GitHub, Microsoft, Apple** hesabıyla giriş
 - 🌗 **Aydınlık / karanlık tema** ve telefonda da çalışan duyarlı tasarım
+
+---
+
+## 🌌 v6.0 Aurora Yenilikleri
+
+Tarama motoru, API ve kullanım aynı; v6.0 tamamen **arayüz** sürümüdür.
+
+| Özellik | Açıklama |
+|---------|----------|
+| 🌠 **Aurora arka plan** | Yavaşça hareket eden ışık bulutları ve vurgu renginde parçacık ağı (Ayarlar'dan kapatılabilir, sekme arka plandayken durur, "hareketi azalt" tercihine uyar) |
+| ⌘ **Komut paleti (Ctrl+K)** | Sayfalara geçiş, tema/vurgu değiştirme, PDF/CSV dışa aktarma, eski raporları açma ve hedefleri tek tuşla yeniden tarama. Palete bir hedef yazıp Enter'a basınca doğrudan tarama sayfasına gider |
+| ⌨️ **Klavye kısayolları** | `0`–`6` sayfalar, `N` yeni tarama, `T` tema, `[` menüyü daralt, `/` geçmişte ara, `?` yardım |
+| 🎨 **5 vurgu rengi** | Camgöbeği, mor, yeşil, pembe, kehribar; hem aydınlık hem karanlık temada |
+| 📊 **Canlı kartlar** | Sayarak artan rakamlar, her kartta son taramalardan mini trend grafiği (sparkline), yüklenirken iskelet animasyonu |
+| 🗓️ **Tarama aktivite haritası** | GitHub tarzı, son 1 yılın gün gün tarama yoğunluğu |
+| 🔔 **Bildirim zili** | Görülmemiş kritik/yüksek olay sayısı ve açılır liste |
+| 📡 **Radar tarama ekranı** | Tarama sürerken dönen radar ve geçen süre; bitince açık portlar risk renginde "blip" olarak belirir |
+| 🎯 **Yeni risk göstergesi** | 270°'lik dolan yay, işaret çizgileri ve risk seviyesi; port tablosunda animasyonlu risk çubukları |
+| 🔎 **Bulgu filtreleri** | Eklenti bulgularını şiddete göre tek tıkla süzme, IP'yi kopyalama butonu |
+| 🕸️ **Etkileşimli ağ haritası** | Porta tıklayınca diğer düğümler solar, yan panelde banner, CVE ve bulgular görünür; klavyeyle de gezilebilir |
+| ⇤ **Daraltılabilir menü** | Sadece ikonlardan oluşan ince menü; tercih hatırlanır |
 
 ---
 
@@ -358,7 +379,7 @@ ReconClaw/
 │   └── report.html       # Yazdırılabilir (PDF) rapor
 ├── static/
 │   ├── css/style.css     # Arayüz stilleri (aydınlık + karanlık tema)
-│   └── js/               # app.js, login.js, theme.js, report.js
+│   └── js/               # app.js, login.js, theme.js (tema + vurgu), fx.js (efektler), report.js
 ├── tests/
 │   ├── test_engine.py    # Tarayıcı ve risk motoru testleri
 │   ├── test_plugins.py   # Eklenti testleri
@@ -418,7 +439,7 @@ pytest
 - [x] Tarama geçmişi, geçmiş rapor görüntüleme ve JSON dışa aktarma
 - [x] Eklenti sistemi (HTTP güvenlik başlıkları, TLS sertifika analizi)
 
-**🌌 v5.0 Nebula** *(mevcut sürüm)*
+**🌌 v5.0 Nebula**
 - [x] Operations Center paneli (istatistik kartları, olay akışı, trend ve port grafikleri)
 - [x] Aydınlık / karanlık tema
 - [x] E-posta + Google / GitHub / Microsoft / Apple ile giriş, kullanıcıya özel geçmiş
@@ -426,12 +447,19 @@ pytest
 - [x] API anahtarı, hız sınırı, güvenlik başlıkları
 - [x] Docker + Caddy ile alan adında otomatik HTTPS
 
+**🌠 v6.0 Aurora** *(mevcut sürüm)*
+- [x] Aurora arka plan, cam paneller, sayfa geçiş animasyonları
+- [x] Komut paleti (Ctrl+K) ve klavye kısayolları
+- [x] Vurgu rengi seçici, daraltılabilir menü, bildirim zili
+- [x] Sparkline kartlar, aktivite ısı haritası, radar tarama ekranı
+- [x] Etkileşimli ağ haritası, bulgu filtreleri, yeni risk göstergesi
+
 **🔭 Sonraki adımlar**
 - [ ] UDP tarama
 - [ ] Zamanlanmış (periyodik) taramalar ve e-posta bildirimi
 - [ ] İki adımlı doğrulama (TOTP)
 
-**🌠 v6.0**
+**🚀 v7.0**
 - [ ] Yapay zekâ destekli pentest asistanı
 - [ ] Makine öğrenmesi ile anomali tespiti
 - [ ] Bulut tarama (AWS, Azure, Kubernetes)

@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body class="auth-page">
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
 <main class="auth-shell">
     <section class="auth-hero">
         <div class="brand">
@@ -21,13 +23,14 @@
                 <div class="brand-sub">v{{ version }} {{ codename | upper }} · SEC_AUDIT</div>
             </div>
         </div>
-        <h1>OPERATIONS_CENTER</h1>
+        <h1 class="typed" id="typed" data-text="OPERATIONS_CENTER">OPERATIONS_CENTER</h1>
         <p>Asenkron ağ keşfi, port tarama ve risk analiz platformu. Devam etmek için giriş yapın.</p>
         <ul>
             <li>Asenkron TCP motoru &amp; banner grabbing</li>
             <li>CVE imza eşleştirme &amp; risk skoru</li>
             <li>Canlı güvenlik olay akışı &amp; trend grafikleri</li>
-            <li>Tarama karşılaştırma, ağ haritası, PDF/CSV rapor</li>
+            <li>Tarama karşılaştırma, etkileşimli ağ haritası, PDF/CSV rapor</li>
+            <li>Komut paleti (Ctrl+K), aktivite haritası, 5 vurgu rengi</li>
         </ul>
         <div class="radar" aria-hidden="true"></div>
     </section>
@@ -91,6 +94,7 @@
         <p class="legal">⚖️ Yalnızca sahibi olduğunuz veya yazılı izin aldığınız sistemleri tarayın.</p>
     </section>
 </main>
+<script src="{{ url_for('static', path='js/fx.js') }}"></script>
 <script src="{{ url_for('static', path='js/login.js') }}"></script>
 </body>
 </html>
