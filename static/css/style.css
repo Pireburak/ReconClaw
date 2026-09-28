@@ -602,3 +602,92 @@ pre.code { margin: 0; padding: 12px; overflow-x: auto; font-size: .74rem; border
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
     #bgCanvas, .aurora { display: none; }
 }
+
+/* =====================================================================
+   Giriş sayfası: WebGL duman arka planı + cam kart + kayan etiketler
+   ===================================================================== */
+.auth-page.smoky { position: relative; overflow-x: hidden; background-image: none; }
+#smokeCanvas { position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+#smokeCanvas.ready { opacity: 1; }
+.smoke-veil { position: fixed; inset: 0; z-index: -1; pointer-events: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    background: radial-gradient(circle at 50% 50%, transparent 0 30%, color-mix(in srgb, var(--bg) 55%, transparent) 100%); }
+
+.glass-card {
+    position: relative; width: min(440px, 100%); padding: 30px 30px 24px;
+    border-radius: 22px; border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+    background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
+    backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .45), inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
+    animation: cardIn .8s cubic-bezier(.2, .8, .2, 1);
+}
+:root[data-theme="light"] .glass-card { background: color-mix(in srgb, #fff 62%, transparent); box-shadow: 0 30px 70px rgba(15, 27, 45, .18); }
+/* Kartın kenarında dönen ışık */
+.glass-card::before {
+    content: ""; position: absolute; inset: -1px; z-index: -1; padding: 1px; border-radius: inherit; pointer-events: none;
+    background: conic-gradient(from var(--spin, 0deg), transparent 0 70%, var(--cyan) 85%, var(--pink) 92%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: borderSpin 6s linear infinite;
+}
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes borderSpin { to { --spin: 360deg; } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(24px) scale(.97); filter: blur(6px); } }
+
+.glass-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.glass-top .icon-btn { background: color-mix(in srgb, var(--panel-solid) 40%, transparent); }
+.glass-head { text-align: center; margin-bottom: 20px; }
+.glass-head h1 { margin: 0; font-size: 1.75rem; letter-spacing: 1px; color: var(--text); }
+.glass-head p { margin: 8px 0 0; font-size: .78rem; color: var(--muted); }
+.glass-head .typed { color: var(--cyan); font-weight: 700; }
+.glass-card .tabs { background: color-mix(in srgb, var(--panel-2) 55%, transparent); }
+.glass-card .auth-form { gap: 22px; }
+
+/* Kayan etiketli alanlar */
+.float { position: relative; }
+.float input {
+    padding: 20px 36px 8px 28px; font-size: .95rem; color: var(--text);
+    background: transparent; border: 0; border-bottom: 2px solid color-mix(in srgb, var(--text) 25%, transparent); border-radius: 0;
+    box-shadow: none; transition: border-color .25s;
+}
+.float input:focus { border-color: transparent; box-shadow: none; }
+.float::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--pink)); transform: scaleX(0); transform-origin: left;
+    transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+}
+.float:focus-within::after { transform: scaleX(1); }
+.float label {
+    position: absolute; left: 0; top: 18px; display: flex; align-items: center; gap: 8px;
+    font-size: .9rem; color: var(--muted); pointer-events: none; transform-origin: left;
+    transition: transform .25s ease, color .25s ease, top .25s ease;
+}
+.float label .ico { width: 17px; height: 17px; flex: none; transition: transform .25s; }
+.float input:focus + label, .float input:not(:placeholder-shown) + label { top: -2px; transform: scale(.78); color: var(--cyan); }
+.float input:focus + label .ico { transform: scale(1.1); }
+.float .pw-toggle { top: auto; bottom: 4px; transform: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; }
+.float .pw-toggle .ico { width: 17px; height: 17px; }
+.float .pw-toggle:hover, .float .pw-toggle.on { color: var(--cyan); }
+.float input:-webkit-autofill { -webkit-text-fill-color: var(--text); transition: background-color 9999s; }
+
+/* Ok animasyonlu buton */
+.go-btn { position: relative; overflow: hidden; padding: 13px 18px; font-size: .85rem; border-radius: 12px;
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--cyan) 35%, transparent); }
+.go-btn .ico { width: 18px; height: 18px; transition: transform .25s; }
+.go-btn:hover:not(:disabled) .ico { transform: translateX(5px); }
+.go-btn::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-20deg); }
+.go-btn:hover:not(:disabled)::after { animation: shine .8s ease; }
+@keyframes shine { to { left: 130%; } }
+
+.glass-card .social a, .glass-card .social span { background: color-mix(in srgb, var(--panel-2) 55%, transparent); border-radius: 10px; }
+.glass-card .social a:hover { transform: translateY(-2px); }
+.glass-card .social a { transition: border-color .2s, box-shadow .2s, transform .2s; }
+.glass-card .divider { margin: 20px 0 14px; }
+
+@media (max-width: 480px) {
+    .glass-card { padding: 24px 18px 18px; border-radius: 18px; }
+    .glass-head h1 { font-size: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .glass-card::before { animation: none; }
+}

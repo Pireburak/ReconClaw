@@ -59,6 +59,7 @@ Tarama motoru, API ve kullanım aynı; v6.0 tamamen **arayüz** sürümüdür.
 | 🔎 **Bulgu filtreleri** | Eklenti bulgularını şiddete göre tek tıkla süzme, IP'yi kopyalama butonu |
 | 🕸️ **Etkileşimli ağ haritası** | Porta tıklayınca diğer düğümler solar, yan panelde banner, CVE ve bulgular görünür; klavyeyle de gezilebilir |
 | ⇤ **Daraltılabilir menü** | Sadece ikonlardan oluşan ince menü; tercih hatırlanır |
+| 💨 **Dumanlı giriş ekranı** | Fareyi izleyen WebGL duman arka planı (vurgu rengini ve temayı takip eder), dönen ışıklı cam kart, kayan etiketli alanlar ve ok animasyonlu buton. WebGL yoksa Aurora arka planına düşer |
 
 ---
 
