@@ -20,6 +20,9 @@ let historyRows = [];
 let uptimeBase = 0;
 let uptimeAt = Date.now();
 let me = null;
+let sevFilter = "all";
+let bellEvents = [];
+let scanTimer = null;
 
 // ------------------------------------------------------------------ yardımcılar
 function esc(value) {
@@ -89,7 +92,9 @@ function route() {
     document.querySelectorAll("#nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === name));
     $("viewTitle").textContent = VIEWS[name][0];
     $("viewSub").textContent = VIEWS[name][1];
+    $("crumb").textContent = VIEWS[name][0] === "OPERATIONS_CENTER" ? "SYS_OVERVIEW" : VIEWS[name][0];
     closeMenu();
+    closeModals();
     if (name === "overview") loadStats();
     if (name === "history" || name === "compare" || name === "map") loadHistory().then(() => {
         if (name === "compare") fillCompareSelects();
@@ -189,14 +194,20 @@ function renderTrend(trend) {
 
 function renderStats(s) {
     setIndicators(s);
-    $("sDomains").textContent = s.domains_scanned;
+    RCFX.countUp($("sDomains"), s.domains_scanned);
     $("sScans").textContent = `${s.total_scans} tarama`;
-    $("sVulns").textContent = s.vulnerabilities;
-    $("sCritical").textContent = s.severity.critical;
-    $("sHighRisk").textContent = s.high_risk_targets;
-    $("sActive").textContent = s.active_scans;
+    RCFX.countUp($("sVulns"), s.vulnerabilities);
+    RCFX.countUp($("sCritical"), s.severity.critical);
+    RCFX.countUp($("sHighRisk"), s.high_risk_targets);
+    RCFX.countUp($("sActive"), s.active_scans);
     $("sOpen").textContent = `${s.open_ports} açık port`;
-    $("sDb").textContent = s.db_status;
+    RCFX.countUp($("sDb"), s.db_status);
+    RCFX.sparkline($("spkScans"), s.trend.map((_, i) => i + 1));
+    RCFX.sparkline($("spkVulns"), s.trend.map((t) => t.vulns));
+    RCFX.sparkline($("spkRisk"), s.trend.map((t) => t.score));
+    RCFX.sparkline($("spkOpen"), s.trend.map((t) => t.open));
+    renderHeatmap(s.activity || []);
+    renderBell(s.events);
 
     const postureColor = riskColor(s.avg_risk);
     donut($("postureDonut"), [{ value: s.avg_risk, color: postureColor }, { value: 100 - s.avg_risk, color: "transparent" }],
@@ -234,6 +245,39 @@ function renderStats(s) {
                 <td class="muted">${esc(t.time)}</td>
             </tr>`).join("")
         : `<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>`;
+}
+
+function renderHeatmap(days) {
+    const total = days.reduce((a, d) => a + d.count, 0);
+    const max = Math.max(1, ...days.map((d) => d.count));
+    // İlk sütun pazartesi başlasın diye boş hücrelerle hizala
+    const first = days.length ? (new Date(days[0].date + "T00:00:00").getDay() + 6) % 7 : 0;
+    const pad = Array.from({ length: first }, () => '<i style="visibility:hidden"></i>').join("");
+    $("heatmap").innerHTML = pad + days.map((d) => {
+        const level = d.count ? Math.max(1, Math.ceil((d.count / max) * 4)) : 0;
+        return `<i data-l="${level}" title="${esc(d.date)}: ${d.count} tarama"></i>`;
+    }).join("");
+    const active = days.filter((d) => d.count).length;
+    $("activitySum").textContent = `Son 1 yıl: ${total} tarama · ${active} aktif gün`;
+}
+
+function renderBell(events) {
+    bellEvents = events.filter((e) => e.kind !== "scan" && (e.level === "critical" || e.level === "high"));
+    let seen = 0;
+    try { seen = Number(localStorage.getItem("rc-bell-seen") || 0); } catch { /* yoksay */ }
+    const newest = bellEvents.reduce((m, e) => Math.max(m, e.scan_id), 0);
+    const unseen = bellEvents.filter((e) => e.scan_id > seen).length;
+    $("bellCount").hidden = !unseen;
+    $("bellCount").textContent = unseen > 9 ? "9+" : unseen;
+    $("bellBtn").classList.toggle("ring", unseen > 0);
+    $("bellBtn").dataset.newest = newest;
+    $("bellList").innerHTML = bellEvents.length
+        ? bellEvents.slice(0, 12).map((e) => `
+            <li data-id="${e.scan_id}" style="--c:${SEV_COLOR[e.level]}">
+                <span class="dot"></span><span>${esc(e.text)}</span>
+                <span class="meta">${esc(e.time)} · ${esc(e.target)}</span>
+            </li>`).join("")
+        : `<li class="empty">Kritik veya yüksek olay yok 🎉</li>`;
 }
 
 async function loadStats() {
@@ -285,6 +329,7 @@ async function startScan(event) {
     btn.disabled = true;
     btn.textContent = "TARANIYOR...";
     $("indEngine").textContent = "RECON_ENGINE_BUSY";
+    radarStart(target, body.max_port || 27);
 
     const scope = body.max_port ? `1-${body.max_port}` : "yaygın portlar";
     log(`Hedef: ${target} (${scope}, zaman aşımı ${body.timeout} sn)`, "warn");
@@ -298,16 +343,55 @@ async function startScan(event) {
         if (data.findings.length) log(`Eklentiler ${data.findings.length} bulgu üretti.`, "warn");
         log(`Tarama bitti: ${data.total_open} açık port, risk %${data.overall_risk}, ${data.duration} sn. Rapor #${data.scan_id}`, "ok");
         renderResult(data);
+        radarDone(data);
         toast(`Tarama tamamlandı — risk %${data.overall_risk}`);
-        setTimeout(() => go("results"), 700);
+        setTimeout(() => go("results"), 1600);
     } catch (err) {
         log(`Hata: ${err.message}`, "err");
         toast(err.message, "err");
+        radarDone(null, err.message);
     } finally {
         btn.disabled = false;
         btn.textContent = "⚡ TARAMAYI BAŞLAT";
         $("indEngine").textContent = "RECON_ENGINE_READY";
     }
+}
+
+function radarStart(target, portCount) {
+    const radar = $("radar");
+    radar.querySelectorAll(".blip").forEach((b) => b.remove());
+    radar.classList.add("active");
+    const t0 = Date.now();
+    const update = () => {
+        $("radarStatus").innerHTML = `SCANNING<small>${esc(target)} · ${portCount} port · ${((Date.now() - t0) / 1000).toFixed(1)} sn</small>`;
+    };
+    update();
+    clearInterval(scanTimer);
+    scanTimer = setInterval(update, 100);
+}
+
+function radarDone(data, error) {
+    clearInterval(scanTimer);
+    const radar = $("radar");
+    radar.classList.remove("active");
+    if (!data) {
+        $("radarStatus").innerHTML = `<span style="color:var(--red)">FAILED</span><small>${esc(error || "")}</small>`;
+        return;
+    }
+    // Açık portlar radarda risk renginde parlayan noktalar olarak belirir
+    data.analysis.forEach((p, i) => {
+        const angle = (i / Math.max(1, data.analysis.length)) * Math.PI * 2 + 0.4;
+        const dist = 22 + (p.port % 17) * 1.4;
+        const blip = document.createElement("span");
+        blip.className = "blip";
+        blip.title = `${p.port}/${p.service}`;
+        blip.style.left = `${50 + Math.cos(angle) * dist}%`;
+        blip.style.top = `${50 + Math.sin(angle) * dist}%`;
+        blip.style.setProperty("--c", riskColor(p.risk));
+        blip.style.animationDelay = `${i * 0.12}s`;
+        radar.appendChild(blip);
+    });
+    $("radarStatus").innerHTML = `<span style="color:${riskColor(data.overall_risk)}">COMPLETE · %${data.overall_risk}</span><small>${data.total_open} açık port · ${data.duration} sn</small>`;
 }
 
 async function loadRecentTargets() {
@@ -331,11 +415,32 @@ async function loadPlugins() {
 }
 
 // ------------------------------------------------------------------ sonuçlar
-function setGauge(score) {
-    const gauge = $("gauge");
-    gauge.className = `gauge ${riskClass(score)}`;
-    gauge.style.setProperty("--deg", `${(score / 100) * 360}deg`);
-    $("gaugeText").textContent = `${score}%`;
+function setGauge(score, label) {
+    // 270°'lik yay: sol alttan sağ alta
+    const r = 70, c = 2 * Math.PI * r, arc = c * 0.75;
+    const color = riskColor(score);
+    const ticks = Array.from({ length: 28 }, (_, i) => {
+        const a = (135 + (i / 27) * 270) * Math.PI / 180;
+        const on = i / 27 <= score / 100;
+        return `<line x1="${85 + Math.cos(a) * 80}" y1="${85 + Math.sin(a) * 80}" x2="${85 + Math.cos(a) * 84}" y2="${85 + Math.sin(a) * 84}"
+            stroke="${on ? color : "var(--line-2)"}" stroke-width="2" stroke-linecap="round"/>`;
+    }).join("");
+    $("gauge").innerHTML = `<svg class="gauge-svg" viewBox="0 0 170 170" role="img" aria-label="Risk skoru ${score}">
+        ${ticks}
+        <circle cx="85" cy="85" r="${r}" fill="none" stroke="var(--panel-2)" stroke-width="12" stroke-linecap="round"
+            stroke-dasharray="${arc} ${c}" transform="rotate(135 85 85)"/>
+        <circle class="arc" cx="85" cy="85" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
+            stroke-dasharray="${arc} ${c}" stroke-dashoffset="${arc}" transform="rotate(135 85 85)" style="filter:drop-shadow(0 0 6px ${color})"/>
+        <text x="85" y="88" text-anchor="middle" font-size="34" font-weight="800" style="fill:${color}">${score}</text>
+        <text x="85" y="108" text-anchor="middle" font-size="9" style="fill:var(--muted)">${esc(label || "RISK SCORE")}</text>
+        <text x="46" y="150" text-anchor="middle" font-size="8" style="fill:var(--muted)">0</text>
+        <text x="124" y="150" text-anchor="middle" font-size="8" style="fill:var(--muted)">100</text>
+    </svg>`;
+    // Yayın dolma animasyonu için bir sonraki karede ofseti değiştir
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        const el = $("gauge").querySelector(".arc");
+        if (el) el.style.strokeDashoffset = arc * (1 - score / 100);
+    }));
 }
 
 function renderList(el, items, emptyText) {
@@ -349,7 +454,7 @@ function renderResult(data) {
     $("noResult").hidden = true;
     $("resultView").hidden = false;
     $("rScanId").textContent = `#${data.scan_id}`;
-    setGauge(data.overall_risk);
+    setGauge(data.overall_risk, data.risk_level.label.toUpperCase());
     $("fTarget").textContent = data.target;
     $("fIp").textContent = data.resolved_ip;
     $("fOpen").textContent = `${data.total_open} / ${data.scanned_ports}`;
@@ -363,14 +468,26 @@ function renderResult(data) {
                 <td class="port">${p.port}/${esc(p.protocol.toLowerCase())}</td>
                 <td>${esc(p.service)}</td>
                 <td class="banner">${esc(p.banner) || "—"}</td>
-                <td class="${riskClass(p.risk)}"><b>%${p.risk}</b></td>
+                <td><span class="meter" style="--c:${riskColor(p.risk)}"><span class="bar"><i style="width:${p.risk}%"></i></span><b class="${riskClass(p.risk)}">%${p.risk}</b></span></td>
             </tr>`).join("")
         : `<tr><td colspan="4" class="empty">Açık port bulunamadı (veya güvenlik duvarı tarafından filtreleniyor).</td></tr>`;
 
     renderList($("cveList"), data.cve_alerts, "Bilinen bir zafiyet imzası tespit edilmedi.");
     renderList($("recList"), data.recommendations, "Ek bir öneri yok.");
 
-    const sorted = [...(data.findings || [])].sort((a, b) =>
+    sevFilter = "all";
+    renderFindings();
+}
+
+function renderFindings() {
+    const all = currentReport?.findings || [];
+    const counts = {};
+    all.forEach((f) => { counts[f.severity] = (counts[f.severity] || 0) + 1; });
+    $("sevFilter").innerHTML = all.length
+        ? [["all", `Tümü (${all.length})`], ...SEVERITY_ORDER.filter((k) => counts[k]).map((k) => [k, `${SEVERITY[k]} (${counts[k]})`])]
+            .map(([k, label]) => `<button type="button" class="chip${sevFilter === k ? " on" : ""}" data-sev="${k}">${esc(label)}</button>`).join("")
+        : "";
+    const sorted = all.filter((f) => sevFilter === "all" || f.severity === sevFilter).sort((a, b) =>
         SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) || a.port - b.port);
     $("findings").innerHTML = sorted.length
         ? sorted.map((f) => `
@@ -522,10 +639,10 @@ async function drawMap(id) {
     ports.forEach((p, i) => {
         const angle = (2 * Math.PI * i) / Math.max(ports.length, 1) - Math.PI / 2;
         const x = cx + radius * Math.cos(angle), y = cy + radius * Math.sin(angle);
-        links += `<line class="link ${hot.has(p.port) ? "hot" : ""}" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`;
+        links += `<line class="link ${hot.has(p.port) ? "hot" : ""}" data-port="${p.port}" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`;
         const n = findingCount[p.port];
-        nodes += `<g class="node"><title>${p.port}/${esc(p.service)} — risk %${p.risk}${p.banner ? "\n" + esc(p.banner) : ""}</title>
-            <circle cx="${x}" cy="${y}" r="24" fill="var(--panel-solid)" stroke="${color(p.risk)}" stroke-width="3" style="filter:drop-shadow(0 0 6px ${color(p.risk)})"/>
+        nodes += `<g class="node port" data-port="${p.port}" tabindex="0" style="animation-delay:${i * 0.06}s"><title>${p.port}/${esc(p.service)} — risk %${p.risk}</title>
+            <circle class="body" cx="${x}" cy="${y}" r="24" fill="var(--panel-solid)" stroke="${color(p.risk)}" stroke-width="3" style="filter:drop-shadow(0 0 6px ${color(p.risk)})"/>
             <text x="${x}" y="${y + 4}" font-weight="700">${p.port}</text>
             <text class="sub" x="${x}" y="${y + 40}">${esc(p.service)}</text>
             ${n ? `<circle cx="${x + 18}" cy="${y - 18}" r="9" fill="var(--pink)"/><text x="${x + 18}" y="${y - 14}" font-size="10" style="fill:#fff">${n}</text>` : ""}
@@ -544,12 +661,135 @@ async function drawMap(id) {
         ${nodes}
         ${ports.length ? "" : `<text class="sub" x="${cx}" y="${cy + 80}">Açık port bulunamadı</text>`}
     </svg>`;
+    mapReport = r;
+    showMapDetail(null);
+}
+
+let mapReport = null;
+
+function showMapDetail(port) {
+    const svg = $("mapOut").querySelector(".netmap");
+    svg?.classList.toggle("focus", port !== null);
+    svg?.querySelectorAll("[data-port]").forEach((el) => el.classList.toggle("sel", Number(el.dataset.port) === port));
+    const r = mapReport;
+    if (!r) return;
+    if (port === null) {
+        $("mapDetail").innerHTML = `
+            <h4>${esc(r.target)}</h4>
+            <dl><dt>IP</dt><dd>${esc(r.resolved_ip)}</dd><dt>Açık port</dt><dd>${r.total_open}</dd>
+                <dt>Risk</dt><dd><span class="badge ${riskClass(r.overall_risk)}">%${r.overall_risk} · ${esc(r.risk_level.label)}</span></dd>
+                <dt>CVE</dt><dd>${r.cve_alerts.length}</dd><dt>Bulgu</dt><dd>${(r.findings || []).length}</dd></dl>
+            <span class="muted small">Ayrıntı için bir port düğümüne tıklayın.</span>`;
+        return;
+    }
+    const p = r.analysis.find((x) => x.port === port);
+    const cves = r.cve_alerts.filter((a) => a.includes(`[Port ${port}]`));
+    const findings = (r.findings || []).filter((f) => f.port === port);
+    $("mapDetail").innerHTML = `
+        <h4>${p.port}/${esc(p.service)}</h4>
+        <dl><dt>Risk</dt><dd><span class="meter" style="--c:${riskColor(p.risk)}"><span class="bar"><i style="width:${p.risk}%"></i></span><b>%${p.risk}</b></span></dd>
+            <dt>Banner</dt><dd class="mono">${esc(p.banner) || "—"}</dd></dl>
+        ${cves.length ? `<ul class="list" style="color:var(--red)">${cves.map((c) => `<li>${esc(c.replace(/^\[Port \d+\] /, ""))}</li>`).join("")}</ul>` : ""}
+        ${findings.length ? `<ul class="list">${findings.map((f) => `<li><span class="badge sev-${esc(f.severity)}">${esc(SEVERITY[f.severity] || f.severity)}</span> ${esc(f.title)}</li>`).join("")}</ul>` : ""}
+        ${!cves.length && !findings.length ? `<span class="muted small">Bu port için ek bulgu yok.</span>` : ""}
+        <p style="margin:12px 0 0"><button type="button" class="btn sm" id="mapBack">← HEDEF ÖZETİ</button></p>`;
 }
 
 // ------------------------------------------------------------------ ayarlar
 function markThemeSeg() {
     const pref = window.RCTheme.pref();
     document.querySelectorAll("#themeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.themePref === pref));
+    const accent = window.RCTheme.accent();
+    document.querySelectorAll("#accentSwatches .swatch").forEach((b) => b.classList.toggle("on", b.dataset.accent === accent));
+    $("fxToggle").checked = RCFX.enabled();
+}
+
+// ------------------------------------------------------------------ komut paleti & kısayollar
+let paletteItems = [];
+let paletteSel = 0;
+
+function paletteSource() {
+    const nav = Object.entries(VIEWS).map(([key, [title, sub]], i) => ({
+        group: "SAYFALAR", ico: "▸", label: title === "OPERATIONS_CENTER" ? "SYS_OVERVIEW" : title, hint: `${i}`, keywords: sub,
+        run: () => go(key),
+    }));
+    const actions = [
+        { ico: "⚡", label: "Yeni tarama başlat", hint: "N", run: () => go("scan") },
+        { ico: "🌗", label: "Temayı değiştir (aydınlık / karanlık)", hint: "T", run: () => window.RCTheme.toggle() },
+        { ico: "🎨", label: "Vurgu rengini değiştir", run: () => {
+            const list = window.RCTheme.accents;
+            window.RCTheme.setAccent(list[(list.indexOf(window.RCTheme.accent()) + 1) % list.length]);
+        } },
+        { ico: "✨", label: "Hareketli arka planı aç / kapat", run: () => { RCFX.set(!RCFX.enabled()); markThemeSeg(); } },
+        { ico: "⇤", label: "Yan menüyü daralt / genişlet", hint: "[", run: toggleCollapse },
+        ...(currentReport ? [
+            { ico: "🖨", label: `PDF rapor: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportPdf").click() },
+            { ico: "⬇", label: `CSV indir: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportCsv").click() },
+            { ico: "⇄", label: "Son raporu öncekiyle karşılaştır", run: () => $("diffPrev").click() },
+        ] : []),
+        { ico: "⌨", label: "Klavye kısayolları", hint: "?", run: () => openModal("helpModal") },
+        { ico: "⏻", label: "Çıkış yap", run: () => $("logoutBtn").click() },
+    ].map((a) => ({ group: "KOMUTLAR", ...a }));
+    const targets = [...new Set(historyRows.map((r) => r.target))].slice(0, 8).map((t) => ({
+        group: "HEDEFİ TEKRAR TARA", ico: "↻", label: t, run: () => { $("target").value = t; go("scan"); setTimeout(startScan, 120); },
+    }));
+    const scans = historyRows.filter((r) => r.has_report).slice(0, 15).map((r) => ({
+        group: "RAPORLAR", ico: "📄", label: `#${r.id} ${r.target}`, hint: `risk ${r.risk_score} · ${r.scan_time.slice(5, 16)}`,
+        run: () => openScan(r.id),
+    }));
+    return [...nav, ...actions, ...targets, ...scans];
+}
+
+function renderPalette() {
+    const q = $("paletteInput").value.trim().toLocaleLowerCase("tr");
+    paletteItems = paletteSource().filter((it) => !q ||
+        `${it.label} ${it.keywords || ""} ${it.group}`.toLocaleLowerCase("tr").includes(q));
+    paletteSel = Math.min(paletteSel, Math.max(0, paletteItems.length - 1));
+    let lastGroup = "";
+    $("paletteList").innerHTML = paletteItems.length
+        ? paletteItems.map((it, i) => {
+            const head = it.group !== lastGroup ? `<li class="group">${esc(it.group)}</li>` : "";
+            lastGroup = it.group;
+            return `${head}<li class="item${i === paletteSel ? " sel" : ""}" data-i="${i}">
+                <span class="ico">${it.ico}</span><span>${esc(it.label)}</span>${it.hint ? `<span class="hint">${esc(it.hint)}</span>` : ""}</li>`;
+        }).join("")
+        : `<li class="none">Sonuç yok. Tarama başlatmak için hedefi yazıp Enter'a basın.</li>`;
+    $("paletteList").querySelector(".sel")?.scrollIntoView({ block: "nearest" });
+}
+
+function openModal(id) {
+    closeModals();
+    $(id).hidden = false;
+    if (id === "paletteModal") {
+        $("paletteInput").value = "";
+        paletteSel = 0;
+        renderPalette();
+        setTimeout(() => $("paletteInput").focus(), 20);
+        if (!historyRows.length) loadHistory().then(renderPalette);
+    }
+}
+
+function closeModals() {
+    ["paletteModal", "helpModal"].forEach((id) => { $(id).hidden = true; });
+    $("bellPop").hidden = true;
+}
+
+function runPalette(i) {
+    const item = paletteItems[i];
+    const q = $("paletteInput").value.trim();
+    closeModals();
+    if (item) item.run();
+    else if (q) { $("target").value = q; go("scan"); }
+}
+
+function toggleCollapse() {
+    const on = $("app").classList.toggle("collapsed");
+    try { localStorage.setItem("rc-collapsed", on ? "1" : "0"); } catch { /* yoksay */ }
+}
+
+function isTyping(e) {
+    const t = e.target;
+    return t.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(t.tagName);
 }
 
 function curlExample(token) {
@@ -652,6 +892,69 @@ $("compareSelected").addEventListener("click", () => {
 $("compareForm").addEventListener("submit", (e) => { e.preventDefault(); runCompare($("cmpOld").value, $("cmpNew").value); });
 $("mapSelect").addEventListener("change", (e) => drawMap(Number(e.target.value)));
 
+$("accentSwatches").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-accent]");
+    if (b) window.RCTheme.setAccent(b.dataset.accent);
+});
+$("fxToggle").addEventListener("change", (e) => RCFX.set(e.target.checked));
+$("sevFilter").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-sev]");
+    if (b) { sevFilter = b.dataset.sev; renderFindings(); }
+});
+$("copyIp").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("fIp").textContent); toast("IP adresi kopyalandı."); }
+    catch { toast("Kopyalanamadı (tarayıcı izni yok).", "err"); }
+});
+$("mapOut").addEventListener("click", (e) => {
+    const node = e.target.closest(".node.port");
+    const selected = node && node.classList.contains("sel");
+    showMapDetail(node && !selected ? Number(node.dataset.port) : null);
+});
+$("mapOut").addEventListener("keydown", (e) => {
+    const node = e.target.closest(".node.port");
+    if (node && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); showMapDetail(Number(node.dataset.port)); }
+});
+$("mapDetail").addEventListener("click", (e) => { if (e.target.id === "mapBack") showMapDetail(null); });
+$("collapseBtn").addEventListener("click", toggleCollapse);
+$("paletteBtn").addEventListener("click", () => openModal("paletteModal"));
+$("paletteInput").addEventListener("input", () => { paletteSel = 0; renderPalette(); });
+$("paletteInput").addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); paletteSel = Math.min(paletteSel + 1, paletteItems.length - 1); renderPalette(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); paletteSel = Math.max(paletteSel - 1, 0); renderPalette(); }
+    else if (e.key === "Enter") { e.preventDefault(); runPalette(paletteSel); }
+});
+$("paletteList").addEventListener("click", (e) => { const li = e.target.closest(".item"); if (li) runPalette(Number(li.dataset.i)); });
+["paletteModal", "helpModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
+$("bellBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const pop = $("bellPop");
+    pop.hidden = !pop.hidden;
+    if (!pop.hidden) {
+        try { localStorage.setItem("rc-bell-seen", $("bellBtn").dataset.newest || 0); } catch { /* yoksay */ }
+        $("bellCount").hidden = true;
+        $("bellBtn").classList.remove("ring");
+    }
+});
+$("bellList").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
+document.addEventListener("click", (e) => { if (!e.target.closest("#bellPop")) $("bellPop").hidden = true; });
+
+document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        $("paletteModal").hidden ? openModal("paletteModal") : closeModals();
+        return;
+    }
+    if (e.key === "Escape") { closeModals(); closeMenu(); return; }
+    if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+    const views = Object.keys(VIEWS);
+    if (/^[0-6]$/.test(e.key)) go(views[Number(e.key)]);
+    else if (e.key === "n" || e.key === "N") go("scan");
+    else if (e.key === "t" || e.key === "T") window.RCTheme.toggle();
+    else if (e.key === "[") toggleCollapse();
+    else if (e.key === "?") openModal("helpModal");
+    else if (e.key === "/") { e.preventDefault(); go("history"); setTimeout(() => $("historySearch").focus(), 80); }
+});
+
 $("themeSeg").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-theme-pref]");
     if (b) window.RCTheme.set(b.dataset.themePref);
@@ -732,6 +1035,7 @@ $("deleteAccount").addEventListener("click", async () => {
 });
 
 // ------------------------------------------------------------------ başlat
+try { if (localStorage.getItem("rc-collapsed") === "1") $("app").classList.add("collapsed"); } catch { /* yoksay */ }
 applyScanDefaults();
 loadPlugins();
 loadRecentTargets();

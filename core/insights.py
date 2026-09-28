@@ -4,6 +4,7 @@ Fonksiyonlar saf Python'dur (veritabanı / ağ erişimi yok), bu yüzden kolayca
 """
 
 from collections import Counter
+from datetime import date, timedelta
 
 from core.engine import risk_level
 
@@ -24,6 +25,15 @@ def _severity_counts(report) -> Counter:
         if finding["severity"] in counts:
             counts[finding["severity"]] += 1
     return counts
+
+
+def scan_activity(reports: list, days: int = 364, today: date | None = None) -> list:
+    """Son `days` gün için gün başına tarama sayısı (aktivite ısı haritası)."""
+    today = today or date.today()
+    per_day = Counter(r["scan_time"][:10] for r in reports)
+    start = today - timedelta(days=days - 1)
+    return [{"date": d.isoformat(), "count": per_day.get(d.isoformat(), 0)}
+            for d in (start + timedelta(days=i) for i in range(days))]
 
 
 def build_stats(reports: list) -> dict:
@@ -77,6 +87,7 @@ def build_stats(reports: list) -> dict:
             for r in sorted(current, key=lambda r: r["overall_risk"], reverse=True)
         ],
         "events": events[:40],
+        "activity": scan_activity(reports),
     }
 
 

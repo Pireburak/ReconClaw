@@ -1,4 +1,6 @@
-from core.insights import build_stats, compare_reports
+from datetime import date
+
+from core.insights import build_stats, compare_reports, scan_activity
 
 
 def report(scan_id, target, ports, score, cves=(), findings=(), time="2026-09-25 10:00:00"):
@@ -52,3 +54,12 @@ def test_compare_reports():
     assert d["resolved_cves"] == ["[Port 22] eski"] and d["new_cves"] == []
     assert [f["title"] for f in d["new_findings"]] == ["HSTS yok"]
     assert [f["title"] for f in d["resolved_findings"]] == ["CSP yok"]
+
+
+def test_scan_activity():
+    reports = [report(1, "a.com", [], 0, time="2026-09-20 10:00:00"),
+               report(2, "a.com", [], 0, time="2026-09-20 12:00:00"),
+               report(3, "b.com", [], 0, time="2026-09-25 09:00:00")]
+    days = scan_activity(reports, days=7, today=date(2026, 9, 25))
+    assert len(days) == 7 and days[0]["date"] == "2026-09-19" and days[-1]["date"] == "2026-09-25"
+    assert [d["count"] for d in days] == [0, 2, 0, 0, 0, 0, 1]

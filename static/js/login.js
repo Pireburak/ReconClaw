@@ -15,7 +15,9 @@ function setMode(next) {
     $("nameField").hidden = !register;
     $("strengthBox").hidden = !register;
     $("password").autocomplete = register ? "new-password" : "current-password";
-    $("submitBtn").textContent = register ? "HESAP OLUŞTUR" : "GİRİŞ YAP";
+    $("submitText").textContent = register ? "HESAP OLUŞTUR" : "GİRİŞ YAP";
+    $("authTitle").textContent = register ? "Aramıza katıl" : "Tekrar hoş geldin";
+    $("authSub").textContent = register ? "için ücretsiz hesabını oluştur" : "paneline devam etmek için giriş yap";
     showError("");
 }
 
@@ -46,6 +48,7 @@ $("password").addEventListener("input", (e) => {
 $("pwToggle").addEventListener("click", () => {
     const input = $("password");
     input.type = input.type === "password" ? "text" : "password";
+    $("pwToggle").classList.toggle("on", input.type === "text");
 });
 
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.tab)));
@@ -80,6 +83,20 @@ $("authForm").addEventListener("submit", async (event) => {
         btn.disabled = false;
     }
 });
+
+// Başlıkta daktilo efekti
+(function typeTitle() {
+    const el = $("typed");
+    const text = el.dataset.text;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let i = 0;
+    el.textContent = "";
+    const step = () => {
+        el.textContent = text.slice(0, ++i);
+        if (i < text.length) setTimeout(step, 55);
+    };
+    setTimeout(step, 300);
+})();
 
 // OAuth hatası sonrası adres çubuğundaki ?error= parametresini temizle
 if (window.location.search) history.replaceState(null, "", "/login");
