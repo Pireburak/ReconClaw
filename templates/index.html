@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="icon" href="{{ url_for('static', path='favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +20,7 @@
     <!-- ================= YAN MENÜ ================= -->
     <aside class="sidebar" id="sidebar">
         <a class="brand" href="#overview">
-            <div class="brand-logo">🦅</div>
+            <img class="brand-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="40" height="40">
             <div>
                 <div class="brand-name">RECONCLAW</div>
                 <div class="brand-sub">SEC_AUDIT v{{ version }} · {{ codename | upper }}</div>

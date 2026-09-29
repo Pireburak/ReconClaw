@@ -159,7 +159,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-size: .72rem
     background: var(--panel-solid); border-right: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: inherit; }
-.brand-logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; font-size: 1.3rem; background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 25%, transparent), rgba(167, 139, 250, .25)); border: 1px solid var(--cyan); box-shadow: var(--glow); }
+.brand-logo { display: block; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--cyan); box-shadow: var(--glow); }
 .brand-name { font-size: 1.05rem; font-weight: 800; letter-spacing: 2px; color: var(--cyan); }
 .brand-sub { font-size: .62rem; color: var(--muted); letter-spacing: 1px; }
 

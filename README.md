@@ -1,4 +1,6 @@
-<h1 align="center">🦅 ReconClaw v6.0 Aurora</h1>
+<p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="720"></p>
+
+<h1 align="center">🦝 ReconClaw v6.0 Aurora</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
 

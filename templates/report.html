@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="icon" href="{{ url_for('static', path='favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
     <style>
         :root { --c-low: #4d7c0f; --c-medium: #a16207; --c-high: #c2410c; --c-critical: #d41f4a; }
         * { box-sizing: border-box; }
@@ -51,7 +52,7 @@
 <article class="page">
     <header>
         <div>
-            <h1>🦅 ReconClaw Güvenlik Değerlendirme Raporu</h1>
+            <h1><img src="{{ url_for('static', path='img/logo.png') }}" alt="" width="40" height="40" style="vertical-align:middle;margin-right:8px">ReconClaw Güvenlik Değerlendirme Raporu</h1>
             <div style="margin-top:6px;font-size:16px"><b>{{ r.target }}</b> <span style="color:#5a6a85">({{ r.resolved_ip }})</span></div>
         </div>
         <div class="meta">

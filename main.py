@@ -448,5 +448,5 @@ async def health():
 
 if __name__ == "__main__":
     host, port = config.env("HOST", "127.0.0.1"), int(config.env("PORT", "8000"))
-    print(f"\n🦅 ReconClaw v{VERSION} {CODENAME} -> http://{host}:{port}\n")
+    print(f"\n🦝 ReconClaw v{VERSION} {CODENAME} -> http://{host}:{port}\n")
     uvicorn.run("main:app", host=host, port=port, proxy_headers=True, forwarded_allow_ips="*")
