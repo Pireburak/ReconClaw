@@ -1,18 +1,21 @@
-<p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="720"></p>
+<p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
 <h1 align="center">🦝 ReconClaw v6.0 Aurora</h1>
 
-<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
+<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b><br>
+<i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-success?style=for-the-badge" alt="Version">
-<img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-<img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-<img src="https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge" alt="License">
+<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
+<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
+<img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
+<img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
+<img src="https://img.shields.io/badge/Maskot-Rakun%20%F0%9F%A6%9D-E8751A?style=for-the-badge" alt="Maskot: Rakun">
 </p>
 
 <p align="center">
+<a href="#-neden-rakun">Maskot</a> •
 <a href="#-v60-aurora-yenilikleri">Yenilikler</a> •
 <a href="#-kurulum">Kurulum</a> •
 <a href="#-kullanım">Kullanım</a> •
@@ -25,7 +28,7 @@
 
 ---
 
-## 🚀 ReconClaw Nedir?
+## 🦝 ReconClaw Nedir?
 
 ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti ve ön güvenlik değerlendirmesi için geliştirilmiş, web arayüzlü bir siber güvenlik aracıdır.
 
@@ -40,6 +43,56 @@ Yalnızca açık portları listelemekle kalmaz:
 - 🖥️ Sonuçları siber-operasyon merkezi görünümlü **web dashboard** üzerinde sunar
 - 🔐 **E-posta/parola** veya **Google, GitHub, Microsoft, Apple** hesabıyla giriş
 - 🌗 **Aydınlık / karanlık tema** ve telefonda da çalışan duyarlı tasarım
+
+---
+
+## 🦝 Neden Rakun?
+
+<img src="static/img/logo.png" alt="ReconClaw rakun logosu" width="160" align="right">
+
+> **Kısa cevap:** Keşif (*recon*) işi; gizlice yaklaşmayı, her kapıyı tek tek yoklamayı, bulduğunu hatırlamayı ve karanlıkta çalışmayı ister. Doğada bunları rakundan iyi yapan pek yoktur. Adımızdaki **Claw** (pençe) de ona ait. 🐾
+
+ReconClaw'ın maskotu v6.0 ile **kartaldan rakuna** geçti. "Neden rakun?" diye soranlar için hikâyenin tamamı aşağıda.
+
+### 🦅 ➜ 🦝 Kartaldan rakuna: neden değiştik?
+
+Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motorları) daha çok benzer. ReconClaw ise **aktif** bir araç: hedefe gider, her porta TCP bağlantısı açar, kapıyı çalar, dönen banner'ı okur. Yani yukarıdan izlemek yerine yere inip **eliyle yoklayan** bir hayvan gerekiyordu. İşte o hayvan rakun.
+
+### 🔬 Rakun hakkında gerçek bilgiler ve ReconClaw'daki karşılıkları
+
+| Rakunun gerçek özelliği | ReconClaw'daki karşılığı |
+|-------------------------|--------------------------|
+| 🎭 **Doğuştan maskeli.** Gözlerinin etrafındaki siyah "maske" ışık parlamasını azaltıp gece görüşüne yardım ettiği düşünülüyor. | Hedefi yormadan, sessiz ve hızlı tarar: *recon* işi gizlilik ister. |
+| 🐾 **Olağanüstü hassas ön pençeler.** Beyninin duyusal bölgesinin yaklaşık üçte ikisi dokunma algısına ayrılmıştır; bir nesneye bakmadan, sadece dokunarak tanıyabilir. | Her portu tek tek "elle yoklar", banner'ı yakalar ve servisi/sürümü tanır. Adındaki **Claw** buradan geliyor. |
+| 🔐 **Kilit açma ustası.** 1900'lerin başındaki klasik bir deneyde rakunlar 13 karmaşık kilidin 11'ini on denemeden az sürede açmıştır. | Kilitli kapıları değil, **açık bırakılmış** olanları bulur ve raporlar. Kırmaz, yalnızca gösterir. |
+| 🧠 **Güçlü hafıza.** Öğrendiği bir problemin çözümünü yıllarca hatırlayabildiği gözlemlenmiştir. | Her tarama SQLite'a kaydedilir. **Tarama karşılaştırma** ile neyin değiştiğini hatırlar. |
+| 🔍 **Aşırı meraklı.** Her deliğe, her kutuya bakar. | Açık servisin sürümünü kurcalar, **CVE imzalarıyla** eşleştirir. Eklentiler HTTP başlıklarına ve TLS sertifikalarına da bakar. |
+| 🌙 **Gece hayvanı.** | Karanlık temada kendini evinde hisseder. 🌗 |
+| 🏙️ **Her ortama uyum sağlar.** Ormanda da, şehrin ortasında da yaşar. | Tek bir IP'de de, alan adında da, Docker + HTTPS ile sunucuda da çalışır. |
+| 🧼 **"Yıkayıcı" rakun.** Bilimsel adı *Procyon lotor*'daki *lotor*, Latincede "yıkayan" demektir; yiyeceğini suda evirip çevirir. | Bulduğu her açık için **temizlik önerisi** üretir: servisi kapat, sürümü güncelle, IP filtresi uygula. |
+
+### 🎨 Logonun anatomisi
+
+| Öğe | Anlamı |
+|-----|--------|
+| 🟠 **Kehribar gözler** | Uyanık, her şeyi gören tarayıcı. Tarama sırasındaki radar ekranına gönderme. |
+| 🦾 **Mekanik pençe** | *Claw*: portlara dokunan, banner yakalayan tarama motoru |
+| ⚙️ **Dişliler** | Asenkron motor, eklenti sistemi ve birlikte dönen modüller |
+| 🔥 **Alev kuyruk** | Hız: yüzlerce port saniyeler içinde |
+| 🛡️ **Süslü kalkan çerçeve** | Savunma odaklı amaç. Araç saldırmak için değil, **korumak** için. |
+| 🟧 **Turuncu–altın–siyah palet** | Arayüzdeki risk renkleri gibi dikkat çeker ve uyarır |
+
+### 📍 Rakunu nerede görürsünüz?
+
+- Panelin sol üst köşesinde (logo)
+- Giriş / kayıt ekranında
+- PDF raporların başlığında
+- Tarayıcı sekmesinde (favicon) ve iPhone/iPad ana ekranında (apple-touch-icon)
+- Sunucu açılırken konsolda: `🦝 ReconClaw v6.0 Aurora -> http://127.0.0.1:8000`
+
+### 💬 Birisi "Neden rakun?" diye sorarsa
+
+> *"Çünkü rakun maskelidir, meraklıdır, eline geçen her kapıyı yoklar ve bulduğunu unutmaz. Biz de öyle bir tarayıcı yaptık. Tek farkı: bizimki kapıyı açmaz, açık kaldığını söyler."* 🦝
 
 ---
 
@@ -275,6 +328,8 @@ Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır
 
 ```text
 ═══════════════════════════════════════════════════════
+ 🦝 ReconClaw · Tarama Raporu
+───────────────────────────────────────────────────────
  Hedef          : example.com
  Çözümlenen IP  : 192.168.1.10
 ───────────────────────────────────────────────────────
@@ -342,6 +397,7 @@ Her sağlayıcıda bir "OAuth uygulaması" oluşturup verilen ID/secret değerle
 ## 🏗️ Sistem Mimarisi
 
 ```text
+                  🦝 ReconClaw
    🔐 Giriş (e-posta / Google / GitHub / Microsoft / Apple)
                      │  oturum çerezi / API anahtarı
                      ▼
@@ -381,6 +437,8 @@ ReconClaw/
 │   ├── login.html        # Giriş / kayıt sayfası
 │   └── report.html       # Yazdırılabilir (PDF) rapor
 ├── static/
+│   ├── img/              # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
+│   ├── favicon.png       # Tarayıcı sekmesi simgesi
 │   ├── css/style.css     # Arayüz stilleri (aydınlık + karanlık tema)
 │   └── js/               # app.js, login.js, theme.js (tema + vurgu), fx.js (efektler), report.js
 ├── tests/
@@ -456,6 +514,7 @@ pytest
 - [x] Vurgu rengi seçici, daraltılabilir menü, bildirim zili
 - [x] Sparkline kartlar, aktivite ısı haritası, radar tarama ekranı
 - [x] Etkileşimli ağ haritası, bulgu filtreleri, yeni risk göstergesi
+- [x] 🦝 Yeni maskot: kartal yerine rakun (logo, favicon, rapor başlığı, README banner'ı)
 
 **🔭 Sonraki adımlar**
 - [ ] UDP tarama
@@ -480,6 +539,7 @@ ReconClaw yalnızca **sahibi olduğunuz** veya **yazılı izin aldığınız** s
 ## ✍️ Geliştirici
 
 <p align="center">
+<img src="static/img/logo.png" alt="ReconClaw" width="72"><br>
 <b>Burak Özdemir</b> — <a href="https://github.com/Pireburak">@Pireburak</a><br>
-<sub>ReconClaw'ı beğendiyseniz ⭐ vermeyi unutmayın!</sub>
+<sub>ReconClaw'ı beğendiyseniz rakunumuza bir ⭐ bırakmayı unutmayın! 🦝</sub>
 </p>
