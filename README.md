@@ -1,18 +1,21 @@
-<p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="720"></p>
+<p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
 <h1 align="center">🦝 ReconClaw v6.0 Aurora</h1>
 
-<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b></p>
+<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b><br>
+<i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-success?style=for-the-badge" alt="Version">
-<img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-<img src="https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-<img src="https://img.shields.io/badge/License-Educational-blueviolet?style=for-the-badge" alt="License">
+<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
+<img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
+<img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
+<img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
+<img src="https://img.shields.io/badge/Maskot-Rakun%20%F0%9F%A6%9D-E8751A?style=for-the-badge" alt="Maskot: Rakun">
 </p>
 
 <p align="center">
+<a href="#-neden-rakun">Maskot</a> •
 <a href="#-v60-aurora-yenilikleri">Yenilikler</a> •
 <a href="#-kurulum">Kurulum</a> •
 <a href="#-kullanım">Kullanım</a> •
@@ -25,7 +28,7 @@
 
 ---
 
-## 🚀 ReconClaw Nedir?
+## 🦝 ReconClaw Nedir?
 
 ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti ve ön güvenlik değerlendirmesi için geliştirilmiş, web arayüzlü bir siber güvenlik aracıdır.
 
@@ -40,6 +43,25 @@ Yalnızca açık portları listelemekle kalmaz:
 - 🖥️ Sonuçları siber-operasyon merkezi görünümlü **web dashboard** üzerinde sunar
 - 🔐 **E-posta/parola** veya **Google, GitHub, Microsoft, Apple** hesabıyla giriş
 - 🌗 **Aydınlık / karanlık tema** ve telefonda da çalışan duyarlı tasarım
+
+---
+
+## 🦝 Neden Rakun?
+
+<img src="static/img/logo.png" alt="ReconClaw rakun logosu" width="140" align="right">
+
+ReconClaw'ın maskotu artık bir **rakun**. Seçim tesadüf değil; rakun, bir keşif aracının yaptığı her şeyi zaten doğasında yapıyor:
+
+| Rakunun özelliği | ReconClaw'daki karşılığı |
+|------------------|--------------------------|
+| 🎭 **Doğuştan maskeli** | Hedefi yormadan, sessizce ve hızlı tarar: *recon* işi gizlilik ister |
+| 🐾 **Becerikli pençeler** | Her kapıyı (portu) tek tek yoklar, banner'ları yakalar, açık kalanı bulur — adındaki *Claw* buradan gelir |
+| 🔍 **Meraklı doğa** | Açık servisin sürümünü kurcalar, CVE imzalarıyla eşleştirir |
+| 🌙 **Gece hayvanı** | Karanlık temada kendini evinde hisseder 🌗 |
+| ⚙️ **Logodaki dişliler** | Asenkron tarama motoru ve eklenti sistemi |
+| 🔥 **Turuncu–altın renkler** | Arayüzdeki risk renkleri gibi: dikkat çeker, uyarır |
+
+Logo; panelin sol üstünde, giriş ekranında, PDF raporların başlığında ve tarayıcı sekmesindeki simgede (favicon) yer alır.
 
 ---
 
@@ -275,6 +297,8 @@ Her açık port, servisin kritikliğine göre bir **risk ağırlığı** taşır
 
 ```text
 ═══════════════════════════════════════════════════════
+ 🦝 ReconClaw · Tarama Raporu
+───────────────────────────────────────────────────────
  Hedef          : example.com
  Çözümlenen IP  : 192.168.1.10
 ───────────────────────────────────────────────────────
@@ -342,6 +366,7 @@ Her sağlayıcıda bir "OAuth uygulaması" oluşturup verilen ID/secret değerle
 ## 🏗️ Sistem Mimarisi
 
 ```text
+                  🦝 ReconClaw
    🔐 Giriş (e-posta / Google / GitHub / Microsoft / Apple)
                      │  oturum çerezi / API anahtarı
                      ▼
@@ -381,6 +406,8 @@ ReconClaw/
 │   ├── login.html        # Giriş / kayıt sayfası
 │   └── report.html       # Yazdırılabilir (PDF) rapor
 ├── static/
+│   ├── img/              # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
+│   ├── favicon.png       # Tarayıcı sekmesi simgesi
 │   ├── css/style.css     # Arayüz stilleri (aydınlık + karanlık tema)
 │   └── js/               # app.js, login.js, theme.js (tema + vurgu), fx.js (efektler), report.js
 ├── tests/
@@ -456,6 +483,7 @@ pytest
 - [x] Vurgu rengi seçici, daraltılabilir menü, bildirim zili
 - [x] Sparkline kartlar, aktivite ısı haritası, radar tarama ekranı
 - [x] Etkileşimli ağ haritası, bulgu filtreleri, yeni risk göstergesi
+- [x] 🦝 Yeni maskot: kartal yerine rakun (logo, favicon, rapor başlığı, README banner'ı)
 
 **🔭 Sonraki adımlar**
 - [ ] UDP tarama
@@ -480,6 +508,7 @@ ReconClaw yalnızca **sahibi olduğunuz** veya **yazılı izin aldığınız** s
 ## ✍️ Geliştirici
 
 <p align="center">
+<img src="static/img/logo.png" alt="ReconClaw" width="72"><br>
 <b>Burak Özdemir</b> — <a href="https://github.com/Pireburak">@Pireburak</a><br>
-<sub>ReconClaw'ı beğendiyseniz ⭐ vermeyi unutmayın!</sub>
+<sub>ReconClaw'ı beğendiyseniz rakunumuza bir ⭐ bırakmayı unutmayın! 🦝</sub>
 </p>
