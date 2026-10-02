@@ -68,6 +68,10 @@ REQUIRE_TARGET_VERIFICATION = _bool("REQUIRE_TARGET_VERIFICATION", False)
 # Örnek: ADMIN_EMAILS=ben@ornek.com,asistan@ornek.com
 ADMIN_EMAILS = {e.strip().lower() for e in env("ADMIN_EMAILS").split(",") if e.strip()}
 
+# Sistemin sahibi (owner): silinemez, askıya alınamaz, yetkisi alınamaz; yöneticileri yalnızca o çıkarabilir.
+# Alternatif: python manage.py make-owner e-posta
+OWNER_EMAIL = env("OWNER_EMAIL").lower()
+
 # Sürekli izleme görevlerini çalıştıran arka plan zamanlayıcısı
 SCHEDULER_ENABLED = _bool("SCHEDULER_ENABLED", True)
 

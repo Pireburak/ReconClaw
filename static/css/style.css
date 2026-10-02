@@ -861,3 +861,4 @@ tr.warn-row td:nth-child(2) { color: var(--red); }
 /* Bal küpü alanı: ekran okuyucular ve kullanıcılar görmez */
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .cf-turnstile { margin: 4px 0 12px; min-height: 65px; }
+.badge.owner-badge { color: #1d1b17; background: var(--yellow); letter-spacing: .16em; }

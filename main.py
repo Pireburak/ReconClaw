@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
     # Uygulama başlarken veritabanı tablolarını kontrol et/oluştur
     init_db()
     auth.sync_admins()
+    auth.sync_owner()
     scheduler = None
     if config.SCHEDULER_ENABLED:
         scheduler = asyncio.create_task(monitor.scheduler_loop(run_scan))
@@ -77,6 +78,30 @@ CSP = (
     f"font-src 'self'; img-src 'self' data: https:; connect-src 'self'{_ts}; frame-src {_frames}; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
+
+
+UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _same_origin(request: Request) -> bool:
+    """CSRF koruması: oturum çereziyle yapılan değiştirici isteklerin başka bir siteden gelmediğini doğrular.
+    Tarayıcılar Origin başlığını sahteleyemez; API anahtarıyla (Bearer) yapılan istekler çerez taşımaz."""
+    origin = request.headers.get("origin")
+    if origin is None:
+        # Origin yoksa tarayıcının Sec-Fetch-Site bilgisine bak (curl / test istemcisi ikisini de göndermez)
+        return request.headers.get("sec-fetch-site", "same-origin") in ("same-origin", "none")
+    allowed = {str(request.base_url).rstrip("/")}
+    if config.PUBLIC_URL:
+        allowed.add(config.PUBLIC_URL)
+    return origin.rstrip("/") in allowed
+
+
+@app.middleware("http")
+async def csrf_guard(request: Request, call_next):
+    if (request.method in UNSAFE_METHODS and auth.SESSION_COOKIE in request.cookies
+            and not _bearer(request) and not _same_origin(request)):
+        return JSONResponse({"detail": "Geçersiz istek kaynağı (CSRF koruması)."}, status_code=403)
+    return await call_next(request)
 
 
 @app.middleware("http")
