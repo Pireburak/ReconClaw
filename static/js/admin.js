@@ -3,6 +3,12 @@
 
 (() => {
     const MY_ID = Number(document.body.dataset.uid);
+    const I_AM_OWNER = document.body.dataset.role === "owner";
+    const ROLE_BADGE = {
+        owner: '<span class="badge owner-badge">SAHİP</span>',
+        admin: '<span class="badge admin-badge">YÖNETİCİ</span>',
+        user: '<span class="badge sev-info">ÜYE</span>',
+    };
     let catalog = null;
     let auditFilled = false;
     let searchTimer = null;
@@ -89,27 +95,31 @@
         $("adminUserCount").textContent = `${list.length} kayıt`;
         $("adminUsers").innerHTML = list.length ? list.map((u) => {
             const self = u.id === MY_ID;
+            const staff = u.role === "admin" || u.role === "owner";
+            // Sahibe kimse dokunamaz; bir yöneticiye karşı işlem yalnızca sahibe açık
+            const locked = self || u.role === "owner" || (u.role === "admin" && !I_AM_OWNER);
+            const why = u.role === "owner" ? "Sahip hesabı değiştirilemez" : u.role === "admin" && !I_AM_OWNER ? "Yalnızca sahip yapabilir" : "";
             return `<tr class="${u.disabled ? "dead" : ""}" data-uid="${u.id}">
                 <td>${u.id}</td>
                 <td><b>${esc(u.name)}</b>${self ? ' <span class="muted small">(siz)</span>' : ""}<br><span class="muted small">${esc(u.email)}</span>
                     ${u.disabled ? '<br><span class="badge sev-high">ASKIDA</span>' : ""}</td>
-                <td>${u.role === "admin" ? '<span class="badge admin-badge">YÖNETİCİ</span>' : '<span class="badge sev-info">ÜYE</span>'}</td>
+                <td>${ROLE_BADGE[u.role] || ROLE_BADGE.user}</td>
                 <td><span class="plan-tag" data-level="${u.level}">${esc(u.plan_name)}</span>
-                    ${u.plan_expires && u.role !== "admin" ? `<br><span class="muted small">→ ${esc(u.plan_expires.slice(0, 10))}</span>` : ""}
+                    ${u.plan_expires && !staff ? `<br><span class="muted small">→ ${esc(u.plan_expires.slice(0, 10))}</span>` : ""}
                     ${u.paid ? `<br><span class="muted small">${tlFmt(u.paid)} ödendi</span>` : ""}</td>
                 <td>${u.scans_today} <span class="muted small">bugün</span><br><span class="muted small">${u.scan_count} toplam</span></td>
                 <td class="small">${esc(u.last_login || "—")}</td>
                 <td class="assign">
-                    <select data-plan-for="${u.id}" ${u.role === "admin" ? "disabled" : ""}>${planOptions(u.stored_plan)}</select>
-                    <select data-days-for="${u.id}" ${u.role === "admin" ? "disabled" : ""}>
+                    <select data-plan-for="${u.id}" ${staff ? "disabled" : ""}>${planOptions(u.stored_plan)}</select>
+                    <select data-days-for="${u.id}" ${staff ? "disabled" : ""}>
                         <option value="30">30 gün</option><option value="365">1 yıl</option><option value="">Süresiz</option>
                     </select>
-                    <button type="button" class="btn sm" data-assign="${u.id}" ${u.role === "admin" ? "disabled" : ""}>ATA</button>
+                    <button type="button" class="btn sm" data-assign="${u.id}" ${staff ? "disabled" : ""}>ATA</button>
                 </td>
                 <td class="row-actions">
-                    <button type="button" class="btn sm" data-role="${u.id}" data-next="${u.role === "admin" ? "user" : "admin"}" ${self ? "disabled" : ""}>${u.role === "admin" ? "YETKİYİ AL" : "YÖNETİCİ YAP"}</button>
-                    <button type="button" class="btn sm ${u.disabled ? "" : "danger"}" data-disable="${u.id}" data-next="${u.disabled ? "0" : "1"}" ${self ? "disabled" : ""}>${u.disabled ? "AKTİF ET" : "ASKIYA AL"}</button>
-                    <button type="button" class="btn sm danger" data-remove="${u.id}" data-email="${esc(u.email)}" ${self ? "disabled" : ""}>SİL</button>
+                    <button type="button" class="btn sm" data-role="${u.id}" data-next="${staff ? "user" : "admin"}" ${locked ? `disabled title="${why}"` : ""}>${staff ? "YETKİYİ AL" : "YÖNETİCİ YAP"}</button>
+                    <button type="button" class="btn sm ${u.disabled ? "" : "danger"}" data-disable="${u.id}" data-next="${u.disabled ? "0" : "1"}" ${locked ? `disabled title="${why}"` : ""}>${u.disabled ? "AKTİF ET" : "ASKIYA AL"}</button>
+                    <button type="button" class="btn sm danger" data-remove="${u.id}" data-email="${esc(u.email)}" ${locked ? `disabled title="${why}"` : ""}>SİL</button>
                 </td>
             </tr>`;
         }).join("") : '<tr><td colspan="8" class="empty">Kullanıcı bulunamadı.</td></tr>';

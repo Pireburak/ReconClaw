@@ -64,3 +64,13 @@ def test_turnstile_required_when_configured(client, monkeypatch):
 def test_turnstile_off_by_default(client):
     assert captcha.enabled() is False
     assert "cf-turnstile" not in client.get("/login").text
+
+
+def test_csrf_origin_check(client):
+    client.post("/auth/register", json={"email": "csrf@example.com", "password": "parola123"})
+    evil = {"Origin": "https://kotu-site.example"}
+    assert client.post("/api/me/token", headers=evil).status_code == 403
+    assert client.delete("/api/scans", headers=evil).status_code == 403
+    assert client.delete("/api/scans", headers={"Sec-Fetch-Site": "cross-site"}).status_code == 403
+    assert client.delete("/api/scans", headers={"Origin": "http://testserver"}).status_code == 200
+    assert client.get("/api/me", headers=evil).status_code == 200  # okuma istekleri etkilenmez

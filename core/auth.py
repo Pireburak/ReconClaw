@@ -83,7 +83,8 @@ def public_user(row) -> dict:
         "has_api_token": bool(row["api_token"]),
         "providers": providers,
         "role": row["role"],
-        "is_admin": row["role"] == "admin",
+        "is_admin": row["role"] in ("admin", "owner"),
+        "is_owner": row["role"] == "owner",
         "created_at": row["created_at"],
         "last_login": row["last_login"],
     }
@@ -156,8 +157,39 @@ def sync_admins():
         return 0
     marks = ",".join("?" * len(config.ADMIN_EMAILS))
     with closing(get_db_connection()) as conn, conn:
-        return conn.execute(f"UPDATE users SET role = 'admin' WHERE email IN ({marks}) AND role != 'admin'",
+        return conn.execute(f"UPDATE users SET role = 'admin' WHERE email IN ({marks}) AND role = 'user'",
                             tuple(config.ADMIN_EMAILS)).rowcount
+
+
+def sync_owner() -> bool:
+    """OWNER_EMAIL tanımlıysa o hesabı tek sahip (owner) yapar; varsa önceki sahip yöneticiye iner."""
+    if not config.OWNER_EMAIL:
+        return False
+    return set_owner(config.OWNER_EMAIL)
+
+
+def set_owner(email: str) -> bool:
+    """Hesabı sistemin tek sahibi yapar. Sahip silinemez, askıya alınamaz, yetkisi alınamaz."""
+    email = email.strip().lower()
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if row is None:
+            return False
+        conn.execute("UPDATE users SET role = 'admin' WHERE role = 'owner' AND id != ?", (row["id"],))
+        conn.execute("UPDATE users SET role = 'owner', disabled = 0 WHERE id = ?", (row["id"],))
+    return True
+
+
+def reset_password(email: str, password: str) -> bool:
+    """Terminalden parola sıfırlama (manage.py passwd). Hesabın tüm oturumları kapanır."""
+    validate_password(password)
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT id FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
+        if row is None:
+            return False
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(password), row["id"]))
+        conn.execute("DELETE FROM sessions WHERE user_id = ?", (row["id"],))
+    return True
 
 
 def set_role(email: str, role: str) -> bool:
