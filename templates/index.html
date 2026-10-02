@@ -18,61 +18,43 @@
 
 <div class="app" id="app">
     <!-- ================= YAN MENÜ ================= -->
-    <aside class="sidebar" id="sidebar">
-        <a class="brand" href="#overview">
-            <img class="brand-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="40" height="40">
-            <div>
-                <div class="brand-name">RECONCLAW</div>
-                <div class="brand-sub">SEC_AUDIT v{{ version }} · {{ codename | upper }}</div>
-            </div>
+    <!-- ================= RAKUN + DOCK ================= -->
+    <aside class="rail" id="sidebar">
+        <a class="rail-logo" href="#overview" title="ReconClaw v{{ version }} {{ codename }}">
+            <img src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="64" height="64">
         </a>
-
-        <nav>
+        <nav class="dock" id="dock" aria-label="Ana menü">
             <ul class="nav" id="nav">
-                <li><a href="#overview" data-view="overview" title="SYS_OVERVIEW"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="code">[00]</span> <span class="label">SYS_OVERVIEW</span><kbd class="kbd-hint">0</kbd></a></li>
-                <li><a href="#scan" data-view="scan" title="NEW_SCAN"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span class="code">[01]</span> <span class="label">NEW_SCAN</span><kbd class="kbd-hint">1</kbd></a></li>
-                <li><a href="#results" data-view="results" title="SCAN_RESULTS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg><span class="code">[02]</span> <span class="label">SCAN_RESULTS</span><kbd class="kbd-hint">2</kbd></a></li>
-                <li><a href="#history" data-view="history" title="SCAN_HISTORY"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg><span class="code">[03]</span> <span class="label">SCAN_HISTORY</span><kbd class="kbd-hint">3</kbd></a></li>
-                <li><a href="#compare" data-view="compare" title="SCAN_DIFF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg><span class="code">[04]</span> <span class="label">SCAN_DIFF</span><kbd class="kbd-hint">4</kbd></a></li>
-                <li><a href="#map" data-view="map" title="NETWORK_MAP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg><span class="code">[05]</span> <span class="label">NETWORK_MAP</span><kbd class="kbd-hint">5</kbd></a></li>
-                <li><a href="#settings" data-view="settings" title="SETTINGS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="code">[06]</span> <span class="label">SETTINGS</span><kbd class="kbd-hint">6</kbd></a></li>
+                <li><a class="dock-item" href="#overview" data-view="overview" aria-label="SYS_OVERVIEW"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span><span class="dock-tip"><b>SYS_OVERVIEW</b><kbd>0</kbd></span></a></li>
+                <li><a class="dock-item" href="#scan" data-view="scan" aria-label="NEW_SCAN"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></span><span class="dock-tip"><b>NEW_SCAN</b><kbd>1</kbd></span></a></li>
+                <li><a class="dock-item" href="#results" data-view="results" aria-label="SCAN_RESULTS"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span><span class="dock-tip"><b>SCAN_RESULTS</b><kbd>2</kbd></span></a></li>
+                <li><a class="dock-item" href="#history" data-view="history" aria-label="SCAN_HISTORY"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg></span><span class="dock-tip"><b>SCAN_HISTORY</b><kbd>3</kbd></span></a></li>
+                <li><a class="dock-item" href="#compare" data-view="compare" aria-label="SCAN_DIFF"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span><span class="dock-tip"><b>SCAN_DIFF</b><kbd>4</kbd></span></a></li>
+                <li><a class="dock-item" href="#map" data-view="map" aria-label="NETWORK_MAP"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg></span><span class="dock-tip"><b>NETWORK_MAP</b><kbd>5</kbd></span></a></li>
+                <li><a class="dock-item" href="#settings" data-view="settings" aria-label="SETTINGS"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>SETTINGS</b><kbd>6</kbd></span></a></li>
             </ul>
         </nav>
-
-        <div class="side-status">
-            <div class="clock"><span>UTC</span><b id="utcClock">--:--:--</b></div>
-            <div class="clock up"><span>UPTIME</span><b id="uptime">00:00:00</b></div>
-            <div class="indicator" id="indGateway">GATEWAY_ONLINE</div>
-            <div class="indicator" id="indEngine">RECON_ENGINE_READY</div>
-            <div class="indicator" id="indDb">DATABASE_ONLINE</div>
-        </div>
-
-        <div class="user-card">
-            <div class="avatar" id="avatar">
-                {% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.name[:1] | upper }}{% endif %}
-            </div>
-            <div class="user-meta">
-                <b id="userName">{{ user.name }}</b>
-                <span>{{ user.email }}</span>
-            </div>
-            <button type="button" class="icon-btn" id="logoutBtn" title="Çıkış yap" aria-label="Çıkış yap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <div class="rail-foot">
+            <button type="button" class="dock-item" id="logoutBtn" aria-label="Çıkış yap">
+                <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></span>
+                <span class="dock-tip"><b>ÇIKIŞ YAP</b></span>
             </button>
         </div>
-        <button type="button" class="icon-btn collapse-btn" id="collapseBtn" title="Menüyü daralt / genişlet ([)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><span>MENÜYÜ DARALT</span>
-        </button>
-        <div class="credit">Developed by <b>John Doe</b></div>
     </aside>
-    <div class="scrim" id="scrim" hidden></div>
 
     <!-- ================= İÇERİK ================= -->
     <main class="main">
+        <div class="statusbar">
+            <img class="mobile-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="" width="28" height="28">
+            <span class="indicator" id="indGateway">GATEWAY_ONLINE</span>
+            <span class="indicator" id="indEngine">RECON_ENGINE_READY</span>
+            <span class="indicator" id="indDb">DATABASE_ONLINE</span>
+            <span class="sb-spacer"></span>
+            <span class="sb-clock">UTC <b id="utcClock">--:--:--</b></span>
+            <span class="sb-clock up">UPTIME <b id="uptime">00:00:00</b></span>
+        </div>
         <header class="topbar">
             <div style="display:flex;gap:12px;align-items:flex-start">
-                <button type="button" class="icon-btn menu-btn" id="menuBtn" aria-label="Menü">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-                </button>
                 <div>
                     <div class="crumbs">RECONCLAW / <b id="crumb">SYS_OVERVIEW</b></div>
                     <h1><span id="viewTitle">OPERATIONS_CENTER</span> <span class="live">LIVE</span></h1>
@@ -93,6 +75,10 @@
                     <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
                     <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
                 </button>
+                <a class="user-chip" href="#settings" title="{{ user.email }}">
+                    <span class="avatar" id="avatar">{% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.name[:1] | upper }}{% endif %}</span>
+                    <span id="userName">{{ user.name }}</span>
+                </a>
                 <div class="popover" id="bellPop" hidden>
                     <h4>KRİTİK &amp; YÜKSEK OLAYLAR</h4>
                     <ul class="feed" id="bellList"></ul>
@@ -102,6 +88,79 @@
 
         <!-- [00] GENEL BAKIŞ -->
         <section data-page="overview">
+            <section class="features" id="featuresBlock">
+                <button type="button" class="feat-close" id="hideFeatures" title="Tanıtımı gizle (Ctrl+K ile geri açılır)" aria-label="Tanıtımı gizle">✕</button>
+                <div class="feat-head">
+                    <span class="feat-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg> Rakun gibi keşfeder 🦝</span>
+                    <h2>Keşiften rapora, ihtiyacın olan her şey</h2>
+                    <p>ReconClaw; port tarama, risk analizi ve raporlamayı tek bir panelde birleştirir.</p>
+                </div>
+                <div class="feat-tabs" role="tablist" id="featTabs">
+                    <button type="button" role="tab" data-ftab="recon" class="on" aria-selected="true">Keşif</button>
+                    <button type="button" role="tab" data-ftab="analysis" aria-selected="false">Analiz</button>
+                    <button type="button" role="tab" data-ftab="security" aria-selected="false">Güvenlik &amp; Rapor</button>
+                </div>
+                <div class="feat-grid" role="tabpanel" data-fpanel="recon">
+                    <a class="feat-card" href="#scan">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M12 18h.01"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/></svg></span>
+                        <h4>Asenkron TCP tarama</h4>
+                        <p>Yüzlerce portu aynı anda, saniyeler içinde yoklar; eşzamanlılık sınırıyla hedefi boğmaz.</p>
+                        <span class="feat-foot">Tarama başlat <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#scan">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m16 16-1.9-1.9"/></svg></span>
+                        <h4>Banner &amp; sürüm tespiti</h4>
+                        <p>Açık servisin kendini tanıttığı satırı yakalar; SSH, FTP, HTTP sürümlerini ortaya çıkarır.</p>
+                        <span class="feat-foot">Tarama başlat <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#scan">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+                        <h4>Akıllı hedef girişi</h4>
+                        <p>DNS çözümler, https://site.com/yol gibi girdileri otomatik temizler; IP veya alan adı kabul eder.</p>
+                        <span class="feat-foot">Hedef gir <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                </div>
+                <div class="feat-grid" role="tabpanel" data-fpanel="analysis" hidden>
+                    <a class="feat-card" href="#results">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+                        <h4>0–100 risk skoru</h4>
+                        <p>Her açık servis kritikliğine göre puanlanır; düşük, orta, yüksek ve kritik seviyelere ayrılır.</p>
+                        <span class="feat-foot">Sonuçlara git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#results">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3 3 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>
+                        <h4>CVE imza eşleştirme</h4>
+                        <p>vsFTPd 2.3.4, eski OpenSSH, Apache 2.4.49 gibi bilinen zafiyetli sürümleri anında işaretler.</p>
+                        <span class="feat-foot">Sonuçlara git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#compare">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg></span>
+                        <h4>Tarama karşılaştırma</h4>
+                        <p>Aynı hedefin iki taramasında açılan/kapanan portları ve çözülen bulguları gösterir.</p>
+                        <span class="feat-foot">Karşılaştır <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                </div>
+                <div class="feat-grid" role="tabpanel" data-fpanel="security" hidden>
+                    <a class="feat-card" href="#results">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+                        <h4>Eklenti kontrolleri</h4>
+                        <p>HTTP güvenlik başlıklarını ve TLS sertifikalarını denetler; zayıf protokolleri yakalar.</p>
+                        <span class="feat-foot">Bulguları gör <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#history">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+                        <h4>PDF &amp; CSV rapor</h4>
+                        <p>Yönetici özetli, yazdırılabilir rapor ve Excel'de açılabilen CSV dışa aktarımı.</p>
+                        <span class="feat-foot">Geçmişe git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#settings">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg></span>
+                        <h4>API anahtarı &amp; oturumlar</h4>
+                        <p>curl veya script ile tarama yap; parola, oturum ve anahtarlarını tek yerden yönet.</p>
+                        <span class="feat-foot">Ayarlara git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                </div>
+            </section>
             <div class="stats">
                 <div class="stat"><div class="stat-label">DOMAINS_SCANNED</div><div class="stat-value skeleton" id="sDomains">0</div><div class="stat-sub" id="sScans">0 tarama</div><svg class="spark" id="spkScans" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
                 <div class="stat c-pink"><div class="stat-label">VULNERABILITIES</div><div class="stat-value skeleton" id="sVulns">0</div><div class="stat-sub">CVE + eklenti bulguları</div><svg class="spark" id="spkVulns" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
@@ -315,6 +374,7 @@
                         <button type="button" data-theme-pref="system">💻 Sistem</button>
                     </div>
                     <div class="swatches" id="accentSwatches">
+                        <button type="button" class="swatch" data-accent="copper" title="Bakır (rakun)"></button>
                         <button type="button" class="swatch" data-accent="cyan" title="Camgöbeği"></button>
                         <button type="button" class="swatch" data-accent="violet" title="Mor"></button>
                         <button type="button" class="swatch" data-accent="green" title="Yeşil"></button>
@@ -322,6 +382,7 @@
                         <button type="button" class="swatch" data-accent="amber" title="Kehribar"></button>
                     </div>
                     <label class="toggle-row"><span>Hareketli arka plan (parçacık ağı)</span><input type="checkbox" id="fxToggle"></label>
+                    <label class="toggle-row"><span>Genel bakışta özellik tanıtımı</span><input type="checkbox" id="featToggle"></label>
                     <p class="muted small" style="margin-top:14px">Klavye kısayolları için <kbd>?</kbd> tuşuna basın.</p>
                 </section>
 
@@ -382,6 +443,7 @@
                 </section>
             </div>
         </section>
+        <footer class="app-foot">🦝 ReconClaw v{{ version }} {{ codename }} · Developed by <b>John Doe</b></footer>
     </main>
 </div>
 
@@ -407,7 +469,6 @@
             <dt><kbd>0</kbd> … <kbd>6</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
             <dt><kbd>N</kbd></dt><dd>Yeni tarama</dd>
             <dt><kbd>T</kbd></dt><dd>Aydınlık / karanlık tema</dd>
-            <dt><kbd>[</kbd></dt><dd>Yan menüyü daralt / genişlet</dd>
             <dt><kbd>/</kbd></dt><dd>Geçmişte ara</dd>
             <dt><kbd>?</kbd></dt><dd>Bu pencere</dd>
             <dt><kbd>Esc</kbd></dt><dd>Pencereyi kapat</dd>
