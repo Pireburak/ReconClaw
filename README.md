@@ -75,7 +75,6 @@
   - [Paylaşım bağlantısı](#-salt-okunur-paylaşım-bağlantısı)
 - [Sürekli İzleme (v7.0)](#-sürekli-izleme-v70)
 - [Pasif Keşif (v7.0)](#️-pasif-keşif-v70)
-- [Yönetim Paneli ve Admin Hesabı](#-yönetim-paneli-ve-admin-hesabı)
 - [Abonelik Planları](#-abonelik-planları)
 - [Nasıl Çalışır?](#️-nasıl-çalışır)
 - [Risk Değerlendirme Modeli](#-risk-değerlendirme-modeli)
@@ -121,7 +120,6 @@ ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti
 | 🤖 | **AI Analist** *(v8)* | Claude ile Türkçe yönetici özeti, önceliklendirilmiş aksiyon planı ve rapor üzerine soru-cevap; internetsiz ortamda kural tabanlı analist |
 | 📡 | **Sürekli izleme** *(v7)* | Saatlik / günlük / haftalık otomatik tarama, değişim alarmı, Discord / Slack webhook |
 | 🛰️ | **Pasif keşif** *(v7)* | Sertifika Şeffaflığı loglarından alt alan adları, DNS kayıtları, SPF / DMARC / CAA denetimi |
-| 👑 | **Yönetim paneli** *(v7)* | Kullanıcılar, plan atama, askıya alma, gelir özeti ve denetim kaydı |
 
 **Kimler için?** Ağını tanımak isteyen sistem yöneticileri, siber güvenlik öğrencileri, CTF / lab ortamlarında çalışanlar ve yetkili sızma testi öncesinde hızlı bir ön değerlendirme isteyenler için.
 
@@ -269,7 +267,6 @@ Tüm taramalar en yeniden eskiye listelenir. Hedef veya IP'ye göre **anlık ara
 |---------|-------|
 | `Ctrl` + `K` | Komut paleti |
 | `0` … `9` | Bölümler arasında geçiş (0 = Operasyon Merkezi, 6 = Pasif Keşif, 7 = Sürekli İzleme, 8 = Ayarlar, 9 = Abonelik) |
-| `A` | Yönetim paneli (yalnızca yöneticiler) |
 | `N` | Yeni tarama |
 | `T` | Karanlık / kâğıt tema |
 | `/` | Arşivde ara |
@@ -418,68 +415,39 @@ MITRE ATT&CK karşılığı: T1596.003 (Digital Certificates) ve T1590.002 (DNS)
 
 ---
 
-## 👑 Yönetim Paneli ve Admin Hesabı
-
-<p align="center"><img src="docs/screenshots/26-yonetim-paneli.jpg" alt="Yönetim paneli" width="100%"></p>
-
-Yönetici hesapları **sınırsız "Admin" seviyesindedir** (kota, port, izleme ve AI sınırı yoktur) ve sol menüde kırmızı kalkanlı **YÖNETİM** sayfasını görür (kısayol `A`):
-
-- **Sistem özeti:** kullanıcı sayısı, ücretli abone, aylık yinelenen gelir (MRR), tahsilat, bugünkü tarama, aktif izleme, son 24 saatteki hatalı giriş, 14 günlük kayıt / tarama grafiği
-- **Kullanıcılar:** arama, ödeme kaydı oluşturmadan plan atama (30 gün / 1 yıl / süresiz), yönetici yapma, askıya alma (oturumlar ve API anahtarı anında geçersiz olur), silme
-- **Denetim kaydı:** giriş, hatalı giriş, plan değişikliği, API anahtarı ve yönetici eylemleri; IP adresi ve işlemi yapan kişiyle
-
-Yönetici kendini askıya alamaz, yetkisini kaldıramaz veya silemez; böylece sistem yöneticisiz kalmaz.
-
-**Panel gizlidir (v8.2):** Yönetici olmayan kullanıcılar ve oturumsuz ziyaretçiler için panel hiç yokmuş gibi davranır. Menüde görünmez, sayfa kaynağında ve herkese giden JavaScript'te izi yoktur (`admin.js` yalnızca yöneticilere yüklenir), `/api/admin/*` uç noktaları **404** döner ve `/docs` API belgesinde listelenmez. Asıl koruma ise sunucunun her istekte rolü denetlemesidir. Her kullanıcı kendi hesap etkinliğini **Ayarlar → Hesap etkinliği**'nde görür.
-
-**Kendinizi yönetici yapmak için** (önce siteye normal şekilde kayıt olun):
-
-```bash
-# Yöntem 1: komut satırı (anında)
-python manage.py make-admin sizin@mailiniz.com
-
-# Yöntem 2: .env dosyası (sunucu yeniden başlatılınca)
-ADMIN_EMAILS=sizin@mailiniz.com
-```
-
-> [!TIP]
-> Güvenlik gereği parolayla açılan bir hesap, `ADMIN_EMAILS` listesinde olsa bile **kayıt anında** yönetici olmaz (e-posta doğrulanmadığı için adresi sizden önce alan biri yönetici olabilirdi). Hesap sunucu açılırken veya `manage.py` ile yükseltilir. E-postası sağlayıcı tarafından doğrulanmış Google / GitHub girişi ise anında yönetici olur.
-
----
-
 ## 💳 Abonelik Planları
 
-ReconClaw **5 kademeli üyelik** sistemine sahiptir. Her yeni hesap **Free** planla başlar; sınırlar yalnızca arayüzde değil **sunucu tarafında** uygulanır (API ile de aşılamaz). Sınırı aşan bir istek `HTTP 402` döner ve arayüz kullanıcıyı **Abonelik** sayfasına yönlendirir. **Sınırsız erişim yalnızca yöneticilere** (Admin seviyesi) aittir; hiçbir satın alınabilir plan sınırsız değildir.
+ReconClaw **5 kademeli üyelik** sistemine sahiptir. Her yeni hesap **Free** planla başlar; sınırlar yalnızca arayüzde değil **sunucu tarafında** uygulanır (API ile de aşılamaz). Sınırı aşan bir istek `HTTP 402` döner ve arayüz kullanıcıyı **Abonelik** sayfasına yönlendirir.
 
 <p align="center"><img src="docs/screenshots/16-abonelik.jpg" alt="Abonelik planları" width="100%"></p>
 
-| Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max | 🛡️ Admin |
-|---------|:------:|:-----:|:---------:|:-------:|:-----------:|:-------:|
-| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺1.999** | satın alınamaz |
-| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺19.990 | — |
-| Günlük tarama | 5 | 50 | 200 | 1.000 | 5.000 | ∞ |
-| Dakikalık tarama | 2 | 5 | 10 | 20 | 60 | ∞ |
-| Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 | 1–65535 |
-| HTTP / TLS eklentileri | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| PDF / CSV rapor, paylaşım bağlantısı | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tarama karşılaştırma | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| API anahtarı | — | — | ✅ | ✅ | ✅ | ✅ |
-| Doğrulanmış hedef | 1 | 3 | 10 | 25 | 100 | ∞ |
-| Pasif keşif (CT / DNS) | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Sürekli izleme | — | 1 görev | 5 görev | 20 görev | 50 görev | ∞ |
-| Saatlik izleme | — | — | — | ✅ | ✅ | ✅ |
-| AI Analist | — | — | 20 / gün | 100 / gün | 500 / gün | ∞ |
-| Güvenlik karnesi, ATT&CK, uyum | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max |
+|---------|:------:|:-----:|:---------:|:-------:|:-----------:|
+| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺1.999** |
+| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺19.990 |
+| Günlük tarama | 5 | 50 | 200 | 1.000 | 5.000 |
+| Dakikalık tarama | 2 | 5 | 10 | 20 | 60 |
+| Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 |
+| HTTP / TLS eklentileri | — | ✅ | ✅ | ✅ | ✅ |
+| PDF / CSV rapor, paylaşım bağlantısı | — | ✅ | ✅ | ✅ | ✅ |
+| Tarama karşılaştırma | — | ✅ | ✅ | ✅ | ✅ |
+| API anahtarı | — | — | ✅ | ✅ | ✅ |
+| Doğrulanmış hedef | 1 | 3 | 10 | 25 | 100 |
+| Pasif keşif (CT / DNS) | — | ✅ | ✅ | ✅ | ✅ |
+| Sürekli izleme | — | 1 görev | 5 görev | 20 görev | 50 görev |
+| Saatlik izleme | — | — | — | ✅ | ✅ |
+| AI Analist | — | — | 20 / gün | 100 / gün | 500 / gün |
+| Güvenlik karnesi, ATT&CK, uyum | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-### 🌍 Bölgesel fiyatlandırma (v8.1)
+### 🌍 Türkiye ve yurt dışı fiyatı
 
-<p align="center"><img src="docs/screenshots/28-bolgesel-fiyat.jpg" alt="Bölgesel fiyatlandırma" width="100%"></p>
+<p align="center"><img src="docs/screenshots/28-bolgesel-fiyat.jpg" alt="Yurt dışı fiyatı" width="100%"></p>
 
-Fiyatlar ziyaretçinin **IP adresinin ülkesine** göre yerel para biriminde gösterilir: Almanya ve Avro Bölgesi **€**, ABD **$**, Birleşik Krallık **£**, Suudi Arabistan **SAR**, BAE **AED**, Katar, Kuveyt, Azerbaycan, İsviçre, Japonya, Kanada, Avustralya ve Rusya kendi para birimiyle; listede olmayan ülkeler **$** ile.
+Ziyaretçinin ülkesi **IP adresinden** bulunur. **Türkiye'den** gelenler fiyatları **TL** olarak görür ve öder; **yurt dışındaki tüm ülkeler** (Almanya, ABD, Suudi Arabistan...) tek para birimi olan **Euro (€)** ile görür ve öder.
 
-- **En ucuz fiyat her zaman Türkiye'dedir.** Yurt dışında her ücretli planın aylık fiyatına **≈950 TL** (`REGIONAL_SURCHARGE_TRY`) eklenir, güncel kurla çevrilir ve x,99 biçimine yuvarlanır. Örnek: Pro = (299 + 950) TL ÷ kur → Almanya'da yaklaşık **€24,99**.
-- Kurlar open.er-api.com'dan 12 saatte bir alınır; internet yoksa `.env`'deki `FX_RATES` veya yerleşik yaklaşık kurlar kullanılır.
-- Abonelik sayfasındaki **BÖLGE** menüsünden başka ülkelerin fiyatları önizlenebilir; **ödeme ise her zaman IP'den tespit edilen bölgenin fiyatıyla** alınır (VPN'siz biri Türkiye fiyatı seçemez). Ödeme kaydı para birimi, ülke ve TL karşılığıyla saklanır; yönetim panelindeki gelir TL'ye çevrilerek toplanır.
+- **En ucuz fiyat her zaman Türkiye'dedir.** Yurt dışında her ücretli planın aylık fiyatına **≈950 TL** (`REGIONAL_SURCHARGE_TRY`) eklenir, güncel Euro kuruyla çevrilir ve x,99 biçimine yuvarlanır. Örnek: Pro = (299 + 950) TL ÷ Euro kuru ≈ **€24,99**.
+- Euro kuru open.er-api.com'dan 12 saatte bir alınır; internet yoksa `.env`'deki `FX_RATES=EUR=...` veya yerleşik yaklaşık kur kullanılır.
+- Abonelik sayfasındaki **BÖLGE** menüsünden Türkiye / Yurt dışı fiyatları önizlenebilir; **ödeme ise her zaman IP'den tespit edilen bölgenin fiyatıyla** alınır. Ödeme kaydı para birimi, ülke ve TL karşılığıyla saklanır.
 - Yerel ağdan (127.0.0.1, 192.168.x) bağlananlar Türkiye (`DEFAULT_COUNTRY`) sayılır. Cloudflare arkasında `TRUST_COUNTRY_HEADER=true` ile `CF-IPCountry` başlığı kullanılır.
 
 - **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez. İzleme taramaları da kotaya sayılır.
@@ -712,8 +680,6 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 | `GET /api/alerts` · `POST /api/alerts/seen` | **v7:** İzleme alarmları / tümünü okundu işaretle |
 | `POST /api/recon` · `GET /api/recon` · `GET /api/recon/{id}` | **v7:** Pasif keşif başlat `{"domain"}` / geçmiş / kayıtlı sonuç |
 | `GET /api/me/audit` | **v7:** Hesabınızın güvenlik olayları |
-| `GET /api/admin/overview` · `GET /api/admin/users` · `GET /api/admin/audit` | **v7 (yönetici):** Sistem özeti, kullanıcı listesi, denetim kaydı |
-| `PATCH /api/admin/users/{id}` · `DELETE /api/admin/users/{id}` | **v7 (yönetici):** `{"role", "plan", "days", "disabled"}` ile güncelle / sil |
 | `GET /api/health` | Sağlık kontrolü (oturum gerektirmez) |
 
 <details>
@@ -753,15 +719,14 @@ Tüm ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yap�
 | `ALLOW_PRIVATE_TARGETS` | `true` | İç ağ adreslerinin taranması. **İnternete açık sunucuda `false` yapın** |
 | `SCAN_RATE_LIMIT` | `0` | Plan sınırlarına ek, tüm kullanıcılar için dakikalık üst sınır (0 = kapalı, yalnızca plan sınırları) |
 | `REQUIRE_TARGET_VERIFICATION` | `false` | Yalnızca sahipliği doğrulanmış hedefler taransın. **Herkese açık sunucuda `true` yapın** |
-| `ADMIN_EMAILS` | *(boş)* | Virgülle ayrılmış yönetici e-postaları (bkz. [Yönetim Paneli](#-yönetim-paneli-ve-admin-hesabı)) |
 | `SCHEDULER_ENABLED` | `true` | Sürekli izleme zamanlayıcısı |
 | `ANTHROPIC_API_KEY` | *(boş)* | AI Analist için Claude API anahtarı. Boşsa kural tabanlı analist çalışır |
 | `AI_MODEL` | `claude-opus-5-5` | AI Analist'in kullandığı Claude modeli |
-| `REGIONAL_SURCHARGE_TRY` | `950` | Yurt dışı fiyatlarına eklenen TL tutarı (aylık, plan başına) |
+| `REGIONAL_SURCHARGE_TRY` | `950` | Yurt dışı (Euro) fiyatlarına eklenen TL tutarı (aylık, plan başına) |
 | `DEFAULT_COUNTRY` | `TR` | Ülke bulunamazsa kullanılacak ülke |
 | `GEO_LOOKUP` | `true` | Ziyaretçi IP'sinin ülkesini ipapi.co ile bul |
 | `TRUST_COUNTRY_HEADER` | `false` | Cloudflare `CF-IPCountry` başlığına güven |
-| `FX_RATES` | *(boş)* | Kurları sabitle, ör. `USD=45,EUR=52,SAR=12` (1 birim = kaç TL) |
+| `FX_RATES` | *(boş)* | Euro kurunu sabitle, ör. `EUR=52` (1 € = kaç TL) |
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | *(boş)* | Cloudflare Turnstile bot doğrulaması (ikisi de doluysa giriş/kayıtta zorunlu) |
 | `RECONCLAW_DB` | `data/reconclaw_v4.db` | Veritabanı dosyasının yolu |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | — | Google ile giriş |
@@ -833,8 +798,7 @@ ReconClaw bir güvenlik aracı olduğu için kendi güvenliğine de özen göste
 | **HTTP başlıkları** | CSP (yalnızca `'self'`), HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy. ReconClaw kendi `http_headers` eklentisinden **temiz geçer** |
 | **Dışa aktarım** | CSV'de Excel formül enjeksiyonuna karşı hücreler temizlenir; arayüzde tüm sunucu verisi HTML'e basılmadan kaçışlanır (XSS) |
 | **Bağımsızlık** | Yazı tipleri projeye gömülüdür (`static/fonts`); harici CDN'e istek atılmaz |
-| **Yönetici rolü** *(v7)* | Kayıt anında yöneticilik yalnızca e-postası doğrulanmış sosyal girişe verilir; yönetici kendini askıya alamaz / silemez; askıya alınan hesabın tüm oturumları ve API anahtarı anında düşer |
-| **Denetim kaydı** *(v7)* | Giriş, hatalı giriş, plan, API anahtarı ve yönetici eylemleri IP ile kayıt altına alınır |
+| **Denetim kaydı** *(v7)* | Giriş, hatalı giriş, plan ve API anahtarı olayları IP ile kayıt altına alınır; kullanıcı kendi kaydını Ayarlar'da görür |
 | **İstem enjeksiyonu** *(v8)* | Taranan sunucudan gelen banner'lar AI modeline ayrı veri bloğunda ve "güvenilmez veri" olarak verilir; analist savunma odaklı talimatla sınırlıdır |
 | **Paylaşım** *(v8)* | 192 bit rastgele anahtar, `noindex`, `no-referrer`, tek tıkla iptal; sahibinin planı düşerse veya hesabı askıya alınırsa bağlantı çalışmaz |
 | **Webhook** *(v7)* | Yalnızca http(s); `ALLOW_PRIVATE_TARGETS=false` iken iç ağ adreslerine gönderim engellenir; arayüzde adresin gizli kısmı maskelenir |
@@ -896,14 +860,13 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 | Özellik | Açıklama |
 |---------|----------|
-| Gizli yönetim paneli | Yönetici olmayanlara 404, API belgesinde ve herkese açık kodda iz yok |
 | Bot koruması | Cloudflare Turnstile (isteğe bağlı) + bal küpü alanı + hız sınırı |
 
 ### 🌍 v8.1 Cortex
 
 | Özellik | Açıklama |
 |---------|----------|
-| Bölgesel fiyatlandırma | IP'ye göre ülke ve para birimi (€, $, £, SAR, AED...), canlı kur, yurt dışına ≈950 TL fark; Türkiye en ucuz |
+| Türkiye / yurt dışı fiyatı | IP'ye göre Türkiye'de TL, yurt dışında Euro; canlı kur, yurt dışına ≈950 TL fark; Türkiye en ucuz |
 
 ### 🧠 v8.0 Cortex
 
@@ -919,8 +882,6 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 | Özellik | Açıklama |
 |---------|----------|
-| 👑 Yönetici rolü | `ADMIN_EMAILS` / `manage.py make-admin`; sınırsız Admin seviyesi; Ultra Max ₺1.999 ve sınırlı |
-| 🗂️ Yönetim paneli | Kullanıcılar, plan atama, askıya alma, MRR, 14 günlük grafik, denetim kaydı |
 | 📡 Sürekli izleme | Saatlik / günlük / haftalık zamanlanmış tarama, değişim alarmı, Discord / Slack webhook |
 | 🛰️ Pasif keşif | Sertifika Şeffaflığı alt alan adları, DNS kayıtları, SPF / DMARC / CAA puanı |
 | 📝 Hesap etkinliği | Kullanıcının kendi güvenlik kaydı; zilde izleme alarmları |
@@ -998,14 +959,12 @@ Tarama motoru ve API aynı kaldı; v6.0 baştan sona bir **arayüz** sürümüd�
 ```text
 ReconClaw/
 ├── main.py                 # FastAPI uygulaması: sayfalar, API, güvenlik başlıkları, hız sınırı, zamanlayıcı
-├── manage.py               # Yönetim komutları: make-admin, remove-admin, list-admins
 ├── core/
 │   ├── config.py           # .env / ortam değişkeni ayarları
-│   ├── plans.py            # Abonelik planları, kotalar, demo ödeme, Admin seviyesi
-│   ├── pricing.py          # v8.1: IP'ye göre ülke, para birimi, kur ve bölgesel fiyat
+│   ├── plans.py            # Abonelik planları, kotalar, demo ödeme
+│   ├── pricing.py          # v8.1: IP'ye göre Türkiye (TL) / yurt dışı (Euro) fiyatı
 │   ├── captcha.py          # v8.2: Cloudflare Turnstile + bal küpü bot koruması
 │   ├── verify.py           # Hedef sahipliği doğrulama (DNS TXT / .well-known)
-│   ├── admin.py            # v7: Yönetim paneli (özet, kullanıcılar, plan atama, askıya alma)
 │   ├── audit.py            # v7: Denetim kaydı
 │   ├── monitor.py          # v7: Sürekli izleme, değişim alarmları, webhook, zamanlayıcı
 │   ├── recon.py            # v7: Pasif keşif (CT logları, DNS, SPF / DMARC / CAA)
@@ -1029,7 +988,6 @@ ReconClaw/
 │   ├── js/
 │   │   ├── app.js          #   Panel mantığı, grafikler, harita, palet, kısayollar
 │   │   ├── ops.js          #   v7: Pasif keşif ve sürekli izleme sayfaları
-│   │   ├── admin.js        #   v7: Yönetim paneli (yalnızca yöneticilere yüklenir)
 │   │   ├── intel.js        #   v8: Derin analiz paneli, AI Analist, paylaşım
 │   │   ├── login.js        #   Giriş / kayıt formu
 │   │   ├── theme.js        #   Tema ve vurgu rengi (erken yüklenir)
@@ -1062,7 +1020,7 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 | `scans`      | `id`, `user_id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor), `share_token` |
 | `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
 | `findings`   | `id`, `scan_id`, `plugin`, `port`, `severity`, `title`, `detail`                 |
-| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `plan`, `plan_expires`, `role` (user/admin), `disabled`, `created_at`, `last_login` |
+| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `plan`, `plan_expires`, `role`, `disabled`, `created_at`, `last_login` |
 | `identities` | `id`, `user_id`, `provider` (google/github/…), `subject`                          |
 | `sessions`   | `token_hash`, `user_id`, `created_at`, `expires_at`, `user_agent`                |
 | `oauth_states` | `state`, `provider`, `verifier`, `created_at` (10 dk geçerli, tek kullanımlık) |
@@ -1092,7 +1050,7 @@ pytest
 | `test_plugins.py` | 6 | HTTP başlık ve TLS eklentileri, eklenti yükleyici |
 | `test_insights.py` | 4 | Panel istatistikleri, aktivite takvimi, tarama karşılaştırma |
 | `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
-| `test_admin.py` | 7 | Admin seviyesi, panel erişim kontrolü, plan atama, askıya alma, kendini kilitleme koruması, denetim kaydı, `manage.py`, doğrulanmamış e-postayla yöneticilik engeli |
+| `test_admin.py` | 7 | Erişim kontrolü, hesap askıya alma, denetim kaydı, rol yükseltme güvenliği |
 | `test_monitoring.py` | 9 | İzleme plan sınırları, yeni port alarmı ve webhook, plan düşünce duraklatma, zamanlayıcı, alarm kuralları, SPF / DMARC / CAA, alt alan adı etiketleri, keşif API'si |
 | `test_captcha.py` | 3 | Bal küpü, Turnstile zorunluluğu ve sunucu tarafı doğrulama, varsayılan kapalı |
 | `test_pricing.py` | 5 | Bölgeye göre para birimi, Türkiye'nin en ucuz olması, x,99 yuvarlama, ülke tespiti, ödemenin tespit edilen bölgeden alınması |
@@ -1157,12 +1115,6 @@ VirtualBox'ta 3D hızlandırma kapalıysa WebGL yazılımla çizilir. **Ayarlar 
 </details>
 
 <details>
-<summary><b>YÖNETİM menüsü görünmüyor</b></summary>
-
-Hesabınız yönetici değil. `python manage.py make-admin sizin@mailiniz.com` çalıştırın (hesabın önceden açılmış olması gerekir) ve sayfayı yenileyin. Plan rozetinde **ADMIN** yazmalıdır.
-</details>
-
-<details>
 <summary><b>AI Analist "KURAL TABANLI (ÇEVRİMDIŞI)" yazıyor</b></summary>
 
 `.env` dosyasında `ANTHROPIC_API_KEY` tanımlı değil ya da `anthropic` paketi kurulu değil. Anahtarı [console.anthropic.com](https://console.anthropic.com) adresinden alıp `.env`'e yazın, `pip install -r requirements.txt` çalıştırın ve sunucuyu yeniden başlatın. Anahtar olmadan da kural tabanlı analist çalışmaya devam eder.
@@ -1188,7 +1140,7 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 
 | # | Adım | Ne söylenir? |
 |---|------|--------------|
-| 1 | **Erişim terminalini** açın, yönetici hesabıyla girin | "Çok kullanıcılı, OAuth destekli; plan rozetinde ADMIN görüyorsunuz" |
+| 1 | **Erişim terminalini** açın ve giriş yapın | "Çok kullanıcılı, OAuth destekli, bot korumalı" |
 | 2 | `1` → `scanme.nmap.org` → **Taramayı başlat** | "Asenkron motor: yüzlerce port aynı anda, radarda canlı" |
 | 3 | **Hedef dosyası** → **Derin analiz → Karne** | "Bulgular A+…F nota dönüşüyor; CVE varsa not D'yi geçemiyor" |
 | 4 | **MITRE ATT&CK** sekmesi, bir tekniğe tıklayın | "Her açık port bir saldırı tekniğine bağlanıyor; keşiften etkiye olası saldırı zinciri" |
@@ -1197,7 +1149,6 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 | 7 | `7` → **Sürekli izleme** → görev ekle → **Şimdi tara** | "Değişiklik olduğunda alarm ve Discord bildirimi geliyor" |
 | 8 | `6` → **Pasif keşif** | "Hedefe tek paket göndermeden Sertifika Şeffaflığı loglarından alt alan adları ve e-posta güvenliği" |
 | 9 | **PAYLAŞ** → bağlantıyı telefonda açın | "Jüri raporu oturum açmadan görebiliyor; tek tıkla iptal" |
-| 10 | `A` → **Yönetim** paneli | "Gelir, kullanıcılar, plan atama ve denetim kaydı: bir SaaS ürününün yönetim katmanı" |
 
 **Olası sorulara hazır cevaplar:**
 
@@ -1217,7 +1168,7 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 - [x] Yapay zekâ destekli analist (Claude) ve çevrimdışı kural tabanlı analist
 - [x] MITRE ATT&CK eşleştirme, ISO 27001 / KVKK uyum ön değerlendirmesi
 - [x] Pasif keşif: Sertifika Şeffaflığı, DNS, e-posta güvenliği
-- [x] Yönetici paneli, denetim kaydı, salt-okunur rapor paylaşımı
+- [x] Denetim kaydı, salt-okunur rapor paylaşımı
 
 **🔭 Sıradaki adımlar**
 - [ ] Gerçek ödeme altyapısı (iyzico) ve e-fatura

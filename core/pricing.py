@@ -1,15 +1,15 @@
 """
-Bölgesel fiyatlandırma: ziyaretçinin ülkesine (IP adresi) göre para birimi ve fiyat.
+Bölgeye göre fiyatlandırma: Türkiye'den gelen ziyaretçiler TL, yurt dışından gelenler Euro öder.
 
-  * Türkiye'de fiyatlar TL olarak plan tablosundaki gibidir ve her zaman en ucuzu Türkiye'dir.
-  * Diğer ülkelerde her ücretli planın aylık fiyatına REGIONAL_SURCHARGE_TRY (varsayılan 950 TL)
-    eklenir ve güncel kurla yerel para birimine çevrilir (Almanya → €, ABD → $, Suudi Arabistan → SAR...).
-    Sonuç x,99 ile biten "fiyat etiketi" biçimine yuvarlanır. Yıllık fiyat = aylık × 10.
+  * Türkiye'de fiyatlar plan tablosundaki gibidir (TL) ve her zaman en ucuzu Türkiye'dir.
+  * Yurt dışında (Türkiye dışındaki tüm ülkeler) her ücretli planın aylık fiyatına
+    REGIONAL_SURCHARGE_TRY (varsayılan 950 TL) eklenir ve güncel Euro kuruyla çevrilir; sonuç
+    x,99 biçimine yuvarlanır. Yıllık fiyat = aylık × 10. Tek bir Euro hesabıyla tahsilat yapılabilir.
   * Ülke tespiti: (isteğe bağlı) Cloudflare'in CF-IPCountry başlığı → istemci IP'si için
     çevrimiçi GeoIP sorgusu (önbellekli) → bulunamazsa DEFAULT_COUNTRY (TR). Yerel ağ adresleri
     (127.0.0.1, 192.168.x) her zaman varsayılan ülkeye düşer.
-  * Kurlar open.er-api.com'dan 12 saatte bir alınır; internet yoksa .env'deki FX_RATES veya
-    yerleşik yaklaşık kurlar kullanılır.
+  * Euro kuru open.er-api.com'dan 12 saatte bir alınır; internet yoksa .env'deki FX_RATES veya
+    yerleşik yaklaşık kur kullanılır.
 """
 
 import ipaddress
@@ -20,32 +20,13 @@ import httpx
 
 from core import config
 
-# ülke -> (para birimi, Türkçe ülke adı)
-COUNTRIES = {
-    "TR": ("TRY", "Türkiye"),
-    "US": ("USD", "ABD"),
-    "GB": ("GBP", "Birleşik Krallık"),
-    "DE": ("EUR", "Almanya"), "FR": ("EUR", "Fransa"), "NL": ("EUR", "Hollanda"), "IT": ("EUR", "İtalya"),
-    "ES": ("EUR", "İspanya"), "AT": ("EUR", "Avusturya"), "BE": ("EUR", "Belçika"), "IE": ("EUR", "İrlanda"),
-    "FI": ("EUR", "Finlandiya"), "PT": ("EUR", "Portekiz"), "GR": ("EUR", "Yunanistan"), "LU": ("EUR", "Lüksemburg"),
-    "CH": ("CHF", "İsviçre"),
-    "SA": ("SAR", "Suudi Arabistan"),
-    "AE": ("AED", "Birleşik Arap Emirlikleri"),
-    "QA": ("QAR", "Katar"),
-    "KW": ("KWD", "Kuveyt"),
-    "AZ": ("AZN", "Azerbaycan"),
-    "RU": ("RUB", "Rusya"),
-    "JP": ("JPY", "Japonya"),
-    "CA": ("CAD", "Kanada"),
-    "AU": ("AUD", "Avustralya"),
-}
-DEFAULT_FOREIGN = ("USD", "Diğer ülkeler")
+# Türkiye TL öder; diğer tüm ülkeler Euro öder
+COUNTRIES = {"TR": ("TRY", "Türkiye")}
+DEFAULT_FOREIGN = ("EUR", "Yurt dışı")
 
 # 1 birim yabancı para = kaç TL (yalnızca çevrimdışı yedek; YAKLAŞIK değerlerdir, canlı kur tercih edilir)
-FALLBACK_TRY_PER_UNIT = {
-    "USD": 45.0, "EUR": 52.0, "GBP": 60.0, "CHF": 56.0, "SAR": 12.0, "AED": 12.25, "QAR": 12.36,
-    "KWD": 147.0, "AZN": 26.5, "RUB": 0.55, "JPY": 0.30, "CAD": 32.5, "AUD": 29.5,
-}
+FALLBACK_TRY_PER_UNIT = {"EUR": 52.0}
+
 RATES_URL = "https://open.er-api.com/v6/latest/TRY"
 GEO_URL = "https://ipapi.co/{ip}/country/"
 RATES_TTL = 12 * 3600
@@ -89,14 +70,14 @@ def try_per_unit(currency: str) -> tuple[float, str]:
         return env[currency], ".env"
     if currency in _rates["try_per_unit"]:
         return _rates["try_per_unit"][currency], _rates["source"]
-    return FALLBACK_TRY_PER_UNIT.get(currency, FALLBACK_TRY_PER_UNIT["USD"]), "yaklaşık (çevrimdışı)"
+    return FALLBACK_TRY_PER_UNIT.get(currency, FALLBACK_TRY_PER_UNIT["EUR"]), "yaklaşık (çevrimdışı)"
 
 
 # ---------------------------------------------------------------- ülke tespiti
 def region_of(country: str | None) -> dict:
     country = (country or config.DEFAULT_COUNTRY).upper()
     currency, name = COUNTRIES.get(country, DEFAULT_FOREIGN)
-    return {"country": country, "currency": currency, "name": name if country in COUNTRIES else f"{country} · {name}"}
+    return {"country": country, "currency": currency, "name": name}
 
 
 async def detect_country(ip: str, headers) -> str:
@@ -128,10 +109,7 @@ async def detect_country(ip: str, headers) -> str:
 
 # ---------------------------------------------------------------- fiyatlar
 def _price_tag(value: float, currency: str) -> float:
-    """Yerel fiyatı x,99 biçimine yuvarlar (JPY/RUB gibi küçük birimlerde 10'luk / 100'lük)."""
-    if currency in ("JPY", "RUB"):
-        step = 100 if currency == "JPY" else 10
-        return float(math.ceil(value / step) * step - 1)
+    """Yerel fiyatı x,99 biçimine yuvarlar (ör. 24,02 € → 24,99 €)."""
     return math.ceil(value) - 0.01
 
 
@@ -164,4 +142,5 @@ def price_list(plans, region: dict) -> dict:
 
 
 def supported_regions() -> list:
-    return [{"country": code, "currency": currency, "name": name} for code, (currency, name) in COUNTRIES.items()]
+    """Önizleme menüsü: Türkiye (TL) ve yurt dışı (Euro)."""
+    return [{"country": "TR", "currency": "TRY", "name": "Türkiye"}, {"country": "EU", "currency": "EUR", "name": "Yurt dışı"}]
