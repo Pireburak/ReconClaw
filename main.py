@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from core import admin, ai, audit, auth, config, intel, monitor, oauth, plans, recon, verify
+from core import admin, ai, audit, auth, config, intel, monitor, oauth, plans, pricing, recon, verify
 from core.db_manager import (
     db_ok, delete_scans, get_recent_scans, get_scan_report, get_share_token, get_shared_report, get_user_reports,
     init_db, save_scan, set_share_token,
@@ -29,7 +29,7 @@ from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "8.0"
+VERSION = "8.1"
 CODENAME = "Cortex"
 STARTED_AT = time.time()
 
@@ -630,9 +630,30 @@ class TargetRequest(BaseModel):
     host: str = Field(..., min_length=1, max_length=255)
 
 
+async def visitor_region(request: Request) -> dict:
+    """Ziyaretçinin IP adresine göre ülke / para birimi; kurları gerekirse tazeler."""
+    country = await pricing.detect_country(client_ip(request), request.headers)
+    region = pricing.region_of(country)
+    if region["currency"] != "TRY":
+        await pricing.refresh_rates()
+    return region
+
+
 @app.get("/api/plans", tags=["billing"])
-async def list_plans():
-    return {"plans": [p.to_dict() for p in plans.PLANS.values()], "currency": "TRY", "payment_mode": "demo",
+async def list_plans(request: Request, country: str = ""):
+    """Plan kataloğu. Fiyatlar ziyaretçinin ülkesine göre yerel para biriminde döner;
+    `?country=DE` ile başka bir ülkenin fiyatları önizlenebilir (ödeme her zaman tespit edilen bölgeden alınır)."""
+    detected = await visitor_region(request)
+    region = detected
+    if country and country.upper() != detected["country"]:
+        region = pricing.region_of(country[:2])
+        if region["currency"] != "TRY":
+            await pricing.refresh_rates()
+    catalog = list(plans.PLANS.values())
+    return {"plans": [p.to_dict() for p in catalog], "currency": region["currency"], "payment_mode": "demo",
+            "pricing": pricing.price_list(catalog, region), "detected": detected,
+            "checkout_pricing": pricing.price_list(catalog, detected),
+            "regions": pricing.supported_regions(),
             "require_target_verification": config.REQUIRE_TARGET_VERIFICATION, "admin": plans.ADMIN_PLAN.to_dict()}
 
 
@@ -647,8 +668,11 @@ async def billing_checkout(body: CheckoutRequest, request: Request, user=Depends
         raise HTTPException(status_code=422, detail="Geçersiz plan.")
     if plans.is_admin(user):
         raise HTTPException(status_code=400, detail="Yönetici hesapları zaten sınırsız; ödeme akışını denemek için normal bir hesap kullanın.")
-    result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period)
-    audit.log("plan_checkout", user["id"], detail=f"{body.plan} · {body.period} · ₺{result['amount']}", ip=client_ip(request))
+    region = await visitor_region(request)  # ödeme her zaman IP'den tespit edilen bölgenin fiyatıyla
+    result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period, region)
+    audit.log("plan_checkout", user["id"],
+              detail=f"{body.plan} · {body.period} · {result['amount']} {result['currency']} ({region['country']})",
+              ip=client_ip(request))
     return {**result, **plans.subscription(auth.get_user(user["id"]))}
 
 

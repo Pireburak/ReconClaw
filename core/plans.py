@@ -143,26 +143,31 @@ def check_ai_quota(user) -> Plan:
     return plan
 
 
-def checkout(user_id, plan_id: str, period: str = "monthly") -> dict:
-    """Demo ödeme: planı anında etkinleştirir ve bir ödeme kaydı oluşturur."""
+def checkout(user_id, plan_id: str, period: str = "monthly", region: dict | None = None) -> dict:
+    """Demo ödeme: planı anında etkinleştirir ve bölgenin para biriminde bir ödeme kaydı oluşturur."""
+    from core import pricing
+
     plan = PLANS.get(plan_id)
     if plan is None or period not in PERIODS:
         raise ValueError("Geçersiz plan veya dönem.")
+    region = region or pricing.region_of("TR")
     now = _now()
     if plan.id == "free":
         expires, amount = None, 0
     else:
         expires = (now + timedelta(days=PERIODS[period])).isoformat(" ")
-        amount = plan.price_yearly if period == "yearly" else plan.price_monthly
+        amount = pricing.local_price(plan.price_monthly, region, yearly=period == "yearly")
+    amount_try = pricing.to_try(amount, region["currency"]) if amount else 0
     with closing(get_db_connection()) as conn, conn:
         conn.execute("UPDATE users SET plan = ?, plan_expires = ? WHERE id = ?", (plan.id, expires, user_id))
         if amount:
             conn.execute(
-                "INSERT INTO payments (user_id, plan, period, amount, currency, status, created_at) "
-                "VALUES (?, ?, ?, ?, 'TRY', 'demo', ?)",
-                (user_id, plan.id, period, amount, now.isoformat(" ")),
+                "INSERT INTO payments (user_id, plan, period, amount, currency, status, created_at, amount_try, country) "
+                "VALUES (?, ?, ?, ?, ?, 'demo', ?, ?, ?)",
+                (user_id, plan.id, period, amount, region["currency"], now.isoformat(" "), amount_try, region["country"]),
             )
-    return {"plan": plan.id, "expires": expires, "amount": amount, "period": period, "mode": "demo"}
+    return {"plan": plan.id, "expires": expires, "amount": amount, "currency": region["currency"],
+            "country": region["country"], "amount_try": amount_try, "period": period, "mode": "demo"}
 
 
 def grant(user_id, plan_id: str, days: int | None) -> dict:
@@ -179,7 +184,7 @@ def grant(user_id, plan_id: str, days: int | None) -> dict:
 def payments(user_id, limit=20):
     with closing(get_db_connection()) as conn:
         rows = conn.execute(
-            "SELECT id, plan, period, amount, currency, status, created_at FROM payments "
+            "SELECT id, plan, period, amount, currency, country, status, created_at FROM payments "
             "WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit)).fetchall()
     return [dict(r) for r in rows]
 

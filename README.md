@@ -1,18 +1,18 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v8.0 Cortex</h1>
+<h1 align="center">🦝 ReconClaw v8.1 Cortex</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Sürekli Saldırı Yüzeyi İzleme ve Yapay Zekâ Destekli Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v8.0%20Cortex-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v8.1%20Cortex-E8751A?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
 <img src="https://img.shields.io/badge/Docker-HTTPS%20Ready-2B2B2B?style=for-the-badge&logo=docker&logoColor=F5B041" alt="Docker">
 <br>
-<img src="https://img.shields.io/badge/Testler-88%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
+<img src="https://img.shields.io/badge/Testler-93%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
 <img src="https://img.shields.io/badge/Giri%C5%9F-E--posta%20%7C%20Google%20%7C%20GitHub%20%7C%20Microsoft%20%7C%20Apple-2B2B2B?style=for-the-badge" alt="Giriş">
 <img src="https://img.shields.io/badge/Aray%C3%BCz-Gizli%20Dosya-9E1F17?style=for-the-badge" alt="Arayüz">
 <img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
@@ -469,6 +469,17 @@ ReconClaw **5 kademeli üyelik** sistemine sahiptir. Her yeni hesap **Free** pla
 | AI Analist | — | — | 20 / gün | 100 / gün | 500 / gün | ∞ |
 | Güvenlik karnesi, ATT&CK, uyum | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
+### 🌍 Bölgesel fiyatlandırma (v8.1)
+
+<p align="center"><img src="docs/screenshots/28-bolgesel-fiyat.jpg" alt="Bölgesel fiyatlandırma" width="100%"></p>
+
+Fiyatlar ziyaretçinin **IP adresinin ülkesine** göre yerel para biriminde gösterilir: Almanya ve Avro Bölgesi **€**, ABD **$**, Birleşik Krallık **£**, Suudi Arabistan **SAR**, BAE **AED**, Katar, Kuveyt, Azerbaycan, İsviçre, Japonya, Kanada, Avustralya ve Rusya kendi para birimiyle; listede olmayan ülkeler **$** ile.
+
+- **En ucuz fiyat her zaman Türkiye'dedir.** Yurt dışında her ücretli planın aylık fiyatına **≈950 TL** (`REGIONAL_SURCHARGE_TRY`) eklenir, güncel kurla çevrilir ve x,99 biçimine yuvarlanır. Örnek: Pro = (299 + 950) TL ÷ kur → Almanya'da yaklaşık **€24,99**.
+- Kurlar open.er-api.com'dan 12 saatte bir alınır; internet yoksa `.env`'deki `FX_RATES` veya yerleşik yaklaşık kurlar kullanılır.
+- Abonelik sayfasındaki **BÖLGE** menüsünden başka ülkelerin fiyatları önizlenebilir; **ödeme ise her zaman IP'den tespit edilen bölgenin fiyatıyla** alınır (VPN'siz biri Türkiye fiyatı seçemez). Ödeme kaydı para birimi, ülke ve TL karşılığıyla saklanır; yönetim panelindeki gelir TL'ye çevrilerek toplanır.
+- Yerel ağdan (127.0.0.1, 192.168.x) bağlananlar Türkiye (`DEFAULT_COUNTRY`) sayılır. Cloudflare arkasında `TRUST_COUNTRY_HEADER=true` ile `CF-IPCountry` başlığı kullanılır.
+
 - **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez. İzleme taramaları da kotaya sayılır.
 - Ücretli planın süresi dolunca hesap otomatik olarak **Free** sınırlarına döner; API anahtarı da çalışmayı bırakır.
 - Üst barda planı gösteren rozet ve `KOTA 3/5` sayacı bulunur; kilitli düğmelerde **PRO** etiketi görünür.
@@ -744,6 +755,11 @@ Tüm ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yap�
 | `SCHEDULER_ENABLED` | `true` | Sürekli izleme zamanlayıcısı |
 | `ANTHROPIC_API_KEY` | *(boş)* | AI Analist için Claude API anahtarı. Boşsa kural tabanlı analist çalışır |
 | `AI_MODEL` | `claude-opus-5-5` | AI Analist'in kullandığı Claude modeli |
+| `REGIONAL_SURCHARGE_TRY` | `950` | Yurt dışı fiyatlarına eklenen TL tutarı (aylık, plan başına) |
+| `DEFAULT_COUNTRY` | `TR` | Ülke bulunamazsa kullanılacak ülke |
+| `GEO_LOOKUP` | `true` | Ziyaretçi IP'sinin ülkesini ipapi.co ile bul |
+| `TRUST_COUNTRY_HEADER` | `false` | Cloudflare `CF-IPCountry` başlığına güven |
+| `FX_RATES` | *(boş)* | Kurları sabitle, ör. `USD=45,EUR=52,SAR=12` (1 birim = kaç TL) |
 | `RECONCLAW_DB` | `data/reconclaw_v4.db` | Veritabanı dosyasının yolu |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | — | Google ile giriş |
 | `GITHUB_CLIENT_ID` / `_SECRET` | — | GitHub ile giriş |
@@ -872,7 +888,13 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 🧠 v8.0 Cortex *(mevcut sürüm)*
+### 🌍 v8.1 Cortex *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| Bölgesel fiyatlandırma | IP'ye göre ülke ve para birimi (€, $, £, SAR, AED...), canlı kur, yurt dışına ≈950 TL fark; Türkiye en ucuz |
+
+### 🧠 v8.0 Cortex
 
 | Özellik | Açıklama |
 |---------|----------|
@@ -969,6 +991,7 @@ ReconClaw/
 ├── core/
 │   ├── config.py           # .env / ortam değişkeni ayarları
 │   ├── plans.py            # Abonelik planları, kotalar, demo ödeme, Admin seviyesi
+│   ├── pricing.py          # v8.1: IP'ye göre ülke, para birimi, kur ve bölgesel fiyat
 │   ├── verify.py           # Hedef sahipliği doğrulama (DNS TXT / .well-known)
 │   ├── admin.py            # v7: Yönetim paneli (özet, kullanıcılar, plan atama, askıya alma)
 │   ├── audit.py            # v7: Denetim kaydı
@@ -1004,7 +1027,7 @@ ReconClaw/
 │   ├── fonts/              # Gömülü yazı tipleri (OFL lisansı: fonts/OFL.txt)
 │   ├── img/                # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
 │   └── favicon.png
-├── tests/                  # 88 otomatik test (pytest)
+├── tests/                  # 93 otomatik test (pytest)
 ├── docs/
 │   ├── YARISMA.md          # TÜBİTAK / TEKNOFEST proje dosyası
 │   └── screenshots/        # README ekran görüntüleri
@@ -1032,7 +1055,7 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 | `sessions`   | `token_hash`, `user_id`, `created_at`, `expires_at`, `user_agent`                |
 | `oauth_states` | `state`, `provider`, `verifier`, `created_at` (10 dk geçerli, tek kullanımlık) |
 | `usage`      | `user_id`, `day`, `scans`, `ai` (günlük tarama ve AI sayacı)                      |
-| `payments`   | `id`, `user_id`, `plan`, `period`, `amount`, `currency`, `status` (`demo`), `created_at` |
+| `payments`   | `id`, `user_id`, `plan`, `period`, `amount`, `currency`, `country`, `amount_try`, `status` (`demo`), `created_at` |
 | `targets`    | `id`, `user_id`, `host`, `token`, `method` (dns/file), `verified_at`, `created_at` |
 | `audit_log`  | `id`, `user_id`, `actor_id`, `action`, `detail`, `ip`, `created_at` |
 | `monitors`   | `id`, `user_id`, `target`, `interval`, `max_port`, `webhook`, `enabled`, `last_run`, `next_run`, `last_scan_id`, `last_status` |
@@ -1059,6 +1082,7 @@ pytest
 | `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
 | `test_admin.py` | 7 | Admin seviyesi, panel erişim kontrolü, plan atama, askıya alma, kendini kilitleme koruması, denetim kaydı, `manage.py`, doğrulanmamış e-postayla yöneticilik engeli |
 | `test_monitoring.py` | 9 | İzleme plan sınırları, yeni port alarmı ve webhook, plan düşünce duraklatma, zamanlayıcı, alarm kuralları, SPF / DMARC / CAA, alt alan adı etiketleri, keşif API'si |
+| `test_pricing.py` | 5 | Bölgeye göre para birimi, Türkiye'nin en ucuz olması, x,99 yuvarlama, ülke tespiti, ödemenin tespit edilen bölgeden alınması |
 | `test_intel.py` | 11 | ATT&CK eşlemesi ve saldırı zinciri, karne ve not tavanı, uyum, kural tabanlı analist, Claude hatasında yedeğe düşme, istem enjeksiyonu koruması, AI kotası ve önbelleği, paylaşım bağlantısı |
 
 ---
@@ -1169,7 +1193,7 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 - *"Banner'a 'önceki talimatları unut' yazan bir sunucu taranırsa?"* → Banner'lar modele ayrı veri bloğunda ve "güvenilmez veri" olarak veriliyor; analist savunma odaklı talimatla sınırlı.
 - *"Kötüye kullanılırsa?"* → Hedef sahipliği doğrulama (DNS TXT / dosya), iç ağ engeli, plan bazlı kotalar, hız sınırı, denetim kaydı ve hesap askıya alma var. Araç yalnızca izinli hedefler içindir.
 - *"Parolalar nasıl saklanıyor?"* → Tuzlu scrypt; oturum anahtarlarının ve API anahtarlarının bile yalnızca SHA-256 özeti tutuluyor.
-- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 88 otomatik test her değişiklikte çalışıyor.
+- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 93 otomatik test her değişiklikte çalışıyor.
 
 ---
 

@@ -74,3 +74,15 @@ SCHEDULER_ENABLED = _bool("SCHEDULER_ENABLED", True)
 # v8.0: AI Analist. Anahtar yoksa kural tabanlı (çevrimdışı) analist kullanılır.
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY")
 AI_MODEL = env("AI_MODEL", "claude-opus-5-5") or "claude-opus-5-5"
+
+# v8.1: bölgesel fiyatlandırma. Türkiye dışındaki ziyaretçilere fiyat kendi para biriminde,
+# aylık plan fiyatına bu kadar TL eklenerek gösterilir (Türkiye her zaman en ucuz).
+REGIONAL_SURCHARGE_TRY = int(env("REGIONAL_SURCHARGE_TRY", "950") or 950)
+# IP adresi bulunamazsa veya yerel ağdan bağlanılırsa kullanılacak ülke
+DEFAULT_COUNTRY = (env("DEFAULT_COUNTRY", "TR") or "TR").upper()
+# Ziyaretçi IP'sinin ülkesini çevrimiçi GeoIP servisiyle bul (ipapi.co, önbellekli)
+GEO_LOOKUP = _bool("GEO_LOOKUP", True)
+# Cloudflare arkasındaysanız CF-IPCountry başlığına güven (doğrudan erişimde açmayın, sahtelenebilir)
+TRUST_COUNTRY_HEADER = _bool("TRUST_COUNTRY_HEADER", False)
+# Kurları elle sabitlemek için (1 birim = kaç TL), ör: FX_RATES=USD=45,EUR=52,SAR=12
+FX_RATES = env("FX_RATES")

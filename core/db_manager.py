@@ -187,6 +187,12 @@ def init_db():
         usage_columns = {row["name"] for row in conn.execute("PRAGMA table_info(usage)")}
         if "ai" not in usage_columns:
             conn.execute("ALTER TABLE usage ADD COLUMN ai INTEGER NOT NULL DEFAULT 0")
+        # v8.1: bölgesel fiyatlandırma, ödemenin TL karşılığı ve ülkesi
+        payment_columns = {row["name"] for row in conn.execute("PRAGMA table_info(payments)")}
+        if "amount_try" not in payment_columns:
+            conn.execute("ALTER TABLE payments ADD COLUMN amount_try INTEGER")
+        if "country" not in payment_columns:
+            conn.execute("ALTER TABLE payments ADD COLUMN country TEXT")
         if "share_token" not in columns:
             conn.execute("ALTER TABLE scans ADD COLUMN share_token TEXT")
 

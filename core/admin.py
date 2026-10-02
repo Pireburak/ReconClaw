@@ -44,7 +44,7 @@ def overview() -> dict:
             "sessions_active": q("SELECT COUNT(*) FROM sessions WHERE expires_at > ?", now),
             "monitors_active": q("SELECT COUNT(*) FROM monitors WHERE enabled = 1"),
             "alerts_7d": q("SELECT COUNT(*) FROM alerts WHERE created_at >= ?", _days(7)[0]),
-            "revenue_total": q("SELECT COALESCE(SUM(amount), 0) FROM payments"),
+            "revenue_total": q("SELECT COALESCE(SUM(COALESCE(amount_try, amount)), 0) FROM payments"),
             "payments_total": q("SELECT COUNT(*) FROM payments"),
             "failed_logins_24h": q("SELECT COUNT(*) FROM audit_log WHERE action = 'login_failed' AND created_at >= ?",
                                    (datetime.now() - timedelta(days=1)).replace(microsecond=0).isoformat(" ")),
@@ -71,7 +71,7 @@ def list_users(query: str = "", limit: int = 100) -> list:
     with closing(get_db_connection()) as conn:
         rows = conn.execute(
             "SELECT u.*, (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id) AS scan_count, "
-            "(SELECT COALESCE(SUM(amount), 0) FROM payments p WHERE p.user_id = u.id) AS paid "
+            "(SELECT COALESCE(SUM(COALESCE(amount_try, amount)), 0) FROM payments p WHERE p.user_id = u.id) AS paid "
             "FROM users u WHERE u.email LIKE ? OR u.name LIKE ? ORDER BY u.id DESC LIMIT ?",
             (like, like, max(1, min(limit, 500)))).fetchall()
     result = []
