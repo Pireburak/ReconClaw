@@ -124,3 +124,12 @@ def test_old_database_is_migrated(tmp_path, monkeypatch):
     db_manager.init_db()
     tables = {r[0] for r in sqlite3.connect(path).execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"scans", "scans_legacy", "open_ports", "findings"} <= tables
+
+
+def test_static_assets_are_cache_busted(client):
+    # Eski CSS/JS'in tarayıcı önbelleğinden gelip yeni sayfayı bozmaması için sürüm etiketi
+    import main
+
+    html = client.get("/").text
+    assert f"css/style.css?v={main.templates.env.globals['asset_v']}" in html
+    assert "?v=" in client.get("/login").text

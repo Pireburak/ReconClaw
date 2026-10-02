@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
-    <script src="{{ url_for('static', path='js/theme.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}?v={{ asset_v }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}?v={{ asset_v }}">
+    <script src="{{ url_for('static', path='js/theme.js') }}?v={{ asset_v }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}?v={{ asset_v }}">
 </head>
 <body>
 <div class="classbar" role="note">GİZLİ <span>// RECONCLAW // YALNIZCA YETKİLİ PERSONEL //</span> GİZLİ</div>
@@ -18,7 +18,7 @@
     <!-- ================= RAKUN + DOCK ================= -->
     <aside class="rail" id="sidebar">
         <a class="rail-logo" href="#overview" title="ReconClaw v{{ version }} {{ codename }}">
-            <img src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="36" height="36">
+            <img src="{{ url_for('static', path='img/logo.png') }}?v={{ asset_v }}" alt="ReconClaw rakun maskotu" width="36" height="36">
         </a>
         <nav class="dock" id="dock" aria-label="Ana menü">
             <ul class="nav" id="nav">
@@ -42,7 +42,7 @@
     <!-- ================= İÇERİK ================= -->
     <main class="main">
         <div class="statusbar">
-            <img class="mobile-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="" width="28" height="28">
+            <img class="mobile-logo" src="{{ url_for('static', path='img/logo.png') }}?v={{ asset_v }}" alt="" width="28" height="28">
             <span class="indicator" id="indGateway">AĞ GEÇİDİ: AKTİF</span>
             <span class="indicator" id="indEngine">MOTOR: HAZIR</span>
             <span class="indicator" id="indDb">VERİTABANI: ÇEVRİMİÇİ</span>
@@ -472,7 +472,7 @@
 </div>
 
 <div class="toast-box" id="toasts" aria-live="polite"></div>
-<script src="{{ url_for('static', path='js/fx.js') }}"></script>
-<script src="{{ url_for('static', path='js/app.js') }}"></script>
+<script src="{{ url_for('static', path='js/fx.js') }}?v={{ asset_v }}"></script>
+<script src="{{ url_for('static', path='js/app.js') }}?v={{ asset_v }}"></script>
 </body>
 </html>

@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}">
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}?v={{ asset_v }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">
     <style>
         :root { --c-low: #4f6b2f; --c-medium: #8a6d12; --c-high: #b5541b; --c-critical: #b42318; --ink: #1d1b17; --muted: #6a655a; --line: #d2cab6; --paper: #f4f0e6; }
         * { box-sizing: border-box; }
@@ -130,6 +130,6 @@
     </footer>
     <div class="classline bottom">GİZLİ // DAĞITIM: SINIRLI // GİZLİ</div>
 </article>
-<script src="{{ url_for('static', path='js/report.js') }}"></script>
+<script src="{{ url_for('static', path='js/report.js') }}?v={{ asset_v }}"></script>
 </body>
 </html>
