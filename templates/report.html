@@ -24,7 +24,7 @@
         .target { margin-top: 6px; font-size: 14px; }
         .meta { display: grid; grid-template-columns: auto auto; gap: 1px 12px; font-size: 10.5px; color: var(--muted); text-align: left; }
         .meta b { color: var(--ink); font-weight: 600; }
-        .summary { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; border: 1px solid var(--line); }
+        .summary { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 18px; border: 1px solid var(--line); }
         .box { padding: 10px 12px; border-right: 1px solid var(--line); }
         .box:last-child { border-right: none; }
         .box span { display: block; font-size: 9.5px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
@@ -44,6 +44,12 @@
         .toolbar { max-width: 880px; margin: 0 auto 12px; display: flex; justify-content: flex-end; gap: 8px; }
         .toolbar button, .toolbar a { padding: 7px 14px; font: 600 11px "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--paper); background: var(--ink); border: 1px solid var(--ink); cursor: pointer; text-decoration: none; }
         .toolbar a { color: var(--ink); background: transparent; }
+        .grade { font: 700 30px/1 "Barlow Condensed", sans-serif; color: var(--g); }
+        .ok { color: var(--c-low); } .part { color: var(--c-medium); } .bad { color: var(--c-critical); }
+        .chain { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; padding: 0; list-style: none; }
+        .chain li { margin: 0; padding: 4px 8px; font-size: 10.5px; border: 1px solid var(--ink); }
+        .chain li b { display: block; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+        .shared-note { max-width: 880px; margin: 0 auto 12px; padding: 8px 12px; font-size: 11px; color: var(--muted); border: 1px dashed var(--muted); }
         @media print {
             body { padding: 0; background: #fff; }
             .page { box-shadow: none; max-width: none; background: #fff; }
@@ -56,8 +62,9 @@
     </style>
 </head>
 <body>
+{% if shared %}<div class="shared-note">Bu, ReconClaw kullanıcısının paylaştığı salt-okunur bir rapordur. Bağlantı sahibi tarafından istenildiği an iptal edilebilir.</div>{% endif %}
 <div class="toolbar">
-    <a href="/#results">Panele dön</a>
+    {% if not shared %}<a href="/#results">Panele dön</a>{% endif %}
     <button type="button" id="printBtn">Yazdır / PDF kaydet</button>
 </div>
 <article class="page">
@@ -82,6 +89,7 @@
         <div class="box"><span>Risk seviyesi</span><b class="level">{{ r.risk_level.label }}</b></div>
         <div class="box"><span>Açık port</span><b>{{ r.total_open }} / {{ r.scanned_ports }}</b></div>
         <div class="box"><span>Bulgu / CVE</span><b>{{ r.findings | length }} / {{ r.cve_alerts | length }}</b></div>
+        {% if intel %}<div class="box"><span>Güvenlik notu</span><b class="grade" style="--g:var(--c-{{ 'low' if intel.scorecard.grade in ('A+', 'A') else 'medium' if intel.scorecard.grade in ('B', 'C') else 'critical' }})">{{ intel.scorecard.grade }}</b></div>{% endif %}
     </section>
 
     <h2>Yönetici Özeti</h2>
@@ -119,6 +127,45 @@
         </tbody>
     </table>
     {% else %}<p class="none">Eklenti bulgusu yok.</p>{% endif %}
+
+    {% if intel %}
+    <h2>Güvenlik Karnesi</h2>
+    <table>
+        <thead><tr><th>Kategori</th><th>Puan</th><th>Not</th><th>Gözlem</th></tr></thead>
+        <tbody>
+        {% for c in intel.scorecard.categories %}
+            <tr><td>{{ c.name }}</td><td>{{ c.score }}/100</td><td><b>{{ c.grade }}</b></td><td>{{ c.notes[:3] | join("; ") or "—" }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p>Genel not <b>{{ intel.scorecard.grade }}</b> ({{ intel.scorecard.score }}/100). {{ intel.scorecard.caps | join(" ") }}</p>
+
+    <h2>MITRE ATT&amp;CK Saldırı Zinciri</h2>
+    {% if intel.attack.chain %}
+    <ul class="chain">{% for c in intel.attack.chain %}<li><b>{{ c.tactic }}</b>{{ c.technique }} {{ c.name }}</li>{% endfor %}</ul>
+    <table>
+        <thead><tr><th>Taktik</th><th>Teknik</th><th>Gerekçe</th></tr></thead>
+        <tbody>
+        {% for t in intel.attack.tactics if t.techniques %}{% for tech in t.techniques %}
+            <tr><td>{{ t.tr }}</td><td class="mono">{{ tech.id }} · {{ tech.tr }}</td><td>{{ tech.reasons[:2] | join("; ") }}</td></tr>
+        {% endfor %}{% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="none">{{ intel.attack.narrative }}</p>{% endif %}
+
+    <h2>Uyum Ön Değerlendirmesi (ISO/IEC 27001:2022 · KVKK)</h2>
+    <table>
+        <thead><tr><th>Kontrol</th><th>Durum</th><th>Kanıt</th></tr></thead>
+        <tbody>
+        {% for c in intel.compliance.controls %}
+            <tr><td><b>{{ c.id }}</b> {{ c.name }}</td>
+                <td class="{{ 'ok' if c.status == 'pass' else 'part' if c.status == 'partial' else 'bad' }}"><b>{{ {'pass': 'Uyumlu', 'partial': 'Kısmi', 'fail': 'Uyumsuz'}[c.status] }}</b></td>
+                <td>{{ c.evidence | join("; ") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="none">{{ intel.compliance.disclaimer }}</p>
+    {% endif %}
 
     <h2>Öneriler</h2>
     {% if r.recommendations %}<ul>{% for rec in r.recommendations %}<li>{{ rec }}</li>{% endfor %}</ul>

@@ -11,9 +11,27 @@ const VIEWS = {
     history: ["ARŞİV", "Kayıtlı operasyonlar: ara, aç, karşılaştır, sil"],
     compare: ["KARŞILAŞTIRMA", "İki tarama arasındaki değişim: açılan/kapanan portlar, yeni/çözülen bulgular"],
     map: ["AĞ KROKİSİ", "Hedefin açık servis topolojisi"],
+    recon: ["PASİF KEŞİF", "Sertifika Şeffaflığı, DNS ve e-posta güvenliği ile saldırı yüzeyi"],
+    monitors: ["SÜREKLİ İZLEME", "Zamanlanmış taramalar, değişim alarmları ve webhook bildirimleri"],
     settings: ["AYARLAR", "Görünüm, tarama varsayılanları, hesap güvenliği ve API erişimi"],
     plans: ["ABONELİK", "Erişim seviyeleri, kullanım kotası, doğrulanmış hedefler ve ödemeler"],
+    admin: ["YÖNETİM", "Kullanıcılar, planlar, sistem durumu ve denetim kaydı"],
 };
+const IS_ADMIN = document.body.dataset.role === "admin";
+// Ek modüller (ops.js, admin.js, intel.js) sayfa açılınca çalışacak yükleyicilerini buraya kaydeder
+const PAGE_HOOKS = {};
+// Rapor ekrana basıldığında çalışacak ek işleyiciler (ör. intel.js derin analiz paneli)
+const REPORT_HOOKS = [];
+
+function currentView() {
+    const view = (location.hash.slice(1) || "overview").split("?")[0];
+    return VIEWS[view] && (view !== "admin" || IS_ADMIN) ? view : "overview";
+}
+
+function onPage(view, loader) {
+    PAGE_HOOKS[view] = loader;
+    if (currentView() === view) loader();
+}
 const DEFAULTS_KEY = "rc-scan-defaults";
 
 let currentReport = null;
@@ -95,8 +113,7 @@ function download(name, content, type) {
 
 // ------------------------------------------------------------------ yönlendirme
 function route() {
-    const view = (location.hash.slice(1) || "overview").split("?")[0];
-    const name = VIEWS[view] ? view : "overview";
+    const name = currentView();
     document.querySelectorAll("[data-page]").forEach((s) => { s.hidden = s.dataset.page !== name; });
     document.querySelectorAll("#nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === name));
     $("viewTitle").textContent = VIEWS[name][0];
@@ -110,6 +127,7 @@ function route() {
     });
     if (name === "settings") loadSettings();
     if (name === "plans") loadPlans();
+    PAGE_HOOKS[name]?.();
     if (name === "scan") setTimeout(() => $("target").focus(), 50);
     window.scrollTo({ top: 0 });
 }
@@ -287,15 +305,38 @@ function renderHeatmap(days) {
     $("activitySum").textContent = `Son 1 yıl: ${total} tarama · ${active} aktif gün`;
 }
 
+let unseenEvents = 0;
+let unseenAlerts = 0;
+
+function updateBellCount() {
+    const unseen = unseenEvents + unseenAlerts;
+    $("bellCount").hidden = !unseen;
+    $("bellCount").textContent = unseen > 9 ? "9+" : unseen;
+    $("bellBtn").classList.toggle("ring", unseen > 0);
+}
+
+async function loadAlerts() {
+    try {
+        const data = await api("/api/alerts?limit=8");
+        unseenAlerts = data.unseen;
+        $("bellAlerts").innerHTML = data.alerts.length
+            ? data.alerts.map((a) => `
+                <li ${a.scan_id ? `data-id="${a.scan_id}"` : ""} style="--c:${SEV_COLOR[a.level] || "var(--muted)"}" class="${a.seen ? "" : "unseen"}">
+                    <span class="dot"></span><span>${esc(a.title)}</span>
+                    <span class="meta">${esc(a.created_at.slice(5, 16))} · ${esc(a.target)}</span>
+                </li>`).join("")
+            : `<li class="empty">İzleme alarmı yok. <a href="#monitors">Görev ekleyin</a>.</li>`;
+        updateBellCount();
+    } catch { /* yoksay */ }
+}
+
 function renderBell(events) {
     bellEvents = events.filter((e) => e.kind !== "scan" && (e.level === "critical" || e.level === "high"));
     let seen = 0;
     try { seen = Number(localStorage.getItem("rc-bell-seen") || 0); } catch { /* yoksay */ }
     const newest = bellEvents.reduce((m, e) => Math.max(m, e.scan_id), 0);
-    const unseen = bellEvents.filter((e) => e.scan_id > seen).length;
-    $("bellCount").hidden = !unseen;
-    $("bellCount").textContent = unseen > 9 ? "9+" : unseen;
-    $("bellBtn").classList.toggle("ring", unseen > 0);
+    unseenEvents = bellEvents.filter((e) => e.scan_id > seen).length;
+    updateBellCount();
     $("bellBtn").dataset.newest = newest;
     $("bellList").innerHTML = bellEvents.length
         ? bellEvents.slice(0, 12).map((e) => `
@@ -505,6 +546,7 @@ function renderResult(data) {
 
     sevFilter = "all";
     renderFindings();
+    REPORT_HOOKS.forEach((fn) => fn(data));
 }
 
 function renderFindings() {
@@ -737,6 +779,10 @@ const FEATURE_ROWS = [
     ["Tarama karşılaştırma", (p) => p.compare],
     ["API anahtarı", (p) => p.api],
     ["Doğrulanmış hedef", (p) => p.targets ? p.targets : "Sınırsız"],
+    ["Pasif keşif (CT / DNS)", (p) => p.recon],
+    ["Sürekli izleme", (p) => p.monitoring ? (p.monitors ? `${p.monitors} görev` : "Sınırsız") : false],
+    ["Saatlik izleme", (p) => p.hourly],
+    ["AI Analist", (p) => p.ai ? (p.ai_daily ? `${p.ai_daily} / gün` : "Sınırsız") : false],
 ];
 
 const tl = (n) => `₺${Number(n).toLocaleString("tr-TR")}`;
@@ -761,6 +807,7 @@ function applySubscription(sub) {
     const plan = sub.plan;
     $("planChip").textContent = plan.name.toUpperCase();
     $("planChip").dataset.level = plan.level;
+    $("planChip").title = sub.admin ? "Yönetici: tüm sınırlar kaldırıldı" : "Abonelik planınız";
     $("quota").textContent = plan.daily_scans ? `${sub.usage.scans_today}/${plan.daily_scans}` : `${sub.usage.scans_today}/∞`;
     applyPlanLimits();
 }
@@ -820,7 +867,8 @@ function renderSubSummary(b) {
             <dt>Port aralığı</dt><dd>1–${plan.max_port.toLocaleString("tr-TR")}</dd>
         </dl>
         <div class="actions">
-            ${plan.id !== "free" ? '<button type="button" class="btn danger sm" id="cancelPlan">ABONELİĞİ İPTAL ET</button>' : ""}
+            ${b.admin ? '<span class="badge admin-badge">YÖNETİCİ · SINIRSIZ</span>'
+                : plan.id !== "free" ? '<button type="button" class="btn danger sm" id="cancelPlan">ABONELİĞİ İPTAL ET</button>' : ""}
         </div>`;
 }
 
@@ -831,6 +879,7 @@ function renderPlanCards() {
         const price = billingPeriod === "yearly" ? p.price_yearly : p.price_monthly;
         const isCur = p.id === cur.id;
         const action = isCur ? '<button type="button" class="btn block" disabled>MEVCUT PLAN</button>'
+            : cur.id === "admin" ? '<button type="button" class="btn block" disabled>YÖNETİCİ HESABI</button>'
             : `<button type="button" class="btn block ${p.level > cur.level ? "primary" : ""}" data-plan="${p.id}">${p.level > cur.level ? "YÜKSELT" : "BU PLANA GEÇ"}</button>`;
         return `
         <article class="plan-card${isCur ? " current" : ""}${p.id === "pro_max" ? " featured" : ""}">
@@ -916,8 +965,8 @@ let paletteItems = [];
 let paletteSel = 0;
 
 function paletteSource() {
-    const nav = Object.entries(VIEWS).map(([key, [title, sub]], i) => ({
-        group: "BÖLÜMLER", ico: `RC-0${i}`, label: title, hint: `${i}`, keywords: sub,
+    const nav = Object.entries(VIEWS).filter(([key]) => key !== "admin" || IS_ADMIN).map(([key, [title, sub]], i) => ({
+        group: "BÖLÜMLER", ico: `RC-${String(i).padStart(2, "0")}`, label: title, hint: key === "admin" ? "A" : `${i}`, keywords: sub,
         run: () => go(key),
     }));
     const actions = [
@@ -977,7 +1026,7 @@ function openModal(id) {
 }
 
 function closeModals() {
-    ["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => { $(id).hidden = true; });
+    ["paletteModal", "helpModal", "checkoutModal", "upgradeModal", "shareModal"].forEach((id) => { $(id).hidden = true; });
     $("bellPop").hidden = true;
 }
 
@@ -1022,9 +1071,18 @@ async function loadSettings() {
         $("sessionInfo").textContent = `Aktif oturum: ${me.sessions}`;
         $("revokeToken").disabled = !me.has_api_token;
         applySubscription(me.subscription);
+        renderMyAudit(await api("/api/me/audit?limit=12"));
     } catch (err) {
         toast(err.message, "err");
     }
+}
+
+function renderMyAudit(entries) {
+    const warn = new Set(["login_failed", "admin_disable", "token_create", "password_change"]);
+    $("myAudit").innerHTML = entries.length
+        ? entries.map((e) => `<li class="${warn.has(e.action) ? "warn" : ""}"><span>${esc(e.label)}${e.detail ? ` <span class="muted">· ${esc(e.detail)}</span>` : ""}</span>
+            <span class="muted small">${esc(e.created_at)}${e.ip ? ` · ${esc(e.ip)}` : ""}</span></li>`).join("")
+        : '<li class="empty">Kayıt yok.</li>';
 }
 
 // ------------------------------------------------------------------ olaylar
@@ -1148,18 +1206,20 @@ $("paletteInput").addEventListener("keydown", (e) => {
     else if (e.key === "Enter") { e.preventDefault(); runPalette(paletteSel); }
 });
 $("paletteList").addEventListener("click", (e) => { const li = e.target.closest(".item"); if (li) runPalette(Number(li.dataset.i)); });
-["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
+["paletteModal", "helpModal", "checkoutModal", "upgradeModal", "shareModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
 $("bellBtn").addEventListener("click", (e) => {
     e.stopPropagation();
     const pop = $("bellPop");
     pop.hidden = !pop.hidden;
     if (!pop.hidden) {
         try { localStorage.setItem("rc-bell-seen", $("bellBtn").dataset.newest || 0); } catch { /* yoksay */ }
-        $("bellCount").hidden = true;
-        $("bellBtn").classList.remove("ring");
+        unseenEvents = 0;
+        if (unseenAlerts) api("/api/alerts/seen", { method: "POST" }).then(() => { unseenAlerts = 0; updateBellCount(); }).catch(() => {});
+        updateBellCount();
     }
 });
 $("bellList").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
+$("bellAlerts").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#bellPop")) $("bellPop").hidden = true; });
 
 $("periodSeg").addEventListener("click", (e) => {
@@ -1224,7 +1284,7 @@ $("targetList").addEventListener("click", async (e) => {
         if (v) { v.disabled = false; v.textContent = "DOĞRULA"; }
     }
 });
-document.querySelectorAll("#checkoutModal [data-close], #upgradeModal [data-close]").forEach((b) => b.addEventListener("click", closeModals));
+document.querySelectorAll("#checkoutModal [data-close], #upgradeModal [data-close], #shareModal [data-close]").forEach((b) => b.addEventListener("click", closeModals));
 
 document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -1235,7 +1295,8 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { closeModals(); return; }
     if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const views = Object.keys(VIEWS);
-    if (/^[0-7]$/.test(e.key)) go(views[Number(e.key)]);
+    if (/^[0-9]$/.test(e.key)) go(views[Number(e.key)]);
+    else if ((e.key === "a" || e.key === "A") && IS_ADMIN) go("admin");
     else if (e.key === "n" || e.key === "N") go("scan");
     else if (e.key === "t" || e.key === "T") window.RCTheme.toggle();
     else if (e.key === "?") openModal("helpModal");
@@ -1255,7 +1316,6 @@ $("saveDefaults").addEventListener("click", () => {
     };
     try { localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d)); } catch { /* yoksay */ }
     applyScanDefaults();
-loadSubscription();
     toast("Tarama varsayılanları kaydedildi.");
 });
 $("profileForm").addEventListener("submit", async (e) => {
@@ -1328,8 +1388,11 @@ applyScanDefaults();
 loadPlugins();
 loadRecentTargets();
 loadHistory();
+loadSubscription();
+loadAlerts();
 route();
 tick();
+setInterval(() => { if (!document.hidden) loadAlerts(); }, 60000);
 setInterval(tick, 1000);
 // Genel bakış açıkken istatistikler ve olay akışı her 15 sn'de yenilenir
 setInterval(() => { if (!document.hidden && !$("app").querySelector('[data-page="overview"]').hidden) loadStats(); }, 15000);

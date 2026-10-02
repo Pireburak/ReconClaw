@@ -82,6 +82,8 @@ def public_user(row) -> dict:
         "has_password": bool(row["password_hash"]),
         "has_api_token": bool(row["api_token"]),
         "providers": providers,
+        "role": row["role"],
+        "is_admin": row["role"] == "admin",
         "created_at": row["created_at"],
         "last_login": row["last_login"],
     }
@@ -92,13 +94,19 @@ def get_user(user_id):
         return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
 
+def user_by_email(email: str):
+    with closing(get_db_connection()) as conn:
+        return conn.execute("SELECT * FROM users WHERE email = ?", ((email or "").strip().lower(),)).fetchone()
+
+
 def _claim_orphan_scans(conn, user_id):
     # Kimlik doğrulama gelmeden önce yapılmış taramalar ilk kullanıcıya devredilir
     if conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1:
         conn.execute("UPDATE scans SET user_id = ? WHERE user_id IS NULL", (user_id,))
 
 
-def create_user(email: str, name: str, password: str | None = None, avatar_url=None, check_signup=True):
+def create_user(email: str, name: str, password: str | None = None, avatar_url=None, check_signup=True,
+                verified_email: bool = False):
     email = email.strip().lower()
     name = (name or "").strip() or email.split("@")[0]
     if check_signup and not config.ALLOW_SIGNUP:
@@ -110,9 +118,13 @@ def create_user(email: str, name: str, password: str | None = None, avatar_url=N
     with closing(get_db_connection()) as conn, conn:
         if conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
             raise AuthError("Bu e-posta ile kayıtlı bir hesap zaten var.")
+        # Kayıt anında yönetici yalnızca e-postası sağlayıcı tarafından doğrulanmış sosyal girişle olunur.
+        # Parolalı kayıtta e-posta doğrulanmadığından, ADMIN_EMAILS'teki adresi gerçek sahibinden önce
+        # alan biri yönetici olamaz; bu hesaplar açılıştaki sync_admins() veya manage.py ile yükseltilir.
+        role = "admin" if verified_email and email in config.ADMIN_EMAILS else "user"
         cur = conn.execute(
-            "INSERT INTO users (email, name, password_hash, avatar_url, created_at) VALUES (?, ?, ?, ?, ?)",
-            (email, name[:80], hash_password(password) if password else None, avatar_url, _now().isoformat(" ")),
+            "INSERT INTO users (email, name, password_hash, avatar_url, created_at, role) VALUES (?, ?, ?, ?, ?, ?)",
+            (email, name[:80], hash_password(password) if password else None, avatar_url, _now().isoformat(" "), role),
         )
         _claim_orphan_scans(conn, cur.lastrowid)
         return cur.lastrowid
@@ -129,7 +141,28 @@ def authenticate(email: str, password: str):
         raise AuthError("Bu hesap sosyal giriş ile açılmış. Lütfen ilgili butonla giriş yapın.")
     if not verify_password(password, row["password_hash"]):
         raise AuthError("E-posta veya parola hatalı.")
+    ensure_active(row)
     return row["id"]
+
+
+def ensure_active(row):
+    if row is not None and row["disabled"]:
+        raise AuthError("Hesabınız yönetici tarafından askıya alındı.")
+
+
+def sync_admins():
+    """ADMIN_EMAILS listesindeki mevcut hesapları yönetici yapar (uygulama açılırken çağrılır)."""
+    if not config.ADMIN_EMAILS:
+        return 0
+    marks = ",".join("?" * len(config.ADMIN_EMAILS))
+    with closing(get_db_connection()) as conn, conn:
+        return conn.execute(f"UPDATE users SET role = 'admin' WHERE email IN ({marks}) AND role != 'admin'",
+                            tuple(config.ADMIN_EMAILS)).rowcount
+
+
+def set_role(email: str, role: str) -> bool:
+    with closing(get_db_connection()) as conn, conn:
+        return conn.execute("UPDATE users SET role = ? WHERE email = ?", (role, email.strip().lower())).rowcount > 0
 
 
 def update_profile(user_id, name: str):
@@ -163,6 +196,7 @@ def login_with_identity(provider: str, subject: str, email: str | None, name: st
             "SELECT user_id FROM identities WHERE provider = ? AND subject = ?", (provider, subject)
         ).fetchone()
         if row:
+            ensure_active(get_user(row["user_id"]))
             return row["user_id"]
         existing = conn.execute("SELECT id FROM users WHERE email = ?", ((email or "").lower(),)).fetchone()
 
@@ -172,10 +206,11 @@ def login_with_identity(provider: str, subject: str, email: str | None, name: st
         if not email_verified:
             raise AuthError("Bu e-posta başka bir hesapta kayıtlı ve sağlayıcı e-postayı doğrulamadı.")
         user_id = existing["id"]
+        ensure_active(get_user(user_id))
     else:
         if not email:
             raise AuthError("Sağlayıcı e-posta adresinizi paylaşmadı; e-posta izni vererek tekrar deneyin.")
-        user_id = create_user(email, name, avatar_url=avatar_url)
+        user_id = create_user(email, name, avatar_url=avatar_url, verified_email=email_verified)
 
     with closing(get_db_connection()) as conn, conn:
         conn.execute("INSERT INTO identities (user_id, provider, subject) VALUES (?, ?, ?)",
@@ -206,7 +241,7 @@ def user_from_session(token: str | None):
     with closing(get_db_connection()) as conn:
         return conn.execute(
             "SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id "
-            "WHERE s.token_hash = ? AND s.expires_at > ?",
+            "WHERE s.token_hash = ? AND s.expires_at > ? AND u.disabled = 0",
             (_sha256(token), _now().isoformat(" ")),
         ).fetchone()
 
@@ -215,7 +250,7 @@ def user_from_api_token(token: str | None):
     if not token or not token.startswith(API_TOKEN_PREFIX):
         return None
     with closing(get_db_connection()) as conn:
-        return conn.execute("SELECT * FROM users WHERE api_token = ?", (_sha256(token),)).fetchone()
+        return conn.execute("SELECT * FROM users WHERE api_token = ? AND disabled = 0", (_sha256(token),)).fetchone()
 
 
 def delete_session(token: str | None):

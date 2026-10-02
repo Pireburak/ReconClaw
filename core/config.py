@@ -61,3 +61,16 @@ SCAN_RATE_LIMIT = int(env("SCAN_RATE_LIMIT", "0") or 0)
 # Yalnızca sahipliği kanıtlanmış (DNS TXT veya doğrulama dosyası) hedeflerin taranmasına izin ver.
 # İnternete açık, herkesin kayıt olabildiği bir sunucuda AÇIN.
 REQUIRE_TARGET_VERIFICATION = _bool("REQUIRE_TARGET_VERIFICATION", False)
+
+# v7.0: yönetici hesapları. Virgülle ayrılmış e-postalar; bu hesaplar "Admin" olur: tüm plan
+# sınırları kalkar ve Yönetim paneli açılır. Var olan hesaplar uygulama açılırken yükseltilir;
+# kayıt anında ise yalnızca e-postası doğrulanmış sosyal giriş yönetici olur (bkz. auth.create_user).
+# Örnek: ADMIN_EMAILS=ben@ornek.com,asistan@ornek.com
+ADMIN_EMAILS = {e.strip().lower() for e in env("ADMIN_EMAILS").split(",") if e.strip()}
+
+# Sürekli izleme görevlerini çalıştıran arka plan zamanlayıcısı
+SCHEDULER_ENABLED = _bool("SCHEDULER_ENABLED", True)
+
+# v8.0: AI Analist. Anahtar yoksa kural tabanlı (çevrimdışı) analist kullanılır.
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY")
+AI_MODEL = env("AI_MODEL", "claude-opus-5-5") or "claude-opus-5-5"

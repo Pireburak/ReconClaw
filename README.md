@@ -1,33 +1,40 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v6.1 Aurora</h1>
+<h1 align="center">🦝 ReconClaw v8.0 Cortex</h1>
 
-<p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b><br>
+<p align="center"><b>Asenkron Ağ Keşfi, Sürekli Saldırı Yüzeyi İzleme ve Yapay Zekâ Destekli Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v6.1%20Aurora-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v8.0%20Cortex-E8751A?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
 <img src="https://img.shields.io/badge/Docker-HTTPS%20Ready-2B2B2B?style=for-the-badge&logo=docker&logoColor=F5B041" alt="Docker">
 <br>
-<img src="https://img.shields.io/badge/Testler-49%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
+<img src="https://img.shields.io/badge/Testler-88%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
 <img src="https://img.shields.io/badge/Giri%C5%9F-E--posta%20%7C%20Google%20%7C%20GitHub%20%7C%20Microsoft%20%7C%20Apple-2B2B2B?style=for-the-badge" alt="Giriş">
 <img src="https://img.shields.io/badge/Aray%C3%BCz-Gizli%20Dosya-9E1F17?style=for-the-badge" alt="Arayüz">
 <img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
 <img src="https://img.shields.io/badge/Maskot-Rakun%20%F0%9F%A6%9D-E8751A?style=for-the-badge" alt="Maskot: Rakun">
+<br>
+<img src="https://img.shields.io/badge/MITRE-ATT%26CK-9E1F17?style=for-the-badge" alt="MITRE ATT&CK">
+<img src="https://img.shields.io/badge/AI%20Analist-Claude-2B2B2B?style=for-the-badge" alt="AI Analist">
+<img src="https://img.shields.io/badge/Uyum-ISO%2027001%20%7C%20KVKK-4F6B2F?style=for-the-badge" alt="Uyum">
 </p>
 
 <p align="center">
 <a href="#-60-saniyede-başla">Hızlı Başlangıç</a> •
 <a href="#️-ekran-turu">Ekran Turu</a> •
+<a href="#-derin-analiz-v80-cortex">v8 Cortex</a> •
+<a href="#-sürekli-izleme-v70">İzleme</a> •
 <a href="#️-nasıl-çalışır">Nasıl Çalışır</a> •
 <a href="#-api">API</a> •
 <a href="#-alan-adında-yayınlama-https">Yayınlama</a> •
 <a href="#-neden-rakun">Maskot</a> •
 <a href="#-sorun-giderme">Sorun Giderme</a> •
-<a href="#️-yol-haritası">Yol Haritası</a>
+<a href="#️-yol-haritası">Yol Haritası</a> •
+<a href="docs/YARISMA.md">TÜBİTAK / TEKNOFEST</a>
 </p>
 
 <p align="center">
@@ -60,6 +67,15 @@
   - [PDF Rapor](#11-pdf-rapor)
   - [Kâğıt Tema ve Vurgu Renkleri](#12-kâğıt-tema-ve-vurgu-renkleri)
   - [Telefon](#13-telefon)
+- [Derin Analiz (v8.0 Cortex)](#-derin-analiz-v80-cortex)
+  - [Güvenlik karnesi](#-güvenlik-karnesi-a--f)
+  - [MITRE ATT&CK eşlemesi](#-mitre-attck-eşlemesi-ve-saldırı-zinciri)
+  - [ISO 27001 / KVKK uyumu](#-iso-27001--kvkk-uyum-ön-değerlendirmesi)
+  - [AI Analist](#-ai-analist)
+  - [Paylaşım bağlantısı](#-salt-okunur-paylaşım-bağlantısı)
+- [Sürekli İzleme (v7.0)](#-sürekli-izleme-v70)
+- [Pasif Keşif (v7.0)](#️-pasif-keşif-v70)
+- [Yönetim Paneli ve Admin Hesabı](#-yönetim-paneli-ve-admin-hesabı)
 - [Abonelik Planları](#-abonelik-planları)
 - [Nasıl Çalışır?](#️-nasıl-çalışır)
 - [Risk Değerlendirme Modeli](#-risk-değerlendirme-modeli)
@@ -77,6 +93,7 @@
 - [Sunum Rehberi](#-sunum-rehberi)
 - [Yol Haritası](#️-yol-haritası)
 - [Yasal Uyarı](#️-yasal-uyarı)
+- [TÜBİTAK / TEKNOFEST proje dosyası](docs/YARISMA.md)
 
 </details>
 
@@ -84,7 +101,7 @@
 
 ## 🦝 ReconClaw Nedir?
 
-ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti ve ön güvenlik değerlendirmesi için geliştirilmiş, web arayüzlü bir siber güvenlik aracıdır. Bir hedefi verirsiniz; ReconClaw portlarını saniyeler içinde yoklar, açık servislerin sürümünü yakalar, bilinen zafiyetlerle eşleştirir, bir **risk skoru** hesaplar ve ne yapmanız gerektiğini Türkçe olarak söyler. Hepsi, bir istihbarat dosyası gibi tasarlanmış tek bir panelde.
+ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti ve ön güvenlik değerlendirmesi için geliştirilmiş, web arayüzlü bir siber güvenlik platformudur. Bir hedefi verirsiniz; ReconClaw portlarını saniyeler içinde yoklar, açık servislerin sürümünü yakalar, bilinen zafiyetlerle eşleştirir, bir **risk skoru** ve **A+…F güvenlik notu** hesaplar, bulguları **MITRE ATT&CK** saldırı zincirine ve **ISO 27001 / KVKK** kontrollerine bağlar, **AI Analist** ile ne yapmanız gerektiğini Türkçe olarak söyler ve hedefi **sürekli izleyerek** değişiklikte alarm verir. Hepsi, bir istihbarat dosyası gibi tasarlanmış tek bir panelde.
 
 | | Ne yapar? | Nasıl? |
 |---|-----------|--------|
@@ -98,6 +115,13 @@ ReconClaw; **yetkili** ağ keşfi (reconnaissance), port analizi, servis tespiti
 | 🖨️ | **Raporlama** | GİZLİ damgalı PDF rapor, CSV ve JSON dışa aktarım |
 | 🔐 | **Çok kullanıcılı** | E-posta veya Google / GitHub / Microsoft / Apple ile giriş; herkes yalnızca kendi taramalarını görür |
 | 🌐 | **Yayına hazır** | Docker + Caddy ile alan adında tek komutla otomatik HTTPS |
+| 🎯 | **MITRE ATT&CK** *(v8)* | Açık servisleri 14 taktiklik matristeki tekniklere bağlar, keşiften etkiye **saldırı zinciri** çizer |
+| 🅰️ | **Güvenlik karnesi** *(v8)* | 5 kategoride puanlama ve A+…F not; kritik sorunlar notu tavanlar |
+| ⚖️ | **Uyum** *(v8)* | ISO/IEC 27001:2022 Ek A ve KVKK m.12 için uyumlu / kısmi / uyumsuz ön değerlendirme |
+| 🤖 | **AI Analist** *(v8)* | Claude ile Türkçe yönetici özeti, önceliklendirilmiş aksiyon planı ve rapor üzerine soru-cevap; internetsiz ortamda kural tabanlı analist |
+| 📡 | **Sürekli izleme** *(v7)* | Saatlik / günlük / haftalık otomatik tarama, değişim alarmı, Discord / Slack webhook |
+| 🛰️ | **Pasif keşif** *(v7)* | Sertifika Şeffaflığı loglarından alt alan adları, DNS kayıtları, SPF / DMARC / CAA denetimi |
+| 👑 | **Yönetim paneli** *(v7)* | Kullanıcılar, plan atama, askıya alma, gelir özeti ve denetim kaydı |
 
 **Kimler için?** Ağını tanımak isteyen sistem yöneticileri, siber güvenlik öğrencileri, CTF / lab ortamlarında çalışanlar ve yetkili sızma testi öncesinde hızlı bir ön değerlendirme isteyenler için.
 
@@ -244,7 +268,8 @@ Tüm taramalar en yeniden eskiye listelenir. Hedef veya IP'ye göre **anlık ara
 | Kısayol | İşlev |
 |---------|-------|
 | `Ctrl` + `K` | Komut paleti |
-| `0` … `7` | Bölümler arasında geçiş (0 = Operasyon Merkezi … 7 = Abonelik) |
+| `0` … `9` | Bölümler arasında geçiş (0 = Operasyon Merkezi, 6 = Pasif Keşif, 7 = Sürekli İzleme, 8 = Ayarlar, 9 = Abonelik) |
+| `A` | Yönetim paneli (yalnızca yöneticiler) |
 | `N` | Yeni tarama |
 | `T` | Karanlık / kâğıt tema |
 | `/` | Arşivde ara |
@@ -300,26 +325,151 @@ Arayüz telefonda da tam çalışır: sol ikon rayı ekranın altına **sekme ç
 
 ---
 
+## 🧠 Derin Analiz (v8.0 Cortex)
+
+v8.0 ile her tarama raporunun altına **Derin analiz** paneli geldi. Panel aynı rapora dört farklı mercekten bakar: **Karne**, **MITRE ATT&CK**, **Uyum** ve **AI Analist**. İlk üçü tamamen çevrimdışı ve deterministiktir (aynı rapor her zaman aynı sonucu verir); kodu `core/intel.py` içinde ve testlerle doğrulanmıştır. Bu bölümler PDF rapora ve paylaşım bağlantısına da girer.
+
+### 🏅 Güvenlik karnesi (A+ … F)
+
+<p align="center"><img src="docs/screenshots/19-guvenlik-karnesi.jpg" alt="Güvenlik karnesi" width="100%"></p>
+
+| Kategori | Ağırlık | Neye bakar? |
+|----------|:-------:|-------------|
+| Ağ maruziyeti | %30 | Veritabanı, SMB, RDP, VNC, Telnet gibi dışarıda olmaması gereken servisler (−25), yönetim servisleri (−6) |
+| Yama düzeyi | %30 | Bilinen CVE imzası başına −45 |
+| Şifreleme | %20 | FTP / Telnet / POP3 / IMAP gibi şifresiz kimlik doğrulama, yalnızca HTTP sunulması, TLS bulguları, eksik HSTS |
+| Web sıkılaştırma | %10 | HTTP güvenlik başlıkları (yalnızca web servisi varsa hesaplanır) |
+| Bilgi ifşası | %10 | Banner'da veya `Server:` başlığında sürüm bilgisi |
+
+Not ölçeği: **A+** ≥95 · **A** ≥85 · **B** ≥70 · **C** ≥55 · **D** ≥40 · **F**. SSL Labs'teki yaklaşım gibi kritik sorunlar notu **tavanlar**: bilinen CVE varken not en fazla **D**, veritabanı veya dosya paylaşımı dışarıya açıkken en fazla **C** olabilir.
+
+### 🎯 MITRE ATT&CK eşlemesi ve saldırı zinciri
+
+<p align="center"><img src="docs/screenshots/20-mitre-attack.jpg" alt="MITRE ATT&CK matrisi" width="100%"></p>
+
+Her açık servis ve bulgu, bir saldırganın o hedefte kullanabileceği **ATT&CK Enterprise** tekniklerine bağlanır (ör. SSH açık → T1133 Dış uzak erişim servisleri, T1110 Kaba kuvvet, T1021.004 SSH ile yanal hareket; CVE imzası → T1190 Dışa açık uygulamanın istismarı). Sonuç 14 taktiklik bir matriste gösterilir; bir tekniğe tıklayınca gerekçesi ve attack.mitre.org bağlantısı açılır.
+
+Üstteki ok zinciri, matris sırasıyla her taktikten **tek bir teknik** seçerek oluşturulan **olası saldırı yoludur** (kill chain). Etkisi büyük teknikler (CVE istismarı, fidye amaçlı şifreleme, veri imhası) önceliklidir ve bir teknik zincirde yalnızca bir kez yer alır.
+
+### 📋 ISO 27001 / KVKK uyum ön değerlendirmesi
+
+<p align="center"><img src="docs/screenshots/21-uyum.jpg" alt="Uyum ön değerlendirmesi" width="100%"></p>
+
+ISO/IEC 27001:2022 Ek A'dan dışarıdan gözlemlenebilen 8 kontrol (A.8.5, A.8.8, A.8.9, A.8.16, A.8.20, A.8.21, A.8.22, A.8.24) ve 6698 sayılı KVKK'nın **12. maddesi** (veri güvenliğine ilişkin yükümlülükler) için **uyumlu / kısmi / uyumsuz** sınıflandırması ve kanıt üretilir. Hedef sürekli izlemedeyse A.8.16 (izleme faaliyetleri) uyumlu sayılır.
+
+> [!NOTE]
+> Uyum çıktısı yalnızca dışarıdan görülebilen bulgulara dayanan **otomatik bir ön değerlendirmedir**; resmi denetimin yerini tutmaz.
+
+### 🤖 AI Analist
+
+<p align="center"><img src="docs/screenshots/22-ai-analist.jpg" alt="AI Analist" width="100%"></p>
+
+**Değerlendirme üret** düğmesi raporu; **Yönetici özeti**, **Saldırgan gözünden**, **Öncelikli aksiyon planı** (P1 · 24 saat, P2 · 1 hafta, P3 · 30 gün) ve **Uyum notu** bölümleriyle yorumlar. Alttaki kutudan rapor hakkında soru sorabilirsiniz ("3306 neden riskli?", "KVKK açısından durum ne?").
+
+| Motor | Ne zaman? | Nasıl? |
+|-------|-----------|--------|
+| **Claude** | `.env` içinde `ANTHROPIC_API_KEY` tanımlıysa | Rapor, karne, ATT&CK zinciri ve uyum sonucu resmi `anthropic` Python SDK'sıyla `claude-opus-5-5` modeline gönderilir. Model bir isteği reddederse API'nin sunucu taraflı yedek modeli (`fallbacks: "default"`) devreye girer |
+| **Kural tabanlı** | Anahtar yoksa, internet yoksa veya API hata verirse | Aynı bölümleri deterministik kurallarla üretir; port numarası içeren soruları yanıtlar. Sunumda internet olmasa da çalışır |
+
+- **İstem enjeksiyonu (prompt injection) koruması:** Banner ve HTTP başlıkları taranan sunucudan, yani potansiyel saldırgandan gelir. Bu veriler modele ayrı bir `<rapor_verisi>` bloğunda verilir ve sistem talimatı, bloktaki metinlerin talimat olarak değil yalnızca veri olarak ele alınmasını söyler.
+- Rapor değerlendirmesi önbelleğe alınır; aynı raporu tekrar açmak kota harcamaz. Günlük AI hakkı plana bağlıdır (Pro Max 20, Ultra 100, Ultra Max 500).
+
+### 🔗 Salt-okunur paylaşım bağlantısı
+
+<p align="center"><img src="docs/screenshots/23-paylasilan-rapor.jpg" alt="Paylaşılan rapor" width="100%"></p>
+
+Sonuç sayfasındaki **PAYLAŞ** düğmesi, raporu oturum açmadan görüntülenebilen bir bağlantıya (`/share/<anahtar>`) dönüştürür: jüriye, müşteriye veya ekibe gönderin. Bağlantı 192 bit rastgele anahtar taşır, arama motorlarına kapalıdır (`X-Robots-Tag: noindex`) ve tek tıkla iptal edilir.
+
+<p align="center"><img src="docs/screenshots/27-mobil-karne.jpg" alt="Telefonda güvenlik karnesi" width="320"></p>
+
+---
+
+## 📡 Sürekli İzleme (v7.0)
+
+<p align="center"><img src="docs/screenshots/24-surekli-izleme.jpg" alt="Sürekli izleme" width="100%"></p>
+
+Bir hedefi **saatlik, günlük veya haftalık** izlemeye alın. Arka plandaki zamanlayıcı zamanı gelen görevi tarar, sonucu bir önceki taramayla karşılaştırır ve değişiklikleri alarm olarak kaydeder:
+
+| Alarm | Şiddet |
+|-------|--------|
+| Yeni açılan veritabanı / SMB / RDP / VNC / Telnet portu | 🔴 Kritik |
+| Yeni CVE imzası | 🔴 Kritik |
+| Diğer yeni açık portlar, risk skorunda +10 ve üzeri artış | 🟠 Yüksek |
+| Servis sürümü değişikliği, yeni orta/yüksek eklenti bulgusu | 🟡 Orta |
+| Kapanan port, giderilen zafiyet | ⚪ Bilgi |
+
+Alarmlar **İzleme** sayfasındaki akışta ve üst bardaki 🔔 zilde görünür. Görev tanımlarken bir **webhook** adresi verirseniz önemli değişiklikler Discord, Slack veya kendi sunucunuza JSON olarak gönderilir. İzleme taramaları günlük kotaya sayılır ve hedef doğrulama kurallarına uyar; plan izlemeyi kapsamazsa görev kendiliğinden duraklatılır.
+
+---
+
+## 🛰️ Pasif Keşif (v7.0)
+
+<p align="center"><img src="docs/screenshots/25-pasif-kesif.jpg" alt="Pasif keşif" width="100%"></p>
+<p align="center"><sub>Görseldeki veriler, IANA'nın örnek kullanım için ayırdığı <code>example.com</code> üzerinde hazırlanmış <b>örnek veridir</b>.</sub></p>
+
+Hedefe **tek bir paket göndermeden** saldırı yüzeyini çıkarır:
+
+- **Alt alan adları:** Bir alan adı için verilmiş her TLS sertifikası herkese açık **Sertifika Şeffaflığı** loglarına yazılır. ReconClaw bunları crt.sh'tan (yanıt vermezse CertSpotter'dan) toplar ve DNS'te çözülüp çözülmediğini kontrol eder.
+- **Dikkat çeken adlar:** `admin`, `dev`, `staging`, `vpn`, `jenkins`, `grafana` gibi saldırganların ilk baktığı adlar kırmızı etiketle işaretlenir.
+- **DNS ve e-posta güvenliği:** A, AAAA, MX, NS, TXT, CAA kayıtları DNS-over-HTTPS ile alınır; **SPF** (katı / esnek / tehlikeli), **DMARC** (none / quarantine / reject) ve **CAA** değerlendirilip 0–100 e-posta güvenlik puanı verilir.
+- Her alt alan adının yanındaki **TARA** aktif port taramasını, **İZLE** günlük izleme görevini başlatır.
+
+MITRE ATT&CK karşılığı: T1596.003 (Digital Certificates) ve T1590.002 (DNS).
+
+---
+
+## 👑 Yönetim Paneli ve Admin Hesabı
+
+<p align="center"><img src="docs/screenshots/26-yonetim-paneli.jpg" alt="Yönetim paneli" width="100%"></p>
+
+Yönetici hesapları **sınırsız "Admin" seviyesindedir** (kota, port, izleme ve AI sınırı yoktur) ve sol menüde kırmızı kalkanlı **YÖNETİM** sayfasını görür (kısayol `A`):
+
+- **Sistem özeti:** kullanıcı sayısı, ücretli abone, aylık yinelenen gelir (MRR), tahsilat, bugünkü tarama, aktif izleme, son 24 saatteki hatalı giriş, 14 günlük kayıt / tarama grafiği
+- **Kullanıcılar:** arama, ödeme kaydı oluşturmadan plan atama (30 gün / 1 yıl / süresiz), yönetici yapma, askıya alma (oturumlar ve API anahtarı anında geçersiz olur), silme
+- **Denetim kaydı:** giriş, hatalı giriş, plan değişikliği, API anahtarı ve yönetici eylemleri; IP adresi ve işlemi yapan kişiyle
+
+Yönetici kendini askıya alamaz, yetkisini kaldıramaz veya silemez; böylece sistem yöneticisiz kalmaz. Her kullanıcı kendi hesap etkinliğini **Ayarlar → Hesap etkinliği**'nde görür.
+
+**Kendinizi yönetici yapmak için** (önce siteye normal şekilde kayıt olun):
+
+```bash
+# Yöntem 1: komut satırı (anında)
+python manage.py make-admin sizin@mailiniz.com
+
+# Yöntem 2: .env dosyası (sunucu yeniden başlatılınca)
+ADMIN_EMAILS=sizin@mailiniz.com
+```
+
+> [!TIP]
+> Güvenlik gereği parolayla açılan bir hesap, `ADMIN_EMAILS` listesinde olsa bile **kayıt anında** yönetici olmaz (e-posta doğrulanmadığı için adresi sizden önce alan biri yönetici olabilirdi). Hesap sunucu açılırken veya `manage.py` ile yükseltilir. E-postası sağlayıcı tarafından doğrulanmış Google / GitHub girişi ise anında yönetici olur.
+
+---
+
 ## 💳 Abonelik Planları
 
-ReconClaw v6.1 ile **5 kademeli üyelik** sistemi geldi. Her yeni hesap **Free** planla başlar; sınırlar yalnızca arayüzde değil **sunucu tarafında** uygulanır (API ile de aşılamaz). Sınırı aşan bir istek `HTTP 402` döner ve arayüz kullanıcıyı **Abonelik** sayfasına yönlendirir.
+ReconClaw **5 kademeli üyelik** sistemine sahiptir. Her yeni hesap **Free** planla başlar; sınırlar yalnızca arayüzde değil **sunucu tarafında** uygulanır (API ile de aşılamaz). Sınırı aşan bir istek `HTTP 402` döner ve arayüz kullanıcıyı **Abonelik** sayfasına yönlendirir. **Sınırsız erişim yalnızca yöneticilere** (Admin seviyesi) aittir; hiçbir satın alınabilir plan sınırsız değildir.
 
-<p align="center"><img src="docs/screenshots/16-abonelik.png" alt="Abonelik planları" width="100%"></p>
+<p align="center"><img src="docs/screenshots/16-abonelik.jpg" alt="Abonelik planları" width="100%"></p>
 
-| Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max |
-|---------|:------:|:-----:|:---------:|:-------:|:-----------:|
-| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺1.999** |
-| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺19.990 |
-| Günlük tarama | 5 | 50 | 200 | 1.000 | ∞ |
-| Dakikalık tarama | 2 | 5 | 10 | 20 | ∞ |
-| Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 |
-| HTTP / TLS eklentileri | — | ✅ | ✅ | ✅ | ✅ |
-| PDF / CSV rapor | — | ✅ | ✅ | ✅ | ✅ |
-| Tarama karşılaştırma | — | ✅ | ✅ | ✅ | ✅ |
-| API anahtarı | — | — | ✅ | ✅ | ✅ |
-| Doğrulanmış hedef | 1 | 3 | 10 | 25 | ∞ |
+| Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max | 🛡️ Admin |
+|---------|:------:|:-----:|:---------:|:-------:|:-----------:|:-------:|
+| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺5.500** | satın alınamaz |
+| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺55.000 | — |
+| Günlük tarama | 5 | 50 | 200 | 1.000 | 5.000 | ∞ |
+| Dakikalık tarama | 2 | 5 | 10 | 20 | 60 | ∞ |
+| Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 | 1–65535 |
+| HTTP / TLS eklentileri | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| PDF / CSV rapor, paylaşım bağlantısı | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Tarama karşılaştırma | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| API anahtarı | — | — | ✅ | ✅ | ✅ | ✅ |
+| Doğrulanmış hedef | 1 | 3 | 10 | 25 | 100 | ∞ |
+| Pasif keşif (CT / DNS) | — | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Sürekli izleme | — | 1 görev | 5 görev | 20 görev | 50 görev | ∞ |
+| Saatlik izleme | — | — | — | ✅ | ✅ | ✅ |
+| AI Analist | — | — | 20 / gün | 100 / gün | 500 / gün | ∞ |
+| Güvenlik karnesi, ATT&CK, uyum | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-- **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez.
+- **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez. İzleme taramaları da kotaya sayılır.
 - Ücretli planın süresi dolunca hesap otomatik olarak **Free** sınırlarına döner; API anahtarı da çalışmayı bırakır.
 - Üst barda planı gösteren rozet ve `KOTA 3/5` sayacı bulunur; kilitli düğmelerde **PRO** etiketi görünür.
 
@@ -365,7 +515,12 @@ flowchart LR
     F --> G[Eklentiler<br>HTTP başlıkları · TLS sertifikası]
     G --> H[RiskAnalyzer<br>ağırlık + CVE + bulgu puanı]
     H --> I[(SQLite<br>scans · open_ports · findings)]
-    I --> J[📊 Panel · PDF · CSV · JSON]
+    I --> K[🧠 Cortex<br>Karne · ATT&CK · Uyum]
+    K --> L[🤖 AI Analist<br>Claude / kural tabanlı]
+    K --> J[📊 Panel · PDF · paylaşım · CSV · JSON]
+    L --> J
+    M[⏱️ Zamanlayıcı<br>sürekli izleme] -. aynı tarama hattı .-> B
+    I -. önceki tarama ile fark .-> N[🔔 Alarm · webhook]
 ```
 
 1. **Girdi temizleme:** `https://site.com:8080/yol` → `site.com`. Geçersiz ana bilgisayar adları 422 ile reddedilir.
@@ -376,6 +531,8 @@ flowchart LR
 6. **Eklentiler:** Yalnızca ilgilendikleri açık portlarda, eşzamanlı çalışırlar. Biri hata verirse tarama bozulmaz.
 7. **Risk analizi:** Servis ağırlıkları, CVE imza puanları ve eklenti bulgu puanları toplanır (en fazla 100). Öneriler üretilir.
 8. **Kayıt:** Rapor, sahibi olan kullanıcıyla birlikte SQLite'a yazılır. Panel, istatistikleri bu kayıtlardan hesaplar.
+9. **Cortex (v8):** Rapor açıldığında güvenlik karnesi, ATT&CK eşlemesi ve uyum değerlendirmesi kayıtlı rapordan hesaplanır; böylece eski taramalar da yeni analizlerden yararlanır.
+10. **İzleme (v7):** Zamanlayıcı aynı tarama hattını (kota, hedef doğrulama ve iç ağ kontrolleri dahil) kullanır ve sonucu bir önceki taramayla karşılaştırıp alarm üretir.
 
 <details>
 <summary><b>🔐 Sosyal giriş (OAuth) akışı</b></summary>
@@ -533,6 +690,17 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 | `POST /api/billing/cancel` | Aboneliği iptal et, Free plana dön |
 | `GET /api/targets` · `POST /api/targets` | Doğrulama hedeflerini listele / ekle |
 | `POST /api/targets/{id}/verify` · `DELETE /api/targets/{id}` | Hedefi DNS veya dosya ile doğrula / sil |
+| `GET /api/scans/{id}/intel` | **v8:** Güvenlik karnesi, MITRE ATT&CK eşlemesi ve uyum ön değerlendirmesi |
+| `GET /api/scans/{id}/ai` · `POST /api/scans/{id}/ai` | **v8:** AI Analist notları / `{"question": "..."}` ile soru veya `{}` ile rapor değerlendirmesi |
+| `GET` · `POST` · `DELETE /api/scans/{id}/share` | **v8:** Salt-okunur paylaşım bağlantısı durumu / oluştur / iptal et |
+| `GET /share/{anahtar}` | **v8:** Paylaşılan rapor sayfası (oturum gerektirmez) |
+| `GET /api/monitors` · `POST /api/monitors` | **v7:** İzleme görevleri / `{"target", "interval": "hourly\|daily\|weekly", "max_port", "webhook"}` |
+| `PATCH /api/monitors/{id}` · `POST /api/monitors/{id}/run` · `DELETE /api/monitors/{id}` | **v7:** Görevi duraklat/başlat, hemen çalıştır, sil |
+| `GET /api/alerts` · `POST /api/alerts/seen` | **v7:** İzleme alarmları / tümünü okundu işaretle |
+| `POST /api/recon` · `GET /api/recon` · `GET /api/recon/{id}` | **v7:** Pasif keşif başlat `{"domain"}` / geçmiş / kayıtlı sonuç |
+| `GET /api/me/audit` | **v7:** Hesabınızın güvenlik olayları |
+| `GET /api/admin/overview` · `GET /api/admin/users` · `GET /api/admin/audit` | **v7 (yönetici):** Sistem özeti, kullanıcı listesi, denetim kaydı |
+| `PATCH /api/admin/users/{id}` · `DELETE /api/admin/users/{id}` | **v7 (yönetici):** `{"role", "plan", "days", "disabled"}` ile güncelle / sil |
 | `GET /api/health` | Sağlık kontrolü (oturum gerektirmez) |
 
 <details>
@@ -572,6 +740,10 @@ Tüm ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yap�
 | `ALLOW_PRIVATE_TARGETS` | `true` | İç ağ adreslerinin taranması. **İnternete açık sunucuda `false` yapın** |
 | `SCAN_RATE_LIMIT` | `0` | Plan sınırlarına ek, tüm kullanıcılar için dakikalık üst sınır (0 = kapalı, yalnızca plan sınırları) |
 | `REQUIRE_TARGET_VERIFICATION` | `false` | Yalnızca sahipliği doğrulanmış hedefler taransın. **Herkese açık sunucuda `true` yapın** |
+| `ADMIN_EMAILS` | *(boş)* | Virgülle ayrılmış yönetici e-postaları (bkz. [Yönetim Paneli](#-yönetim-paneli-ve-admin-hesabı)) |
+| `SCHEDULER_ENABLED` | `true` | Sürekli izleme zamanlayıcısı |
+| `ANTHROPIC_API_KEY` | *(boş)* | AI Analist için Claude API anahtarı. Boşsa kural tabanlı analist çalışır |
+| `AI_MODEL` | `claude-opus-5-5` | AI Analist'in kullandığı Claude modeli |
 | `RECONCLAW_DB` | `data/reconclaw_v4.db` | Veritabanı dosyasının yolu |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | — | Google ile giriş |
 | `GITHUB_CLIENT_ID` / `_SECRET` | — | GitHub ile giriş |
@@ -641,6 +813,11 @@ ReconClaw bir güvenlik aracı olduğu için kendi güvenliğine de özen göste
 | **HTTP başlıkları** | CSP (yalnızca `'self'`), HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy. ReconClaw kendi `http_headers` eklentisinden **temiz geçer** |
 | **Dışa aktarım** | CSV'de Excel formül enjeksiyonuna karşı hücreler temizlenir; arayüzde tüm sunucu verisi HTML'e basılmadan kaçışlanır (XSS) |
 | **Bağımsızlık** | Yazı tipleri projeye gömülüdür (`static/fonts`); harici CDN'e istek atılmaz |
+| **Yönetici rolü** *(v7)* | Kayıt anında yöneticilik yalnızca e-postası doğrulanmış sosyal girişe verilir; yönetici kendini askıya alamaz / silemez; askıya alınan hesabın tüm oturumları ve API anahtarı anında düşer |
+| **Denetim kaydı** *(v7)* | Giriş, hatalı giriş, plan, API anahtarı ve yönetici eylemleri IP ile kayıt altına alınır |
+| **İstem enjeksiyonu** *(v8)* | Taranan sunucudan gelen banner'lar AI modeline ayrı veri bloğunda ve "güvenilmez veri" olarak verilir; analist savunma odaklı talimatla sınırlıdır |
+| **Paylaşım** *(v8)* | 192 bit rastgele anahtar, `noindex`, `no-referrer`, tek tıkla iptal; sahibinin planı düşerse veya hesabı askıya alınırsa bağlantı çalışmaz |
+| **Webhook** *(v7)* | Yalnızca http(s); `ALLOW_PRIVATE_TARGETS=false` iken iç ağ adreslerine gönderim engellenir; arayüzde adresin gizli kısmı maskelenir |
 
 ---
 
@@ -695,7 +872,27 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 💳 v6.1 Aurora *(mevcut sürüm)*
+### 🧠 v8.0 Cortex *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| 🎯 MITRE ATT&CK | 14 taktiklik matris, teknik gerekçeleri, attack.mitre.org bağlantıları ve otomatik saldırı zinciri |
+| 🅰️ Güvenlik karnesi | 5 kategori, A+…F not, kritik sorunlarda not tavanı |
+| ⚖️ Uyum | ISO/IEC 27001:2022 Ek A (8 kontrol) + KVKK m.12 ön değerlendirmesi |
+| 🤖 AI Analist | Claude (`anthropic` SDK, sunucu taraflı yedek model) veya çevrimdışı kural tabanlı analist; soru-cevap, önbellek, günlük kota |
+| 🔗 Paylaşım | Salt-okunur rapor bağlantısı; PDF rapora karne, ATT&CK ve uyum bölümleri |
+
+### 🛰️ v7.0 Sentinel
+
+| Özellik | Açıklama |
+|---------|----------|
+| 👑 Yönetici rolü | `ADMIN_EMAILS` / `manage.py make-admin`; sınırsız Admin seviyesi; Ultra Max artık ₺5.500 ve sınırlı |
+| 🗂️ Yönetim paneli | Kullanıcılar, plan atama, askıya alma, MRR, 14 günlük grafik, denetim kaydı |
+| 📡 Sürekli izleme | Saatlik / günlük / haftalık zamanlanmış tarama, değişim alarmı, Discord / Slack webhook |
+| 🛰️ Pasif keşif | Sertifika Şeffaflığı alt alan adları, DNS kayıtları, SPF / DMARC / CAA puanı |
+| 📝 Hesap etkinliği | Kullanıcının kendi güvenlik kaydı; zilde izleme alarmları |
+
+### 💳 v6.1 Aurora
 
 | Özellik | Açıklama |
 |---------|----------|
@@ -767,9 +964,18 @@ Tarama motoru ve API aynı kaldı; v6.0 baştan sona bir **arayüz** sürümüd�
 
 ```text
 ReconClaw/
-├── main.py                 # FastAPI uygulaması: sayfalar, API, güvenlik başlıkları, hız sınırı
+├── main.py                 # FastAPI uygulaması: sayfalar, API, güvenlik başlıkları, hız sınırı, zamanlayıcı
+├── manage.py               # Yönetim komutları: make-admin, remove-admin, list-admins
 ├── core/
 │   ├── config.py           # .env / ortam değişkeni ayarları
+│   ├── plans.py            # Abonelik planları, kotalar, demo ödeme, Admin seviyesi
+│   ├── verify.py           # Hedef sahipliği doğrulama (DNS TXT / .well-known)
+│   ├── admin.py            # v7: Yönetim paneli (özet, kullanıcılar, plan atama, askıya alma)
+│   ├── audit.py            # v7: Denetim kaydı
+│   ├── monitor.py          # v7: Sürekli izleme, değişim alarmları, webhook, zamanlayıcı
+│   ├── recon.py            # v7: Pasif keşif (CT logları, DNS, SPF / DMARC / CAA)
+│   ├── intel.py            # v8: MITRE ATT&CK, güvenlik karnesi, ISO 27001 / KVKK uyumu
+│   ├── ai.py               # v8: AI Analist (Claude + kural tabanlı yedek)
 │   ├── engine.py           # AsyncScanner (DNS + TCP + banner) ve RiskAnalyzer
 │   ├── auth.py             # Kullanıcılar, scrypt, oturumlar, API anahtarı
 │   ├── oauth.py            # Google / GitHub / Microsoft / Apple girişi (state + PKCE)
@@ -787,6 +993,9 @@ ReconClaw/
 │   ├── css/style.css       # "Gizli dosya" arayüzü (karanlık + kâğıt tema)
 │   ├── js/
 │   │   ├── app.js          #   Panel mantığı, grafikler, harita, palet, kısayollar
+│   │   ├── ops.js          #   v7: Pasif keşif ve sürekli izleme sayfaları
+│   │   ├── admin.js        #   v7: Yönetim paneli (yalnızca yöneticilere yüklenir)
+│   │   ├── intel.js        #   v8: Derin analiz paneli, AI Analist, paylaşım
 │   │   ├── login.js        #   Giriş / kayıt formu
 │   │   ├── theme.js        #   Tema ve vurgu rengi (erken yüklenir)
 │   │   ├── fx.js           #   İkon rayı büyütme, sayaçlar, sparkline
@@ -795,8 +1004,10 @@ ReconClaw/
 │   ├── fonts/              # Gömülü yazı tipleri (OFL lisansı: fonts/OFL.txt)
 │   ├── img/                # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
 │   └── favicon.png
-├── tests/                  # 61 otomatik test (pytest)
-├── docs/screenshots/       # README ekran görüntüleri
+├── tests/                  # 88 otomatik test (pytest)
+├── docs/
+│   ├── YARISMA.md          # TÜBİTAK / TEKNOFEST proje dosyası
+│   └── screenshots/        # README ekran görüntüleri
 ├── deploy/Caddyfile        # HTTPS ters vekil ayarı
 ├── Dockerfile · docker-compose.yml
 ├── .env.example            # Tüm ayarlar (kopyalayıp .env yapın)
@@ -813,16 +1024,21 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 
 | Tablo        | Alanlar                                                                          |
 | ------------ | -------------------------------------------------------------------------------- |
-| `scans`      | `id`, `user_id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor) |
+| `scans`      | `id`, `user_id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor), `share_token` |
 | `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
 | `findings`   | `id`, `scan_id`, `plugin`, `port`, `severity`, `title`, `detail`                 |
-| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `plan`, `plan_expires`, `created_at`, `last_login` |
+| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `plan`, `plan_expires`, `role` (user/admin), `disabled`, `created_at`, `last_login` |
 | `identities` | `id`, `user_id`, `provider` (google/github/…), `subject`                          |
 | `sessions`   | `token_hash`, `user_id`, `created_at`, `expires_at`, `user_agent`                |
 | `oauth_states` | `state`, `provider`, `verifier`, `created_at` (10 dk geçerli, tek kullanımlık) |
-| `usage`      | `user_id`, `day`, `scans` (günlük tarama sayacı)                                  |
+| `usage`      | `user_id`, `day`, `scans`, `ai` (günlük tarama ve AI sayacı)                      |
 | `payments`   | `id`, `user_id`, `plan`, `period`, `amount`, `currency`, `status` (`demo`), `created_at` |
 | `targets`    | `id`, `user_id`, `host`, `token`, `method` (dns/file), `verified_at`, `created_at` |
+| `audit_log`  | `id`, `user_id`, `actor_id`, `action`, `detail`, `ip`, `created_at` |
+| `monitors`   | `id`, `user_id`, `target`, `interval`, `max_port`, `webhook`, `enabled`, `last_run`, `next_run`, `last_scan_id`, `last_status` |
+| `alerts`     | `id`, `user_id`, `monitor_id`, `scan_id`, `target`, `level`, `title`, `detail`, `seen`, `created_at` |
+| `recon_runs` | `id`, `user_id`, `domain`, `result` (JSON), `created_at` (kullanıcı başına son 30) |
+| `ai_notes`   | `id`, `scan_id`, `user_id`, `question`, `answer`, `engine` (claude/kural), `created_at` |
 
 ---
 
@@ -841,6 +1057,9 @@ pytest
 | `test_plugins.py` | 6 | HTTP başlık ve TLS eklentileri, eklenti yükleyici |
 | `test_insights.py` | 4 | Panel istatistikleri, aktivite takvimi, tarama karşılaştırma |
 | `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
+| `test_admin.py` | 7 | Admin seviyesi, panel erişim kontrolü, plan atama, askıya alma, kendini kilitleme koruması, denetim kaydı, `manage.py`, doğrulanmamış e-postayla yöneticilik engeli |
+| `test_monitoring.py` | 9 | İzleme plan sınırları, yeni port alarmı ve webhook, plan düşünce duraklatma, zamanlayıcı, alarm kuralları, SPF / DMARC / CAA, alt alan adı etiketleri, keşif API'si |
+| `test_intel.py` | 11 | ATT&CK eşlemesi ve saldırı zinciri, karne ve not tavanı, uyum, kural tabanlı analist, Claude hatasında yedeğe düşme, istem enjeksiyonu koruması, AI kotası ve önbelleği, paylaşım bağlantısı |
 
 ---
 
@@ -901,6 +1120,24 @@ VirtualBox'ta 3D hızlandırma kapalıysa WebGL yazılımla çizilir. **Ayarlar 
 </details>
 
 <details>
+<summary><b>YÖNETİM menüsü görünmüyor</b></summary>
+
+Hesabınız yönetici değil. `python manage.py make-admin sizin@mailiniz.com` çalıştırın (hesabın önceden açılmış olması gerekir) ve sayfayı yenileyin. Plan rozetinde **ADMIN** yazmalıdır.
+</details>
+
+<details>
+<summary><b>AI Analist "KURAL TABANLI (ÇEVRİMDIŞI)" yazıyor</b></summary>
+
+`.env` dosyasında `ANTHROPIC_API_KEY` tanımlı değil ya da `anthropic` paketi kurulu değil. Anahtarı [console.anthropic.com](https://console.anthropic.com) adresinden alıp `.env`'e yazın, `pip install -r requirements.txt` çalıştırın ve sunucuyu yeniden başlatın. Anahtar olmadan da kural tabanlı analist çalışmaya devam eder.
+</details>
+
+<details>
+<summary><b>Pasif keşif "kaynak: erişilemedi" diyor</b></summary>
+
+crt.sh ve CertSpotter'a ulaşılamadı (internet yok, kurum güvenlik duvarı ya da servis yoğun). Birkaç dakika sonra tekrar deneyin; DNS ve e-posta değerlendirmesi için de internet erişimi gerekir.
+</details>
+
+<details>
 <summary><b>Tarama 403 "İç ağ / özel adreslerin taranması kapalı" diyor</b></summary>
 
 `.env` içinde `ALLOW_PRIVATE_TARGETS=false` ayarlı. Yerel laboratuvar için `true` yapın; internete açık sunucuda `false` kalmalıdır.
@@ -910,43 +1147,48 @@ VirtualBox'ta 3D hızlandırma kapalıysa WebGL yazılımla çizilir. **Ayarlar 
 
 ## 🎓 Sunum Rehberi
 
-ReconClaw'ı 5 dakikada etkileyici biçimde göstermek için önerilen akış:
+ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akış (ayrıntılı jüri dosyası: [docs/YARISMA.md](docs/YARISMA.md)):
 
 | # | Adım | Ne söylenir? |
 |---|------|--------------|
-| 1 | **Erişim terminalini** açın, fareyi topoğrafik haritada gezdirin | "Giriş ekranı bir istihbarat dosyası gibi; çok kullanıcılı, OAuth destekli" |
-| 2 | Giriş yapın, **Operasyon Merkezi**'ni gösterin | "Tüm taramaların özeti: risk, olaylar, eğilim, takvim" |
-| 3 | `1` → `scanme.nmap.org` → **Taramayı başlat** | "Asenkron motor: yüzlerce port aynı anda, radarda canlı" |
-| 4 | **Hedef dosyası**: risk göstergesi, banner'lar, CVE uyarıları | "Sürüm yakalanıyor, CVE imzalarıyla eşleşiyor, risk skoru hesaplanıyor" |
-| 5 | Aynı hedefi tekrar tarayıp **Öncekiyle karşılaştır** | "Zaman içinde neyin değiştiğini görüyoruz" |
-| 6 | `5` → **Ağ krokisi**'nde bir porta tıklayın | "Saldırı yüzeyinin görsel topolojisi" |
-| 7 | **PDF rapor**'u açın | "Yönetime sunulabilir, GİZLİ damgalı değerlendirme dosyası" |
-| 8 | `Ctrl+K` ve `T` | "Klavye ile tam kontrol; karanlık ve kâğıt tema" |
+| 1 | **Erişim terminalini** açın, yönetici hesabıyla girin | "Çok kullanıcılı, OAuth destekli; plan rozetinde ADMIN görüyorsunuz" |
+| 2 | `1` → `scanme.nmap.org` → **Taramayı başlat** | "Asenkron motor: yüzlerce port aynı anda, radarda canlı" |
+| 3 | **Hedef dosyası** → **Derin analiz → Karne** | "Bulgular A+…F nota dönüşüyor; CVE varsa not D'yi geçemiyor" |
+| 4 | **MITRE ATT&CK** sekmesi, bir tekniğe tıklayın | "Her açık port bir saldırı tekniğine bağlanıyor; keşiften etkiye olası saldırı zinciri" |
+| 5 | **Uyum** sekmesi | "ISO 27001 ve KVKK m.12 açısından ön değerlendirme, kanıtıyla" |
+| 6 | **AI Analist → Değerlendirme üret**, sonra bir soru sorun | "Claude Türkçe aksiyon planı üretiyor; internet yoksa kural tabanlı analist devreye giriyor. Banner'lardan gelen istem enjeksiyonuna karşı korumalı" |
+| 7 | `7` → **Sürekli izleme** → görev ekle → **Şimdi tara** | "Değişiklik olduğunda alarm ve Discord bildirimi geliyor" |
+| 8 | `6` → **Pasif keşif** | "Hedefe tek paket göndermeden Sertifika Şeffaflığı loglarından alt alan adları ve e-posta güvenliği" |
+| 9 | **PAYLAŞ** → bağlantıyı telefonda açın | "Jüri raporu oturum açmadan görebiliyor; tek tıkla iptal" |
+| 10 | `A` → **Yönetim** paneli | "Gelir, kullanıcılar, plan atama ve denetim kaydı: bir SaaS ürününün yönetim katmanı" |
 
 **Olası sorulara hazır cevaplar:**
 
-- *"Parolalar nasıl saklanıyor?"* → Tuzlu scrypt; oturum anahtarlarının bile yalnızca SHA-256 özeti tutuluyor.
-- *"Kötüye kullanılırsa?"* → Hız sınırı, iç ağ engeli, kayıt kapatma ve kullanıcı izolasyonu var. Araç yalnızca izinli hedefler içindir.
-- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor.
-- *"Nmap'ten farkı ne?"* → Nmap'in yerini tutmaz; üzerine risk skoru, CVE eşleştirme, öneri, geçmiş, karşılaştırma ve raporlama katmanı ekleyen web tabanlı bir platformdur.
+- *"Nmap'ten farkı ne?"* → Nmap'in yerini tutmaz; üzerine risk skoru, ATT&CK eşlemesi, uyum değerlendirmesi, AI destekli aksiyon planı, sürekli izleme ve raporlama katmanı ekleyen web tabanlı bir platformdur.
+- *"Yapay zekâ uydurursa?"* → Model yalnızca rapor verisine dayanmakla ve veride olmayan CVE yazmamakla sınırlandırıldı; karne, ATT&CK ve uyum ise yapay zekâdan bağımsız, deterministik ve testli kurallarla hesaplanıyor.
+- *"Banner'a 'önceki talimatları unut' yazan bir sunucu taranırsa?"* → Banner'lar modele ayrı veri bloğunda ve "güvenilmez veri" olarak veriliyor; analist savunma odaklı talimatla sınırlı.
+- *"Kötüye kullanılırsa?"* → Hedef sahipliği doğrulama (DNS TXT / dosya), iç ağ engeli, plan bazlı kotalar, hız sınırı, denetim kaydı ve hesap askıya alma var. Araç yalnızca izinli hedefler içindir.
+- *"Parolalar nasıl saklanıyor?"* → Tuzlu scrypt; oturum anahtarlarının ve API anahtarlarının bile yalnızca SHA-256 özeti tutuluyor.
+- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 88 otomatik test her değişiklikte çalışıyor.
 
 ---
 
 ## 🛣️ Yol Haritası
 
-**🔭 Sıradaki adımlar**
-- [ ] UDP tarama
-- [ ] Zamanlanmış (periyodik) taramalar ve e-posta bildirimi
-- [ ] İki adımlı doğrulama (TOTP)
-- [ ] Çoklu hedef / CIDR aralığı taraması
-- [ ] Türkçe / İngilizce dil seçimi
+**✅ Tamamlananlar (v7.0 – v8.0)**
+- [x] Zamanlanmış (periyodik) taramalar ve bildirim (Discord / Slack webhook)
+- [x] Yapay zekâ destekli analist (Claude) ve çevrimdışı kural tabanlı analist
+- [x] MITRE ATT&CK eşleştirme, ISO 27001 / KVKK uyum ön değerlendirmesi
+- [x] Pasif keşif: Sertifika Şeffaflığı, DNS, e-posta güvenliği
+- [x] Yönetici paneli, denetim kaydı, salt-okunur rapor paylaşımı
 
-**🚀 v7.0**
-- [ ] Yapay zekâ destekli pentest asistanı
-- [ ] Makine öğrenmesi ile anomali tespiti
-- [ ] Bulut tarama (AWS, Azure, Kubernetes)
-- [ ] SIEM entegrasyonu & sürekli izleme
-- [ ] MITRE ATT&CK eşleştirme, OWASP / ISO 27001 uyumluluk raporları
+**🔭 Sıradaki adımlar**
+- [ ] Gerçek ödeme altyapısı (iyzico) ve e-fatura
+- [ ] İki adımlı doğrulama (TOTP)
+- [ ] Çoklu hedef / CIDR aralığı taraması ve UDP tarama
+- [ ] CVE veritabanı entegrasyonu (NVD / OSV) ve EPSS ile istismar olasılığı
+- [ ] Türkçe / İngilizce dil seçimi
+- [ ] SIEM entegrasyonu (syslog / Elastic), e-posta bildirimleri
 
 ---
 
