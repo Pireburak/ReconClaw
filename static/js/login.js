@@ -63,7 +63,13 @@ $("authForm").addEventListener("submit", async (event) => {
     if (!email || !password) return showError("E-posta ve parola gerekli.");
     if (mode === "register" && password.length < 8) return showError("Parola en az 8 karakter olmalı.");
 
-    const body = { email, password, remember: $("remember").checked };
+    const body = { email, password, remember: $("remember").checked, website: $("website").value };
+    // Cloudflare Turnstile açıksa jetonunu ekle
+    const ts = document.querySelector('[name="cf-turnstile-response"]');
+    if (ts) {
+        if (!ts.value) return showError("Lütfen robot olmadığınızı doğrulayın.");
+        body.captcha = ts.value;
+    }
     if (mode === "register") body.name = $("name").value.trim();
 
     const btn = $("submitBtn");
@@ -83,6 +89,7 @@ $("authForm").addEventListener("submit", async (event) => {
     } catch (err) {
         showError(err.message);
         btn.disabled = false;
+        if (window.turnstile) window.turnstile.reset();  // jeton tek kullanımlık
     }
 });
 

@@ -63,8 +63,17 @@ def test_password_signup_with_admin_email_is_not_instant_admin(app_client):
 def test_regular_user_cannot_open_admin_panel(app_client):
     register(app_client, "uye@example.com")
     assert app_client.get("/api/me").json()["role"] == "user"
+    # Panel yönetici olmayanlara hiç yokmuş gibi görünür: 404, API belgesinde ve sayfa kodunda iz yok
     for path in ("/api/admin/overview", "/api/admin/users", "/api/admin/audit"):
-        assert app_client.get(path).status_code == 403
+        assert app_client.get(path).status_code == 404
+    assert app_client.patch("/api/admin/users/1", json={"role": "admin"}).status_code == 404
+    assert "/api/admin" not in app_client.get("/openapi.json").text
+    assert "admin" not in app_client.get("/api/plans").json()
+    page = app_client.get("/").text
+    assert "admin.js" not in page and "YÖNETİM" not in page
+    assert "YÖNETİM" not in app_client.get("/static/js/app.js").text
+    app_client.cookies.clear()
+    assert app_client.get("/api/admin/overview").status_code == 404
 
 
 def test_admin_manages_users_and_audit(app_client):

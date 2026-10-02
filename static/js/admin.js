@@ -173,5 +173,11 @@
         }
     });
 
+    // Görünüm yalnızca bu dosya yüklendiğinde (yani yalnızca yöneticilere) tanımlanır
+    VIEWS.admin = ["YÖNETİM", "Kullanıcılar, planlar, sistem durumu ve denetim kaydı", "A"];
+    document.addEventListener("keydown", (e) => {
+        if ((e.key === "a" || e.key === "A") && !isTyping(e) && !e.ctrlKey && !e.metaKey && !e.altKey) go("admin");
+    });
     onPage("admin", loadAdmin);
+    if (location.hash === "#admin") route();
 })();

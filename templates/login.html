@@ -97,6 +97,9 @@
                 <div class="row-between">
                     <label class="check" style="padding:0"><input type="checkbox" id="remember" checked> Beni hatırla</label>
                 </div>
+                <!-- Bal küpü: ekranda görünmez, yalnızca botlar doldurur -->
+                <div class="hp" aria-hidden="true"><label>Web siteniz <input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></label></div>
+                {% if turnstile_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_key }}" data-theme="auto" data-language="tr"></div>{% endif %}
                 <button type="submit" class="btn primary block go-btn" id="submitBtn"><span id="submitText">ERİŞİM İSTE</span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
             </form>
 
@@ -125,5 +128,6 @@
 <div class="classbar bottom" role="note">GİZLİ <span>// RECONCLAW // DAĞITIM: SINIRLI //</span> GİZLİ</div>
 <script src="{{ url_for('static', path='js/smoke.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/login.js') }}?v={{ asset_v }}"></script>
+{% if turnstile_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
 </body>
 </html>
