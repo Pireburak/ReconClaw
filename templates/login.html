@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
-    <script src="{{ url_for('static', path='js/theme.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}?v={{ asset_v }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}?v={{ asset_v }}">
+    <script src="{{ url_for('static', path='js/theme.js') }}?v={{ asset_v }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}?v={{ asset_v }}">
 </head>
 <body class="access">
 <div class="classbar" role="note">GİZLİ <span>// ERİŞİM KONTROLLÜ SİSTEM // TÜM OTURUMLAR KAYDEDİLİR //</span> GİZLİ</div>
@@ -20,7 +20,7 @@
 
         <section class="dossier-side" aria-label="Dosya özeti">
             <div class="brand">
-                <img class="brand-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="34" height="34">
+                <img class="brand-logo" src="{{ url_for('static', path='img/logo.png') }}?v={{ asset_v }}" alt="ReconClaw rakun maskotu" width="34" height="34">
                 <div>
                     <div class="brand-name">RECONCLAW</div>
                     <div class="brand-sub">Keşif ve risk analizi · v{{ version }}</div>
@@ -123,7 +123,7 @@
 </main>
 
 <div class="classbar bottom" role="note">GİZLİ <span>// RECONCLAW // DAĞITIM: SINIRLI //</span> GİZLİ</div>
-<script src="{{ url_for('static', path='js/smoke.js') }}"></script>
-<script src="{{ url_for('static', path='js/login.js') }}"></script>
+<script src="{{ url_for('static', path='js/smoke.js') }}?v={{ asset_v }}"></script>
+<script src="{{ url_for('static', path='js/login.js') }}?v={{ asset_v }}"></script>
 </body>
 </html>

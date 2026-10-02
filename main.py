@@ -1,6 +1,7 @@
 import csv
 import io
 import ipaddress
+import os
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -40,6 +41,19 @@ app = FastAPI(title=f"ReconClaw v{VERSION} {CODENAME}", version=VERSION, lifespa
 # Statik dosyalar (CSS, JS) ve HTML şablonları
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+def _asset_version() -> str:
+    """Statik dosyaların son değişiklik zamanından kısa bir sürüm etiketi üretir.
+    Şablonlarda ?v=... olarak eklenir; dosya değişince tarayıcı eski CSS/JS'i önbellekten kullanmaz."""
+    latest = 0.0
+    for root, _, files in os.walk("static"):
+        for name in files:
+            latest = max(latest, os.path.getmtime(os.path.join(root, name)))
+    return f"{VERSION}-{int(latest)}"
+
+
+templates.env.globals["asset_v"] = _asset_version()
 
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
