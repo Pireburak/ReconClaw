@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}?v={{ asset_v }}">
 </head>
-<body>
+<body data-role="{{ user.role }}" data-uid="{{ user.id }}">
 <div class="classbar" role="note">GİZLİ <span>// RECONCLAW // YALNIZCA YETKİLİ PERSONEL //</span> GİZLİ</div>
 
 <div class="app" id="app">
@@ -28,8 +28,13 @@
                 <li><a class="dock-item" href="#history" data-view="history" aria-label="ARŞİV"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg></span><span class="dock-tip"><b>ARŞİV</b><kbd>3</kbd></span></a></li>
                 <li><a class="dock-item" href="#compare" data-view="compare" aria-label="KARŞILAŞTIRMA"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span><span class="dock-tip"><b>KARŞILAŞTIRMA</b><kbd>4</kbd></span></a></li>
                 <li><a class="dock-item" href="#map" data-view="map" aria-label="AĞ KROKİSİ"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg></span><span class="dock-tip"><b>AĞ KROKİSİ</b><kbd>5</kbd></span></a></li>
-                <li><a class="dock-item" href="#settings" data-view="settings" aria-label="AYARLAR"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>AYARLAR</b><kbd>6</kbd></span></a></li>
-                <li><a class="dock-item" href="#plans" data-view="plans" aria-label="ABONELİK"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.29l4.27-3.66a.5.5 0 0 1 .82.52l-2.83 10.25a1 1 0 0 1-.96.73H5.8a1 1 0 0 1-.97-.73L2.02 6.02a.5.5 0 0 1 .81-.52L7.1 9.16a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/></svg></span><span class="dock-tip"><b>ABONELİK</b><kbd>7</kbd></span></a></li>
+                <li><a class="dock-item" href="#recon" data-view="recon" aria-label="PASİF KEŞİF"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><span class="dock-tip"><b>PASİF KEŞİF</b><kbd>6</kbd></span></a></li>
+                <li><a class="dock-item" href="#monitors" data-view="monitors" aria-label="SÜREKLİ İZLEME"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><span class="dock-tip"><b>SÜREKLİ İZLEME</b><kbd>7</kbd></span></a></li>
+                <li><a class="dock-item" href="#settings" data-view="settings" aria-label="AYARLAR"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>AYARLAR</b><kbd>8</kbd></span></a></li>
+                <li><a class="dock-item" href="#plans" data-view="plans" aria-label="ABONELİK"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.29l4.27-3.66a.5.5 0 0 1 .82.52l-2.83 10.25a1 1 0 0 1-.96.73H5.8a1 1 0 0 1-.97-.73L2.02 6.02a.5.5 0 0 1 .81-.52L7.1 9.16a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/></svg></span><span class="dock-tip"><b>ABONELİK</b><kbd>9</kbd></span></a></li>
+                {% if user.is_admin %}
+                <li><a class="dock-item admin-item" href="#admin" data-view="admin" aria-label="YÖNETİM"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="dock-tip"><b>YÖNETİM</b><kbd>A</kbd></span></a></li>
+                {% endif %}
             </ul>
         </nav>
         <div class="rail-foot">
@@ -80,6 +85,8 @@
                     <span id="userName">{{ user.name }}</span>
                 </a>
                 <div class="popover" id="bellPop" hidden>
+                    <h4>İZLEME ALARMLARI</h4>
+                    <ul class="feed" id="bellAlerts"></ul>
                     <h4>KRİTİK &amp; YÜKSEK OLAYLAR</h4>
                     <ul class="feed" id="bellList"></ul>
                 </div>
@@ -362,7 +369,110 @@
             </section>
         </section>
 
-        <!-- [07] ABONELİK -->
+        <!-- [06] PASİF KEŞİF -->
+        <section data-page="recon" hidden>
+            <div class="grid">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Pasif keşif <span class="lock" id="reconLock" hidden>PRO</span></h3>
+                        <span class="muted small">Hedefe tek paket gönderilmez · ATT&amp;CK T1596.003 / T1590.002</span>
+                    </div>
+                    <form class="scan-form" id="reconForm" autocomplete="off">
+                        <label class="field grow"><span>Alan adı</span><input type="text" id="reconDomain" placeholder="ör. ornek.com" required></label>
+                        <button type="submit" class="btn primary" id="reconBtn">KEŞFİ BAŞLAT</button>
+                    </form>
+                    <div class="chips" id="reconHistory"></div>
+                    <p class="muted small" style="margin:12px 0 0">Alt alan adları herkese açık <b>Sertifika Şeffaflığı</b> loglarından (crt.sh / CertSpotter), kayıtlar DNS-over-HTTPS ile toplanır. Unutulmuş test, yönetim ve uzak erişim sunucuları otomatik işaretlenir.</p>
+                </section>
+                <div id="reconOut"><div class="empty">Bir alan adı girerek saldırı yüzeyini çıkarın.</div></div>
+            </div>
+        </section>
+
+        <!-- [07] SÜREKLİ İZLEME -->
+        <section data-page="monitors" hidden>
+            <div class="grid">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Yeni izleme görevi <span class="muted small" id="monitorCount"></span></h3>
+                        <span class="muted small" id="schedulerState"></span>
+                    </div>
+                    <p class="lock-note" id="monitorLock" hidden>Sürekli izleme <b>Pro</b> ve üzeri planlarda açılır. <a href="#plans">Planları gör</a></p>
+                    <form class="scan-form" id="monitorForm" autocomplete="off">
+                        <label class="field grow"><span>Hedef (IP / Domain)</span><input type="text" id="monTarget" placeholder="ör. ornek.com" required></label>
+                        <label class="field narrow"><span>Aralık</span>
+                            <select id="monInterval"><option value="hourly">Saatlik</option><option value="daily" selected>Günlük</option><option value="weekly">Haftalık</option></select>
+                        </label>
+                        <label class="field narrow"><span>Port kapsamı</span>
+                            <select id="monScope"><option value="">Yaygın (27)</option><option value="1024">1 → 1024</option><option value="10000">1 → 10000</option><option value="65535">1 → 65535</option></select>
+                        </label>
+                        <label class="field grow"><span>Webhook (isteğe bağlı · Discord / Slack)</span><input type="url" id="monWebhook" placeholder="https://discord.com/api/webhooks/..."></label>
+                        <button type="submit" class="btn primary">GÖREV EKLE</button>
+                    </form>
+                    <p class="muted small" style="margin:12px 0 0">Zamanlayıcı her görevi seçilen aralıkta yeniden tarar ve sonucu bir öncekiyle karşılaştırır. Yeni açılan port, yeni CVE, sürüm değişikliği veya risk artışında alarm üretir ve webhook'a bildirim gönderir.</p>
+                </section>
+                <section class="panel">
+                    <h3>İzleme görevleri</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Hedef</th><th>Aralık</th><th>Son çalışma</th><th>Sonraki</th><th>Son durum</th><th>Risk</th><th>Alarm</th><th>Aktif</th><th></th></tr></thead>
+                            <tbody id="monitorList"><tr><td colspan="9" class="empty">Görev yok.</td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="panel" style="--c: var(--red)">
+                    <div class="panel-head">
+                        <h3>Alarm akışı</h3>
+                        <button type="button" class="btn sm" id="alertsSeen">TÜMÜNÜ OKUNDU İŞARETLE</button>
+                    </div>
+                    <ul class="feed" id="alertFeed"><li class="empty">Henüz alarm yok.</li></ul>
+                </section>
+            </div>
+        </section>
+
+        <!-- [10] YÖNETİM -->
+        {% if user.is_admin %}
+        <section data-page="admin" hidden>
+            <div class="stats" id="adminStats"></div>
+            <div class="grid two">
+                <section class="panel" style="--c: var(--red)">
+                    <h3>Son 14 gün</h3>
+                    <div id="adminChart"><div class="empty">Yükleniyor...</div></div>
+                    <p class="muted small">Sütun: yeni kayıt · Çizgi: tarama</p>
+                </section>
+                <section class="panel">
+                    <h3>Plan dağılımı</h3>
+                    <div class="hbars" id="adminPlans"></div>
+                    <dl class="facts" id="adminSystem" style="margin-top:16px"></dl>
+                </section>
+                <section class="panel wide">
+                    <div class="panel-head">
+                        <h3>Kullanıcılar <span class="muted small" id="adminUserCount"></span></h3>
+                        <input type="search" id="adminSearch" placeholder="E-posta / ad ara..." style="width:240px">
+                    </div>
+                    <div class="table-wrap">
+                        <table class="admin-table">
+                            <thead><tr><th>#</th><th>Kullanıcı</th><th>Rol</th><th>Plan</th><th>Tarama</th><th>Son giriş</th><th>Plan ata</th><th></th></tr></thead>
+                            <tbody id="adminUsers"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="panel wide" style="--c: var(--yellow)">
+                    <div class="panel-head">
+                        <h3>Denetim kaydı</h3>
+                        <select id="auditFilter" style="width:220px"><option value="">Tüm olaylar</option></select>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Zaman</th><th>Olay</th><th>Hesap</th><th>Ayrıntı</th><th>Yapan</th><th>IP</th></tr></thead>
+                            <tbody id="auditList"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- [09] ABONELİK -->
         <section data-page="plans" hidden>
             <div class="grid">
                 <section class="panel">
@@ -415,7 +525,7 @@
             </div>
         </section>
 
-        <!-- [06] AYARLAR -->
+        <!-- [08] AYARLAR -->
         <section data-page="settings" hidden>
             <div class="settings">
                 <section class="panel">
@@ -486,6 +596,12 @@
                     </div>
                 </section>
 
+                <section class="panel">
+                    <h3>Hesap etkinliği</h3>
+                    <p class="muted small" style="margin-top:0">Girişler, hatalı denemeler, API anahtarı ve plan işlemleri. Tanımadığınız bir olay görürseniz parolanızı değiştirin.</p>
+                    <ul class="audit-list" id="myAudit"><li class="empty">Yükleniyor...</li></ul>
+                </section>
+
                 <section class="panel danger-zone">
                     <h3>Tehlikeli bölge</h3>
                     <div class="form-stack">
@@ -543,7 +659,7 @@
         <h3>Klavye kısayolları</h3>
         <dl>
             <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Komut paleti</dd>
-            <dt><kbd>0</kbd> … <kbd>7</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
+            <dt><kbd>0</kbd> … <kbd>9</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
             <dt><kbd>N</kbd></dt><dd>Yeni tarama</dd>
             <dt><kbd>T</kbd></dt><dd>Aydınlık / karanlık tema</dd>
             <dt><kbd>/</kbd></dt><dd>Geçmişte ara</dd>
@@ -556,5 +672,7 @@
 <div class="toast-box" id="toasts" aria-live="polite"></div>
 <script src="{{ url_for('static', path='js/fx.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/app.js') }}?v={{ asset_v }}"></script>
+<script src="{{ url_for('static', path='js/ops.js') }}?v={{ asset_v }}"></script>
+{% if user.is_admin %}<script src="{{ url_for('static', path='js/admin.js') }}?v={{ asset_v }}"></script>{% endif %}
 </body>
 </html>

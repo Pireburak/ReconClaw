@@ -112,6 +112,59 @@ def init_db():
                 verifier   TEXT NOT NULL,
                 created_at REAL NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER,
+                actor_id   INTEGER,
+                action     TEXT NOT NULL,
+                detail     TEXT,
+                ip         TEXT,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id, id);
+            CREATE TABLE IF NOT EXISTS monitors (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                target        TEXT NOT NULL,
+                interval      TEXT NOT NULL,
+                max_port      INTEGER,
+                webhook       TEXT,
+                enabled       INTEGER NOT NULL DEFAULT 1,
+                last_run      TEXT,
+                next_run      TEXT NOT NULL,
+                last_scan_id  INTEGER,
+                last_status   TEXT,
+                created_at    TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS alerts (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                monitor_id INTEGER REFERENCES monitors(id) ON DELETE SET NULL,
+                scan_id    INTEGER,
+                target     TEXT NOT NULL,
+                level      TEXT NOT NULL,
+                title      TEXT NOT NULL,
+                detail     TEXT,
+                seen       INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_alerts_user ON alerts(user_id, id);
+            CREATE TABLE IF NOT EXISTS recon_runs (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                domain     TEXT NOT NULL,
+                result     TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS ai_notes (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                scan_id    INTEGER NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
+                user_id    INTEGER NOT NULL,
+                question   TEXT,
+                answer     TEXT NOT NULL,
+                engine     TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
         ''')
         # v4.0 ilk sürümünde tam rapor sütunu, v5.0 öncesinde kullanıcı sütunu yoktu
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(scans)")}
@@ -125,6 +178,17 @@ def init_db():
             conn.execute("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'")
         if "plan_expires" not in user_columns:
             conn.execute("ALTER TABLE users ADD COLUMN plan_expires TEXT")
+        # v7.0: yönetici rolü ve hesap askıya alma
+        if "role" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
+        if "disabled" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0")
+        # v8.0: günlük AI kullanımı ve paylaşılabilir rapor bağlantısı
+        usage_columns = {row["name"] for row in conn.execute("PRAGMA table_info(usage)")}
+        if "ai" not in usage_columns:
+            conn.execute("ALTER TABLE usage ADD COLUMN ai INTEGER NOT NULL DEFAULT 0")
+        if "share_token" not in columns:
+            conn.execute("ALTER TABLE scans ADD COLUMN share_token TEXT")
 
 
 def save_scan(report, user_id=None):
