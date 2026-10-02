@@ -20,6 +20,8 @@ const VIEWS = {
 const IS_ADMIN = document.body.dataset.role === "admin";
 // Ek modüller (ops.js, admin.js, intel.js) sayfa açılınca çalışacak yükleyicilerini buraya kaydeder
 const PAGE_HOOKS = {};
+// Rapor ekrana basıldığında çalışacak ek işleyiciler (ör. intel.js derin analiz paneli)
+const REPORT_HOOKS = [];
 
 function currentView() {
     const view = (location.hash.slice(1) || "overview").split("?")[0];
@@ -544,6 +546,7 @@ function renderResult(data) {
 
     sevFilter = "all";
     renderFindings();
+    REPORT_HOOKS.forEach((fn) => fn(data));
 }
 
 function renderFindings() {
@@ -1023,7 +1026,7 @@ function openModal(id) {
 }
 
 function closeModals() {
-    ["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => { $(id).hidden = true; });
+    ["paletteModal", "helpModal", "checkoutModal", "upgradeModal", "shareModal"].forEach((id) => { $(id).hidden = true; });
     $("bellPop").hidden = true;
 }
 
@@ -1203,7 +1206,7 @@ $("paletteInput").addEventListener("keydown", (e) => {
     else if (e.key === "Enter") { e.preventDefault(); runPalette(paletteSel); }
 });
 $("paletteList").addEventListener("click", (e) => { const li = e.target.closest(".item"); if (li) runPalette(Number(li.dataset.i)); });
-["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
+["paletteModal", "helpModal", "checkoutModal", "upgradeModal", "shareModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
 $("bellBtn").addEventListener("click", (e) => {
     e.stopPropagation();
     const pop = $("bellPop");
@@ -1281,7 +1284,7 @@ $("targetList").addEventListener("click", async (e) => {
         if (v) { v.disabled = false; v.textContent = "DOĞRULA"; }
     }
 });
-document.querySelectorAll("#checkoutModal [data-close], #upgradeModal [data-close]").forEach((b) => b.addEventListener("click", closeModals));
+document.querySelectorAll("#checkoutModal [data-close], #upgradeModal [data-close], #shareModal [data-close]").forEach((b) => b.addEventListener("click", closeModals));
 
 document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {

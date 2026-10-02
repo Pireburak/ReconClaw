@@ -106,6 +106,7 @@
                     <button type="button" role="tab" data-ftab="recon" class="on" aria-selected="true">Keşif</button>
                     <button type="button" role="tab" data-ftab="analysis" aria-selected="false">Analiz</button>
                     <button type="button" role="tab" data-ftab="security" aria-selected="false">Güvenlik &amp; Rapor</button>
+                    <button type="button" role="tab" data-ftab="intel" aria-selected="false">İstihbarat · v8</button>
                 </div>
                 <div class="feat-grid" role="tabpanel" data-fpanel="recon">
                     <a class="feat-card" href="#scan">
@@ -165,6 +166,26 @@
                         <h4>API anahtarı &amp; oturumlar</h4>
                         <p>curl veya script ile tarama yap; parola, oturum ve anahtarlarını tek yerden yönet.</p>
                         <span class="feat-foot">Ayarlara git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                </div>
+                <div class="feat-grid" role="tabpanel" data-fpanel="intel" hidden>
+                    <a class="feat-card" href="#results">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="11"/><rect x="17" y="3" width="4" height="7"/></svg></span>
+                        <h4>MITRE ATT&amp;CK eşlemesi</h4>
+                        <p>Her açık servisi saldırganın kullanabileceği tekniklere bağlar, keşiften etkiye saldırı zincirini çizer.</p>
+                        <span class="feat-foot">Rapora git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#results">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span>
+                        <h4>AI Analist &amp; güvenlik karnesi</h4>
+                        <p>A+…F notu, ISO 27001 / KVKK uyum ön değerlendirmesi ve Claude destekli Türkçe aksiyon planı.</p>
+                        <span class="feat-foot">Rapora git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </a>
+                    <a class="feat-card" href="#monitors">
+                        <span class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+                        <h4>Sürekli izleme &amp; pasif keşif</h4>
+                        <p>Hedefleri zamanlanmış taramayla izler, değişimde alarm verir; CT loglarından alt alan adlarını çıkarır.</p>
+                        <span class="feat-foot">İzlemeye git <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                     </a>
                 </div>
             </section>
@@ -277,6 +298,7 @@
                             <button type="button" class="btn sm" id="exportPdf">PDF RAPOR</button>
                             <button type="button" class="btn sm pink" id="diffPrev">ÖNCEKİYLE KARŞILAŞTIR</button>
                             <button type="button" class="btn sm pink" id="showMap">AĞ KROKİSİ</button>
+                            <button type="button" class="btn sm" id="shareBtn">PAYLAŞ</button>
                             <button type="button" class="btn sm" id="rescan">TEKRAR TARA</button>
                         </div>
                     </div>
@@ -297,6 +319,18 @@
                             <tbody id="results"></tbody>
                         </table>
                     </div>
+                </section>
+                <section class="panel wide intel-panel" style="--c: var(--violet)">
+                    <div class="panel-head">
+                        <h3>Derin analiz <span class="muted small">Cortex istihbarat katmanı</span></h3>
+                        <div class="seg" id="intelTabs" role="tablist">
+                            <button type="button" class="on" data-itab="score">KARNE</button>
+                            <button type="button" data-itab="attack">MITRE ATT&amp;CK</button>
+                            <button type="button" data-itab="comp">UYUM</button>
+                            <button type="button" data-itab="ai">AI ANALİST</button>
+                        </div>
+                    </div>
+                    <div id="intelBody"><div class="empty">Analiz yükleniyor...</div></div>
                 </section>
                 <section class="panel alert">
                     <h3>CVE uyarıları</h3>
@@ -628,6 +662,19 @@
     </div>
 </div>
 
+<!-- Rapor paylaşımı -->
+<div class="modal-back" id="shareModal" hidden>
+    <div class="shortcuts" role="dialog" aria-label="Raporu paylaş">
+        <h3>Salt-okunur paylaşım bağlantısı</h3>
+        <p class="muted small" style="margin-top:0">Bağlantıya sahip herkes raporu (karne, ATT&amp;CK ve uyum dahil) oturum açmadan görebilir. Jüriye, müşteriye veya ekibinize gönderin; işiniz bitince kapatın.</p>
+        <div class="share-row"><input type="text" id="shareUrl" readonly><button type="button" class="btn primary" id="shareCopy">KOPYALA</button></div>
+        <div class="actions" style="justify-content:space-between;margin-top:16px">
+            <button type="button" class="btn danger" id="shareRevoke">PAYLAŞIMI KAPAT</button>
+            <button type="button" class="btn" data-close>KAPAT</button>
+        </div>
+    </div>
+</div>
+
 <!-- Plan sınırı -->
 <div class="modal-back" id="upgradeModal" hidden>
     <div class="shortcuts" role="dialog" aria-label="Planınızı yükseltin">
@@ -673,6 +720,7 @@
 <script src="{{ url_for('static', path='js/fx.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/app.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/ops.js') }}?v={{ asset_v }}"></script>
+<script src="{{ url_for('static', path='js/intel.js') }}?v={{ asset_v }}"></script>
 {% if user.is_admin %}<script src="{{ url_for('static', path='js/admin.js') }}?v={{ asset_v }}"></script>{% endif %}
 </body>
 </html>

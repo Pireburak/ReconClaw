@@ -110,6 +110,12 @@ def create_monitor(user, target: str, interval: str, max_port: int | None = None
     return next(m for m in list_monitors(user["id"]) if m["id"] == cur.lastrowid)
 
 
+def is_monitored(user_id, target: str) -> bool:
+    with closing(get_db_connection()) as conn:
+        return conn.execute("SELECT 1 FROM monitors WHERE user_id = ? AND target = ? AND enabled = 1",
+                            (user_id, target)).fetchone() is not None
+
+
 def get_monitor(user_id, monitor_id):
     with closing(get_db_connection()) as conn:
         return conn.execute("SELECT * FROM monitors WHERE id = ? AND user_id = ?", (monitor_id, user_id)).fetchone()

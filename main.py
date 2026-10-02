@@ -4,10 +4,12 @@ import csv
 import io
 import ipaddress
 import os
+import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime
+from typing import Literal
 from urllib.parse import parse_qsl, quote
 
 import uvicorn
@@ -16,20 +18,19 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
-from core import admin, audit, auth, config, monitor, oauth, plans, recon, verify
+from core import admin, ai, audit, auth, config, intel, monitor, oauth, plans, recon, verify
 from core.db_manager import (
-    db_ok, delete_scans, get_recent_scans, get_scan_report, get_user_reports, init_db, save_scan,
+    db_ok, delete_scans, get_recent_scans, get_scan_report, get_share_token, get_shared_report, get_user_reports,
+    init_db, save_scan, set_share_token,
 )
 from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "7.0"
-CODENAME = "Sentinel"
+VERSION = "8.0"
+CODENAME = "Cortex"
 STARTED_AT = time.time()
 
 
@@ -212,9 +213,28 @@ async def printable_report(request: Request, scan_id: int):
         raise HTTPException(status_code=404, detail="Tarama raporu bulunamadı.")
     return templates.TemplateResponse(request, "report.html", {
         "title": f"ReconClaw Raporu #{scan_id} – {report['target']}", "version": VERSION,
-        "r": report, "user": auth.public_user(user),
+        "r": report, "user": auth.public_user(user), "shared": False,
+        "intel": intel.analyze(report, monitor.is_monitored(user["id"], report["target"])),
         "generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
     })
+
+
+@app.get("/share/{token}", include_in_schema=False)
+async def shared_report(request: Request, token: str):
+    """Paylaşım bağlantısıyla açılan salt-okunur rapor (oturum gerektirmez)."""
+    report, owner_id = await run_in_threadpool(get_shared_report, token[:64]) if len(token) >= 20 else (None, None)
+    owner = auth.get_user(owner_id) if owner_id else None
+    if report is None or owner is None or owner["disabled"] or not plans.effective_plan(owner).exports:
+        raise HTTPException(status_code=404, detail="Paylaşılan rapor bulunamadı veya bağlantı iptal edildi.")
+    response = templates.TemplateResponse(request, "report.html", {
+        "title": f"ReconClaw Raporu – {report['target']}", "version": VERSION,
+        "r": report, "user": {"name": owner["name"]}, "shared": True,
+        "intel": intel.analyze(report, monitor.is_monitored(owner_id, report["target"])),
+        "generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    })
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
 
 
 # ---------------------------------------------------------------- kimlik doğrulama
@@ -515,6 +535,77 @@ async def compare(old: int, new: int, user=Depends(current_user)):
     if a is None or b is None:
         raise HTTPException(status_code=404, detail="Karşılaştırılacak taramalardan biri bulunamadı.")
     return compare_reports(a, b)
+
+
+# ---------------------------------------------------------------- v8.0 istihbarat, AI analist, paylaşım
+class AIRequest(BaseModel):
+    question: str | None = Field(None, max_length=500)
+    refresh: bool = False
+
+
+async def _report_or_404(scan_id, user):
+    report = await run_in_threadpool(get_scan_report, scan_id, user["id"])
+    if report is None:
+        raise HTTPException(status_code=404, detail="Tarama raporu bulunamadı.")
+    return report
+
+
+@app.get("/api/scans/{scan_id}/intel", tags=["intel"])
+async def scan_intel(scan_id: int, user=Depends(current_user)):
+    """Güvenlik karnesi (A+…F), MITRE ATT&CK eşlemesi ve ISO 27001 / KVKK uyum ön değerlendirmesi."""
+    report = await _report_or_404(scan_id, user)
+    return intel.analyze(report, monitor.is_monitored(user["id"], report["target"]))
+
+
+@app.get("/api/scans/{scan_id}/ai", tags=["intel"])
+async def scan_ai_notes(scan_id: int, user=Depends(current_user)):
+    await _report_or_404(scan_id, user)
+    plan = plans.effective_plan(user)
+    return {"notes": ai.notes(scan_id, user["id"]), "engine": ai.engine_name(), "model": config.AI_MODEL,
+            "allowed": plan.ai, "daily": plan.ai_daily, "used": plans.usage_today(user["id"], "ai")}
+
+
+@app.post("/api/scans/{scan_id}/ai", tags=["intel"])
+async def scan_ai(scan_id: int, body: AIRequest, user=Depends(current_user)):
+    """AI Analist: soru verilmezse rapor değerlendirmesi üretir (önbelleğe alınır), verilirse soruyu yanıtlar."""
+    report = await _report_or_404(scan_id, user)
+    question = (body.question or "").strip() or None
+    plans.require(user, "ai", "AI Analist Pro Max ve üzeri planlarda kullanılabilir.")
+    if question is None and not body.refresh:
+        cached = ai.cached_summary(scan_id, user["id"])
+        if cached:
+            return cached
+    plans.check_ai_quota(user)
+    data = intel.analyze(report, monitor.is_monitored(user["id"], report["target"]))
+    result = await ai.analyze(report, data, question)
+    await run_in_threadpool(plans.record_scan, user["id"], "ai")
+    return await run_in_threadpool(ai.save_note, scan_id, user["id"], question, result)
+
+
+@app.get("/api/scans/{scan_id}/share", tags=["intel"])
+async def scan_share_status(scan_id: int, request: Request, user=Depends(current_user)):
+    await _report_or_404(scan_id, user)
+    token = get_share_token(scan_id, user["id"])
+    return {"url": f"{config.PUBLIC_URL or str(request.base_url).rstrip('/')}/share/{token}" if token else None}
+
+
+@app.post("/api/scans/{scan_id}/share", tags=["intel"])
+async def scan_share(scan_id: int, request: Request, user=Depends(current_user)):
+    """Raporu salt-okunur bir bağlantıyla paylaşır (jüri, müşteri veya ekip için)."""
+    plans.require(user, "exports", "Rapor paylaşımı Pro ve üzeri planlarda kullanılabilir.")
+    await _report_or_404(scan_id, user)
+    token = get_share_token(scan_id, user["id"]) or secrets.token_urlsafe(24)
+    set_share_token(scan_id, user["id"], token)
+    audit.log("share_create", user["id"], detail=f"#{scan_id}", ip=client_ip(request))
+    return {"url": f"{config.PUBLIC_URL or str(request.base_url).rstrip('/')}/share/{token}"}
+
+
+@app.delete("/api/scans/{scan_id}/share", tags=["intel"])
+async def scan_unshare(scan_id: int, request: Request, user=Depends(current_user)):
+    if not set_share_token(scan_id, user["id"], None):
+        raise HTTPException(status_code=404, detail="Tarama raporu bulunamadı.")
+    audit.log("share_revoke", user["id"], detail=f"#{scan_id}", ip=client_ip(request))
+    return {"ok": True}
 
 
 @app.get("/api/stats", tags=["dashboard"])

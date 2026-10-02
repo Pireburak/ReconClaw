@@ -72,4 +72,4 @@ SCHEDULER_ENABLED = _bool("SCHEDULER_ENABLED", True)
 
 # v8.0: AI Analist. Anahtar yoksa kural tabanlı (çevrimdışı) analist kullanılır.
 ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY")
-AI_MODEL = env("AI_MODEL", "claude-sonnet-5-5") or "claude-sonnet-5-5"
+AI_MODEL = env("AI_MODEL", "claude-opus-5-5") or "claude-opus-5-5"

@@ -263,6 +263,30 @@ def delete_scans(user_id, scan_id=None):
         return cur.rowcount
 
 
+def set_share_token(scan_id, user_id, token):
+    """Rapor için paylaşım anahtarını ayarlar (None = paylaşımı kapat); kayıt yoksa False."""
+    with closing(get_db_connection()) as conn, conn:
+        return conn.execute("UPDATE scans SET share_token = ? WHERE id = ? AND user_id IS ?",
+                            (token, scan_id, user_id)).rowcount > 0
+
+
+def get_share_token(scan_id, user_id):
+    with closing(get_db_connection()) as conn:
+        row = conn.execute("SELECT share_token FROM scans WHERE id = ? AND user_id IS ?", (scan_id, user_id)).fetchone()
+    return row["share_token"] if row else None
+
+
+def get_shared_report(token):
+    """Paylaşım anahtarıyla raporu ve sahibinin id'sini döndürür; yoksa (None, None)."""
+    with closing(get_db_connection()) as conn:
+        row = conn.execute("SELECT id, user_id, report FROM scans WHERE share_token = ?", (token,)).fetchone()
+    if row is None or row["report"] is None:
+        return None, None
+    report = json.loads(row["report"])
+    report["scan_id"] = row["id"]
+    return report, row["user_id"]
+
+
 def db_ok():
     try:
         with closing(get_db_connection()) as conn:
