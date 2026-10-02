@@ -15,17 +15,15 @@ const VIEWS = {
     monitors: ["SÜREKLİ İZLEME", "Zamanlanmış taramalar, değişim alarmları ve webhook bildirimleri"],
     settings: ["AYARLAR", "Görünüm, tarama varsayılanları, hesap güvenliği ve API erişimi"],
     plans: ["ABONELİK", "Erişim seviyeleri, kullanım kotası, doğrulanmış hedefler ve ödemeler"],
-    admin: ["YÖNETİM", "Kullanıcılar, planlar, sistem durumu ve denetim kaydı"],
 };
-const IS_ADMIN = document.body.dataset.role === "admin";
-// Ek modüller (ops.js, admin.js, intel.js) sayfa açılınca çalışacak yükleyicilerini buraya kaydeder
+// Ek modüller sayfa açılınca çalışacak yükleyicilerini buraya kaydeder
 const PAGE_HOOKS = {};
 // Rapor ekrana basıldığında çalışacak ek işleyiciler (ör. intel.js derin analiz paneli)
 const REPORT_HOOKS = [];
 
 function currentView() {
     const view = (location.hash.slice(1) || "overview").split("?")[0];
-    return VIEWS[view] && (view !== "admin" || IS_ADMIN) ? view : "overview";
+    return VIEWS[view] ? view : "overview";
 }
 
 function onPage(view, loader) {
@@ -824,7 +822,7 @@ function applySubscription(sub) {
     const plan = sub.plan;
     $("planChip").textContent = plan.name.toUpperCase();
     $("planChip").dataset.level = plan.level;
-    $("planChip").title = sub.admin ? "Yönetici: tüm sınırlar kaldırıldı" : "Abonelik planınız";
+    $("planChip").title = sub.admin ? "Sınırsız erişim" : "Abonelik planınız";
     $("quota").textContent = plan.daily_scans ? `${sub.usage.scans_today}/${plan.daily_scans}` : `${sub.usage.scans_today}/∞`;
     applyPlanLimits();
 }
@@ -890,7 +888,7 @@ function renderSubSummary(b) {
             <dt>Port aralığı</dt><dd>1–${plan.max_port.toLocaleString("tr-TR")}</dd>
         </dl>
         <div class="actions">
-            ${b.admin ? '<span class="badge admin-badge">YÖNETİCİ · SINIRSIZ</span>'
+            ${b.admin ? '<span class="badge admin-badge">SINIRSIZ ERİŞİM</span>'
                 : plan.id !== "free" ? '<button type="button" class="btn danger sm" id="cancelPlan">ABONELİĞİ İPTAL ET</button>' : ""}
         </div>`;
 }
@@ -902,7 +900,7 @@ function renderPlanCards() {
         const { value: price, currency } = priceOf(p.id, billingPeriod === "yearly");
         const isCur = p.id === cur.id;
         const action = isCur ? '<button type="button" class="btn block" disabled>MEVCUT PLAN</button>'
-            : cur.id === "admin" ? '<button type="button" class="btn block" disabled>YÖNETİCİ HESABI</button>'
+            : cur.id === "admin" ? '<button type="button" class="btn block" disabled>SINIRSIZ HESAP</button>'
             : `<button type="button" class="btn block ${p.level > cur.level ? "primary" : ""}" data-plan="${p.id}">${p.level > cur.level ? "YÜKSELT" : "BU PLANA GEÇ"}</button>`;
         return `
         <article class="plan-card${isCur ? " current" : ""}${p.id === "pro_max" ? " featured" : ""}">
@@ -1003,8 +1001,8 @@ let paletteItems = [];
 let paletteSel = 0;
 
 function paletteSource() {
-    const nav = Object.entries(VIEWS).filter(([key]) => key !== "admin" || IS_ADMIN).map(([key, [title, sub]], i) => ({
-        group: "BÖLÜMLER", ico: `RC-${String(i).padStart(2, "0")}`, label: title, hint: key === "admin" ? "A" : `${i}`, keywords: sub,
+    const nav = Object.entries(VIEWS).map(([key, [title, sub, hint]], i) => ({
+        group: "BÖLÜMLER", ico: `RC-${String(i).padStart(2, "0")}`, label: title, hint: hint || (i < 10 ? `${i}` : ""), keywords: sub,
         run: () => go(key),
     }));
     const actions = [
@@ -1116,7 +1114,7 @@ async function loadSettings() {
 }
 
 function renderMyAudit(entries) {
-    const warn = new Set(["login_failed", "admin_disable", "token_create", "password_change"]);
+    const warn = new Set(["login_failed", "token_create", "password_change"]);
     $("myAudit").innerHTML = entries.length
         ? entries.map((e) => `<li class="${warn.has(e.action) ? "warn" : ""}"><span>${esc(e.label)}${e.detail ? ` <span class="muted">· ${esc(e.detail)}</span>` : ""}</span>
             <span class="muted small">${esc(e.created_at)}${e.ip ? ` · ${esc(e.ip)}` : ""}</span></li>`).join("")
@@ -1339,7 +1337,6 @@ document.addEventListener("keydown", (e) => {
     if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const views = Object.keys(VIEWS);
     if (/^[0-9]$/.test(e.key)) go(views[Number(e.key)]);
-    else if ((e.key === "a" || e.key === "A") && IS_ADMIN) go("admin");
     else if (e.key === "n" || e.key === "N") go("scan");
     else if (e.key === "t" || e.key === "T") window.RCTheme.toggle();
     else if (e.key === "?") openModal("helpModal");

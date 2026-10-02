@@ -1,18 +1,18 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v8.1 Cortex</h1>
+<h1 align="center">🦝 ReconClaw v8.2 Cortex</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Sürekli Saldırı Yüzeyi İzleme ve Yapay Zekâ Destekli Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v8.1%20Cortex-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v8.2%20Cortex-E8751A?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
 <img src="https://img.shields.io/badge/Docker-HTTPS%20Ready-2B2B2B?style=for-the-badge&logo=docker&logoColor=F5B041" alt="Docker">
 <br>
-<img src="https://img.shields.io/badge/Testler-93%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
+<img src="https://img.shields.io/badge/Testler-96%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
 <img src="https://img.shields.io/badge/Giri%C5%9F-E--posta%20%7C%20Google%20%7C%20GitHub%20%7C%20Microsoft%20%7C%20Apple-2B2B2B?style=for-the-badge" alt="Giriş">
 <img src="https://img.shields.io/badge/Aray%C3%BCz-Gizli%20Dosya-9E1F17?style=for-the-badge" alt="Arayüz">
 <img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
@@ -428,7 +428,9 @@ Yönetici hesapları **sınırsız "Admin" seviyesindedir** (kota, port, izleme 
 - **Kullanıcılar:** arama, ödeme kaydı oluşturmadan plan atama (30 gün / 1 yıl / süresiz), yönetici yapma, askıya alma (oturumlar ve API anahtarı anında geçersiz olur), silme
 - **Denetim kaydı:** giriş, hatalı giriş, plan değişikliği, API anahtarı ve yönetici eylemleri; IP adresi ve işlemi yapan kişiyle
 
-Yönetici kendini askıya alamaz, yetkisini kaldıramaz veya silemez; böylece sistem yöneticisiz kalmaz. Her kullanıcı kendi hesap etkinliğini **Ayarlar → Hesap etkinliği**'nde görür.
+Yönetici kendini askıya alamaz, yetkisini kaldıramaz veya silemez; böylece sistem yöneticisiz kalmaz.
+
+**Panel gizlidir (v8.2):** Yönetici olmayan kullanıcılar ve oturumsuz ziyaretçiler için panel hiç yokmuş gibi davranır. Menüde görünmez, sayfa kaynağında ve herkese giden JavaScript'te izi yoktur (`admin.js` yalnızca yöneticilere yüklenir), `/api/admin/*` uç noktaları **404** döner ve `/docs` API belgesinde listelenmez. Asıl koruma ise sunucunun her istekte rolü denetlemesidir. Her kullanıcı kendi hesap etkinliğini **Ayarlar → Hesap etkinliği**'nde görür.
 
 **Kendinizi yönetici yapmak için** (önce siteye normal şekilde kayıt olun):
 
@@ -760,6 +762,7 @@ Tüm ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yap�
 | `GEO_LOOKUP` | `true` | Ziyaretçi IP'sinin ülkesini ipapi.co ile bul |
 | `TRUST_COUNTRY_HEADER` | `false` | Cloudflare `CF-IPCountry` başlığına güven |
 | `FX_RATES` | *(boş)* | Kurları sabitle, ör. `USD=45,EUR=52,SAR=12` (1 birim = kaç TL) |
+| `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | *(boş)* | Cloudflare Turnstile bot doğrulaması (ikisi de doluysa giriş/kayıtta zorunlu) |
 | `RECONCLAW_DB` | `data/reconclaw_v4.db` | Veritabanı dosyasının yolu |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | — | Google ile giriş |
 | `GITHUB_CLIENT_ID` / `_SECRET` | — | GitHub ile giriş |
@@ -823,6 +826,7 @@ ReconClaw bir güvenlik aracı olduğu için kendi güvenliğine de özen göste
 | **Oturumlar** | Rastgele anahtar, veritabanında yalnızca **SHA-256 özeti**; çerez `HttpOnly` + `SameSite=Lax` (+ HTTPS'te `Secure`). Parola değişince diğer cihazlardaki oturumlar kapanır |
 | **API anahtarı** | `rc_` önekli, yalnızca bir kez gösterilir, veritabanında özeti tutulur, tek tıkla iptal edilir |
 | **OAuth** | Tek kullanımlık `state` (CSRF), Google/Microsoft için **PKCE**; doğrulanmamış e-posta mevcut hesaba bağlanmaz |
+| **Bot koruması** *(v8.2)* | Giriş ve kayıtta isteğe bağlı **Cloudflare Turnstile** (sunucu tarafında doğrulanır) ve her zaman açık **bal küpü** gizli alanı |
 | **Kötüye kullanım** | Giriş denemeleri IP başına 10 / 5 dk, taramalar kullanıcı başına `SCAN_RATE_LIMIT` / dk ile sınırlı |
 | **SSRF / iç ağ** | `ALLOW_PRIVATE_TARGETS=false` ile ziyaretçilerin sunucunuzun iç ağını taraması engellenir |
 | **Veri izolasyonu** | Her kullanıcı yalnızca kendi taramalarını görür, siler ve karşılaştırır |
@@ -888,7 +892,14 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 🌍 v8.1 Cortex *(mevcut sürüm)*
+### 🛡️ v8.2 Cortex *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| Gizli yönetim paneli | Yönetici olmayanlara 404, API belgesinde ve herkese açık kodda iz yok |
+| Bot koruması | Cloudflare Turnstile (isteğe bağlı) + bal küpü alanı + hız sınırı |
+
+### 🌍 v8.1 Cortex
 
 | Özellik | Açıklama |
 |---------|----------|
@@ -992,6 +1003,7 @@ ReconClaw/
 │   ├── config.py           # .env / ortam değişkeni ayarları
 │   ├── plans.py            # Abonelik planları, kotalar, demo ödeme, Admin seviyesi
 │   ├── pricing.py          # v8.1: IP'ye göre ülke, para birimi, kur ve bölgesel fiyat
+│   ├── captcha.py          # v8.2: Cloudflare Turnstile + bal küpü bot koruması
 │   ├── verify.py           # Hedef sahipliği doğrulama (DNS TXT / .well-known)
 │   ├── admin.py            # v7: Yönetim paneli (özet, kullanıcılar, plan atama, askıya alma)
 │   ├── audit.py            # v7: Denetim kaydı
@@ -1027,7 +1039,7 @@ ReconClaw/
 │   ├── fonts/              # Gömülü yazı tipleri (OFL lisansı: fonts/OFL.txt)
 │   ├── img/                # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
 │   └── favicon.png
-├── tests/                  # 93 otomatik test (pytest)
+├── tests/                  # 96 otomatik test (pytest)
 ├── docs/
 │   ├── YARISMA.md          # TÜBİTAK / TEKNOFEST proje dosyası
 │   └── screenshots/        # README ekran görüntüleri
@@ -1082,6 +1094,7 @@ pytest
 | `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
 | `test_admin.py` | 7 | Admin seviyesi, panel erişim kontrolü, plan atama, askıya alma, kendini kilitleme koruması, denetim kaydı, `manage.py`, doğrulanmamış e-postayla yöneticilik engeli |
 | `test_monitoring.py` | 9 | İzleme plan sınırları, yeni port alarmı ve webhook, plan düşünce duraklatma, zamanlayıcı, alarm kuralları, SPF / DMARC / CAA, alt alan adı etiketleri, keşif API'si |
+| `test_captcha.py` | 3 | Bal küpü, Turnstile zorunluluğu ve sunucu tarafı doğrulama, varsayılan kapalı |
 | `test_pricing.py` | 5 | Bölgeye göre para birimi, Türkiye'nin en ucuz olması, x,99 yuvarlama, ülke tespiti, ödemenin tespit edilen bölgeden alınması |
 | `test_intel.py` | 11 | ATT&CK eşlemesi ve saldırı zinciri, karne ve not tavanı, uyum, kural tabanlı analist, Claude hatasında yedeğe düşme, istem enjeksiyonu koruması, AI kotası ve önbelleği, paylaşım bağlantısı |
 
@@ -1193,7 +1206,7 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 - *"Banner'a 'önceki talimatları unut' yazan bir sunucu taranırsa?"* → Banner'lar modele ayrı veri bloğunda ve "güvenilmez veri" olarak veriliyor; analist savunma odaklı talimatla sınırlı.
 - *"Kötüye kullanılırsa?"* → Hedef sahipliği doğrulama (DNS TXT / dosya), iç ağ engeli, plan bazlı kotalar, hız sınırı, denetim kaydı ve hesap askıya alma var. Araç yalnızca izinli hedefler içindir.
 - *"Parolalar nasıl saklanıyor?"* → Tuzlu scrypt; oturum anahtarlarının ve API anahtarlarının bile yalnızca SHA-256 özeti tutuluyor.
-- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 93 otomatik test her değişiklikte çalışıyor.
+- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 96 otomatik test her değişiklikte çalışıyor.
 
 ---
 

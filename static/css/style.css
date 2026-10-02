@@ -858,3 +858,6 @@ tr.warn-row td:nth-child(2) { color: var(--red); }
 .region-pick { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
 .region-pick select { width: auto; min-width: 210px; padding: 6px 8px; font-size: .68rem; }
 @media (max-width: 860px) { .region-pick { margin-left: 0; width: 100%; } .region-pick select { flex: 1; min-width: 0; } }
+/* Bal küpü alanı: ekran okuyucular ve kullanıcılar görmez */
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.cf-turnstile { margin: 4px 0 12px; min-height: 65px; }

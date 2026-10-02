@@ -86,3 +86,7 @@ GEO_LOOKUP = _bool("GEO_LOOKUP", True)
 TRUST_COUNTRY_HEADER = _bool("TRUST_COUNTRY_HEADER", False)
 # Kurları elle sabitlemek için (1 birim = kaç TL), ör: FX_RATES=USD=45,EUR=52,SAR=12
 FX_RATES = env("FX_RATES")
+
+# v8.2: Cloudflare Turnstile bot koruması (ikisi de doluysa giriş ve kayıtta doğrulama istenir)
+TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY")
+TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY")

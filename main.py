@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from core import admin, ai, audit, auth, config, intel, monitor, oauth, plans, pricing, recon, verify
+from core import admin, ai, audit, auth, captcha, config, intel, monitor, oauth, plans, pricing, recon, verify
 from core.db_manager import (
     db_ok, delete_scans, get_recent_scans, get_scan_report, get_share_token, get_shared_report, get_user_reports,
     init_db, save_scan, set_share_token,
@@ -29,7 +29,7 @@ from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "8.1"
+VERSION = "8.2"
 CODENAME = "Cortex"
 STARTED_AT = time.time()
 
@@ -68,9 +68,13 @@ def _asset_version() -> str:
 
 templates.env.globals["asset_v"] = _asset_version()
 
+# Turnstile açıksa yalnızca Cloudflare'in doğrulama adresine izin verilir
+TURNSTILE_ORIGIN = "https://challenges.cloudflare.com"
+_ts = f" {TURNSTILE_ORIGIN}" if captcha.enabled() else ""
+_frames = TURNSTILE_ORIGIN if captcha.enabled() else "'none'"
 CSP = (
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-    "font-src 'self'; img-src 'self' data: https:; connect-src 'self'; "
+    f"default-src 'self'; script-src 'self'{_ts}; style-src 'self' 'unsafe-inline'; "
+    f"font-src 'self'; img-src 'self' data: https:; connect-src 'self'{_ts}; frame-src {_frames}; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
 
@@ -101,6 +105,7 @@ async def plan_error_handler(request: Request, exc: plans.PlanError):
 
 
 @app.exception_handler(verify.VerifyError)
+@app.exception_handler(captcha.CaptchaError)
 @app.exception_handler(admin.AdminError)
 @app.exception_handler(monitor.MonitorError)
 @app.exception_handler(recon.ReconError)
@@ -160,9 +165,12 @@ def current_user(request: Request):
     return user
 
 
-def admin_user(user=Depends(current_user)):
-    if not plans.is_admin(user):
-        raise HTTPException(status_code=403, detail="Bu bölüm yalnızca yöneticilere açık.")
+def admin_user(request: Request):
+    """Yönetim uç noktaları yönetici olmayanlara (ve oturumsuz ziyaretçilere) hiç yokmuş gibi 404 döner;
+    böylece panelin varlığı dışarıdan anlaşılmaz."""
+    user = optional_user(request)
+    if user is None or not plans.is_admin(user):
+        raise HTTPException(status_code=404, detail="Not Found")
     return user
 
 
@@ -198,6 +206,7 @@ async def login_page(request: Request, error: str = ""):
     return templates.TemplateResponse(request, "login.html", {
         "title": "ReconClaw | Giriş", "version": VERSION, "codename": CODENAME, "error": error[:200],
         "providers": oauth.provider_status(), "allow_signup": config.ALLOW_SIGNUP,
+        "turnstile_key": config.TURNSTILE_SITE_KEY if captcha.enabled() else "",
     })
 
 
@@ -242,6 +251,8 @@ class Credentials(BaseModel):
     email: str = Field(..., max_length=254)
     password: str = Field(..., max_length=256)
     remember: bool = True
+    captcha: str | None = Field(None, max_length=2048)   # Cloudflare Turnstile jetonu
+    website: str | None = Field(None, max_length=200)    # bal küpü: insanlar görmez, botlar doldurur
 
 
 class Registration(Credentials):
@@ -252,6 +263,7 @@ class Registration(Credentials):
 async def register(body: Registration, request: Request, response: Response):
     if not login_limiter.allow(("register", client_ip(request))):
         raise HTTPException(status_code=429, detail="Çok fazla deneme. Birkaç dakika sonra tekrar deneyin.")
+    await captcha.check(body.captcha, body.website, client_ip(request))
     user_id = await run_in_threadpool(auth.create_user, body.email, body.name, body.password)
     start_session(response, request, user_id, body.remember)
     audit.log("register", user_id, ip=client_ip(request))
@@ -262,6 +274,7 @@ async def register(body: Registration, request: Request, response: Response):
 async def login(body: Credentials, request: Request, response: Response):
     if not login_limiter.allow(("login", client_ip(request))):
         raise HTTPException(status_code=429, detail="Çok fazla hatalı deneme. 5 dakika sonra tekrar deneyin.")
+    await captcha.check(body.captcha, body.website, client_ip(request))
     try:
         user_id = await run_in_threadpool(auth.authenticate, body.email, body.password)
     except auth.AuthError:
@@ -654,7 +667,7 @@ async def list_plans(request: Request, country: str = ""):
             "pricing": pricing.price_list(catalog, region), "detected": detected,
             "checkout_pricing": pricing.price_list(catalog, detected),
             "regions": pricing.supported_regions(),
-            "require_target_verification": config.REQUIRE_TARGET_VERIFICATION, "admin": plans.ADMIN_PLAN.to_dict()}
+            "require_target_verification": config.REQUIRE_TARGET_VERIFICATION}
 
 
 @app.get("/api/billing", tags=["billing"])
@@ -811,7 +824,7 @@ class AdminUserUpdate(BaseModel):
     disabled: bool | None = None
 
 
-@app.get("/api/admin/overview", tags=["admin"])
+@app.get("/api/admin/overview", include_in_schema=False)
 async def admin_overview(user=Depends(admin_user)):
     data = await run_in_threadpool(admin.overview)
     data.update({"version": VERSION, "codename": CODENAME, "uptime": int(time.time() - STARTED_AT),
@@ -823,24 +836,24 @@ async def admin_overview(user=Depends(admin_user)):
     return data
 
 
-@app.get("/api/admin/users", tags=["admin"])
+@app.get("/api/admin/users", include_in_schema=False)
 async def admin_users(q: str = "", limit: int = 100, user=Depends(admin_user)):
     return await run_in_threadpool(admin.list_users, q[:100], limit)
 
 
-@app.patch("/api/admin/users/{user_id}", tags=["admin"])
+@app.patch("/api/admin/users/{user_id}", include_in_schema=False)
 async def admin_update_user(user_id: int, body: AdminUserUpdate, request: Request, user=Depends(admin_user)):
     return await run_in_threadpool(admin.update_user, user, user_id, body.role, body.plan, body.days,
                                    body.disabled, client_ip(request))
 
 
-@app.delete("/api/admin/users/{user_id}", tags=["admin"])
+@app.delete("/api/admin/users/{user_id}", include_in_schema=False)
 async def admin_delete_user(user_id: int, request: Request, user=Depends(admin_user)):
     await run_in_threadpool(admin.delete_user, user, user_id, client_ip(request))
     return {"deleted": 1}
 
 
-@app.get("/api/admin/audit", tags=["admin"])
+@app.get("/api/admin/audit", include_in_schema=False)
 async def admin_audit(limit: int = 100, action: str = "", user=Depends(admin_user)):
     return {"entries": await run_in_threadpool(audit.entries, None, limit, action[:40]), "actions": audit.ACTIONS}
 

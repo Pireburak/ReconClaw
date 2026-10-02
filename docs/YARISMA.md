@@ -14,7 +14,7 @@
 | **Ürün türü** | Web tabanlı, çok kullanıcılı, açık kaynak kodlu platform |
 | **Sürüm** | v8.0 Cortex |
 | **Teknolojiler** | Python 3, FastAPI, asyncio, SQLite, Claude API (`anthropic` SDK), vanilla JavaScript, Docker + Caddy (HTTPS) |
-| **Doğrulama** | 93 otomatik test (pytest) |
+| **Doğrulama** | 96 otomatik test (pytest) |
 
 ## 2. Özet
 
@@ -100,7 +100,7 @@ Zamanlayıcı her 30 saniyede zamanı gelen görevleri aynı tarama hattından g
 
 ### 7.1 Otomatik testler
 
-`pytest` ile 93 test: tarama motoru ve risk modeli (18), API ve kullanıcı izolasyonu (11), kimlik doğrulama (10), eklentiler (6), istatistikler (4), abonelik (12), yönetim (7), izleme ve keşif (9), Cortex ve AI Analist (11), bölgesel fiyat (5). Ağ gerektiren bileşenler testlerde sahte (mock) fonksiyonlarla izole edilir.
+`pytest` ile 96 test: tarama motoru ve risk modeli (18), API ve kullanıcı izolasyonu (11), kimlik doğrulama (10), eklentiler (6), istatistikler (4), abonelik (12), yönetim (7), izleme ve keşif (9), Cortex ve AI Analist (11), bölgesel fiyat (5), bot koruması (3). Ağ gerektiren bileşenler testlerde sahte (mock) fonksiyonlarla izole edilir.
 
 ### 7.2 Önerilen deneyler (sonuçları siz ekleyin)
 

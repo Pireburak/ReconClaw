@@ -463,7 +463,7 @@
             </div>
         </section>
 
-        <!-- [10] YÖNETİM -->
+        {# [10] YÖNETİM (yalnızca yöneticilere render edilir) #}
         {% if user.is_admin %}
         <section data-page="admin" hidden>
             <div class="stats" id="adminStats"></div>
