@@ -7,7 +7,7 @@ from core import config, plans, pricing
 
 @pytest.fixture(autouse=True)
 def fixed_rates(monkeypatch):
-    monkeypatch.setattr(config, "FX_RATES", "USD=45,EUR=52,SAR=12,GBP=60")
+    monkeypatch.setattr(config, "FX_RATES", "EUR=52")
     monkeypatch.setattr(config, "REGIONAL_SURCHARGE_TRY", 950)
 
 
@@ -26,15 +26,15 @@ def test_turkey_keeps_try_prices_and_is_cheapest():
             assert plan.price_monthly + 900 <= in_try <= plan.price_monthly + 1000 + pricing.try_per_unit(region["currency"])[0]
 
 
-def test_currency_by_country_and_price_tags():
-    assert pricing.region_of("DE")["currency"] == "EUR"
-    assert pricing.region_of("US")["currency"] == "USD"
-    assert pricing.region_of("SA")["currency"] == "SAR"
-    assert pricing.region_of("BR")["currency"] == "USD"  # listede olmayan ülke → dolar
+def test_turkey_pays_try_everyone_else_euro():
+    assert pricing.region_of("TR")["currency"] == "TRY"
+    for country in ("DE", "US", "SA", "GB", "BR", "JP"):
+        assert pricing.region_of(country)["currency"] == "EUR"  # tek Euro hesabı
     de = pricing.region_of("DE")
     assert pricing.local_price(299, de) == 24.99           # (299 + 950) / 52 = 24.02 → 24,99 €
     assert pricing.local_price(299, de, yearly=True) == 249.9
-    assert pricing.local_price(1999, pricing.region_of("US")) == 65.99  # (1999 + 950) / 45 = 65.5
+    assert pricing.local_price(1999, pricing.region_of("US")) == 56.99  # (1999 + 950) / 52 = 56.7
+    assert [r["currency"] for r in pricing.supported_regions()] == ["TRY", "EUR"]
 
 
 def test_country_detection(monkeypatch):
@@ -65,10 +65,10 @@ def test_plans_endpoint_detects_region_and_previews(client):
     data = client.get("/api/plans").json()
     assert data["detected"]["country"] == "TR" and data["pricing"]["currency"] == "TRY"
     assert data["pricing"]["prices"]["ultra_max"]["monthly"] == 1999
-    preview = client.get("/api/plans?country=DE").json()
+    preview = client.get("/api/plans?country=EU").json()
     assert preview["pricing"]["currency"] == "EUR" and preview["detected"]["country"] == "TR"
     assert preview["pricing"]["prices"]["pro"]["monthly"] == 24.99
-    assert any(r["country"] == "SA" for r in preview["regions"])
+    assert [r["currency"] for r in preview["regions"]] == ["TRY", "EUR"]
 
 
 def test_checkout_charges_detected_region_not_preview(client, monkeypatch):
@@ -77,8 +77,8 @@ def test_checkout_charges_detected_region_not_preview(client, monkeypatch):
 
     monkeypatch.setattr(pricing, "detect_country", from_saudi)
     res = client.post("/api/billing/checkout", json={"plan": "pro", "period": "monthly"}).json()
-    assert res["currency"] == "SAR" and res["country"] == "SA"
-    assert res["amount"] == pricing.local_price(299, pricing.region_of("SA"))  # (299+950)/12 → 104,99 SAR
-    assert res["amount_try"] == pricing.to_try(res["amount"], "SAR")
+    assert res["currency"] == "EUR" and res["country"] == "SA"  # Suudi Arabistan'dan bile Euro
+    assert res["amount"] == 24.99
+    assert res["amount_try"] == pricing.to_try(24.99, "EUR")
     pay = client.get("/api/billing").json()["payments"][0]
-    assert pay["currency"] == "SAR" and pay["country"] == "SA"
+    assert pay["currency"] == "EUR" and pay["country"] == "SA"

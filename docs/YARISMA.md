@@ -49,7 +49,7 @@
 2. **Hibrit analiz mimarisi:** Karne, ATT&CK ve uyum katmanı **deterministik ve testli kurallarla** hesaplanır; büyük dil modeli yalnızca bu yapılandırılmış sonuçları *yorumlar*. Böylece model, skorları veya bulguları uyduramaz; internet olmadığında da sistem kural tabanlı analistle çalışmaya devam eder.
 3. **Tarayıcı verisine karşı istem enjeksiyonu farkındalığı:** Banner ve HTTP başlıkları taranan, yani potansiyel olarak saldırgan kontrolündeki sunucudan gelir. Bu veriler modele ayrı bir veri bloğunda ve "güvenilmez veri" etiketiyle verilir; model savunma odaklı bir talimatla sınırlandırılır. Bu, LLM'li güvenlik araçlarında sık gözden kaçan bir saldırı yüzeyidir.
 4. **KVKK bağlamı:** Teknik bulgular (ör. dışarıya açık veritabanı) doğrudan KVKK m.12 veri güvenliği yükümlülüğüyle ilişkilendirilir.
-5. **Etik tasarım:** Hedef sahipliği DNS TXT kaydı veya doğrulama dosyasıyla kanıtlanabilir; yönetici bu doğrulamayı zorunlu kılabilir.
+5. **Etik tasarım:** Hedef sahipliği DNS TXT kaydı veya doğrulama dosyasıyla kanıtlanabilir; sunucu ayarıyla bu doğrulama zorunlu kılınabilir.
 6. **Sürekli izleme + pasif keşif:** Aktif taramanın yanında, hedefe paket göndermeyen Sertifika Şeffaflığı tabanlı alt alan adı keşfi.
 
 ## 6. Yöntem
@@ -137,7 +137,7 @@ Zamanlayıcı her 30 saniyede zamanı gelen görevleri aynı tarama hattından g
 
 - **KOBİ ve kamu:** Uzman istihdam edemeyen kurumlara dış saldırı yüzeyini Türkçe ve anlaşılır biçimde gösterme.
 - **Eğitim:** Siber güvenlik derslerinde ATT&CK ve uyum kavramlarını somut çıktıyla öğretme.
-- **Ticarileşme:** Abonelik modeli (Free → Ultra Max) ve yönetim paneli, ürünü SaaS olarak sunmaya hazırdır; gerçek ödeme altyapısı (iyzico) entegrasyonu yol haritasındadır.
+- **Ticarileşme:** Abonelik modeli (Free → Ultra Max), ürünü SaaS olarak sunmaya hazırdır; gerçek ödeme altyapısı (iyzico) entegrasyonu yol haritasındadır.
 - **Açık kaynak:** Kural tabloları ve eklenti sistemi topluluk katkısına açıktır.
 
 ## 11. Etik ve yasal çerçeve
@@ -147,7 +147,7 @@ Zamanlayıcı her 30 saniyede zamanı gelen görevleri aynı tarama hattından g
 ## 12. Demo kontrol listesi (sunumdan önce)
 
 - [ ] `git pull` ve `pip install -r requirements.txt`; `python main.py` sorunsuz açılıyor
-- [ ] Yönetici hesabı hazır (`python manage.py make-admin ...`), plan rozetinde **ADMIN** yazıyor
+- [ ] Demo hesabı hazır ve tüm özellikleri açık
 - [ ] Metasploitable 2 sanal makinesi açık ve Kali'den erişilebilir (internetsiz sunum için)
 - [ ] En az bir tarama, bir izleme görevi (alarmlı) ve bir pasif keşif kaydı önceden hazır
 - [ ] `.env` içinde `ANTHROPIC_API_KEY` varsa bir AI değerlendirmesi önceden üretilmiş (önbellekten anında açılır)
@@ -164,4 +164,4 @@ Zamanlayıcı her 30 saniyede zamanı gelen görevleri aynı tarama hattından g
 | Neden ATT&CK? | Bulguyu "hangi saldırı adımını mümkün kılıyor" sorusuyla ilişkilendiren, sektörde ortak kabul görmüş bir dil sağladığı için. |
 | Uyum çıktısı resmi mi? | Hayır; dışarıdan gözlemlenebilen bulgulara dayalı ön değerlendirmedir, denetime hazırlık için yol gösterir. |
 | Ölçeklenebilirlik? | Tarama asenkron ve eşzamanlılığı sınırlı; veritabanı katmanı SQLite ile başlar, şema PostgreSQL'e taşınabilir. Docker + Caddy ile HTTPS yayını hazırdır. |
-| Kötüye kullanımı nasıl önlüyorsunuz? | Sahiplik doğrulama, iç ağ engeli, plan bazlı kota ve hız sınırı, denetim kaydı, yönetici tarafından askıya alma. |
+| Kötüye kullanımı nasıl önlüyorsunuz? | Sahiplik doğrulama, iç ağ engeli, plan bazlı kota ve hız sınırı, denetim kaydı, hesap askıya alma. |
