@@ -63,7 +63,7 @@ PLANS = {p.id: p for p in (
     Plan("ultra", "Ultra", 4, "Ekipler ve geniş ağlar için", 999,
          daily_scans=1000, per_minute=20, max_port=65535, plugins=True, exports=True, compare=True, api=True,
          targets=25, recon=True, monitoring=True, monitors=20, hourly=True, ai=True, ai_daily=100),
-    Plan("ultra_max", "Ultra Max", 5, "Kurumsal ölçekte operasyon", 5500,
+    Plan("ultra_max", "Ultra Max", 5, "Kurumsal ölçekte operasyon", 1999,
          daily_scans=5000, per_minute=60, max_port=65535, plugins=True, exports=True, compare=True, api=True,
          targets=100, recon=True, monitoring=True, monitors=50, hourly=True, ai=True, ai_daily=500),
 )}

@@ -455,8 +455,8 @@ ReconClaw **5 kademeli üyelik** sistemine sahiptir. Her yeni hesap **Free** pla
 
 | Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max | 🛡️ Admin |
 |---------|:------:|:-----:|:---------:|:-------:|:-----------:|:-------:|
-| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺5.500** | satın alınamaz |
-| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺55.000 | — |
+| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺1.999** | satın alınamaz |
+| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺19.990 | — |
 | Günlük tarama | 5 | 50 | 200 | 1.000 | 5.000 | ∞ |
 | Dakikalık tarama | 2 | 5 | 10 | 20 | 60 | ∞ |
 | Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 | 1–65535 |
@@ -919,7 +919,7 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 | Özellik | Açıklama |
 |---------|----------|
-| 👑 Yönetici rolü | `ADMIN_EMAILS` / `manage.py make-admin`; sınırsız Admin seviyesi; Ultra Max artık ₺5.500 ve sınırlı |
+| 👑 Yönetici rolü | `ADMIN_EMAILS` / `manage.py make-admin`; sınırsız Admin seviyesi; Ultra Max ₺1.999 ve sınırlı |
 | 🗂️ Yönetim paneli | Kullanıcılar, plan atama, askıya alma, MRR, 14 günlük grafik, denetim kaydı |
 | 📡 Sürekli izleme | Saatlik / günlük / haftalık zamanlanmış tarama, değişim alarmı, Discord / Slack webhook |
 | 🛰️ Pasif keşif | Sertifika Şeffaflığı alt alan adları, DNS kayıtları, SPF / DMARC / CAA puanı |

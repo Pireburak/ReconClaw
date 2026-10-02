@@ -33,8 +33,8 @@ def test_plan_catalog():
     levels = [p.level for p in plans.PLANS.values()]
     assert levels == sorted(levels) == [1, 2, 3, 4, 5]
     assert plans.PLANS["pro"].price_yearly == plans.PLANS["pro"].price_monthly * 10
-    # Ultra Max ₺5.500 ve sınırlıdır; sınırsız erişim yalnızca yöneticilere (Admin seviyesi) verilir
-    assert plans.PLANS["ultra_max"].price_monthly == 5500
+    # Ultra Max ₺1.999 ve sınırlıdır; sınırsız erişim yalnızca yöneticilere (Admin seviyesi) verilir
+    assert plans.PLANS["ultra_max"].price_monthly == 1999
     assert all(p.daily_scans != plans.UNLIMITED for p in plans.PLANS.values())
     assert plans.ADMIN_PLAN.daily_scans == plans.UNLIMITED and "admin" not in plans.PLANS
 
