@@ -3,7 +3,7 @@
     "use strict";
     var KEY = "rc-theme";
     var ACCENT_KEY = "rc-accent";
-    var ACCENTS = ["copper", "cyan", "violet", "green", "pink", "amber"];
+    var ACCENTS = ["ink", "copper", "signal", "olive", "steel"];
     var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: light)") : null;
 
     function stored() {
@@ -13,8 +13,8 @@
     function storedAccent() {
         try {
             var a = localStorage.getItem(ACCENT_KEY);
-            return ACCENTS.indexOf(a) >= 0 ? a : "copper";
-        } catch (e) { return "copper"; }
+            return ACCENTS.indexOf(a) >= 0 ? a : "ink";
+        } catch (e) { return "ink"; }
     }
 
     function resolve(pref) {

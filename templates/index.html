@@ -7,31 +7,28 @@
     <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
     <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
     <script src="{{ url_for('static', path='js/theme.js') }}"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@600;800&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div class="classbar" role="note">GİZLİ <span>// RECONCLAW // YALNIZCA YETKİLİ PERSONEL //</span> GİZLİ</div>
 
 <div class="app" id="app">
     <!-- ================= YAN MENÜ ================= -->
     <!-- ================= RAKUN + DOCK ================= -->
     <aside class="rail" id="sidebar">
         <a class="rail-logo" href="#overview" title="ReconClaw v{{ version }} {{ codename }}">
-            <img src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="64" height="64">
+            <img src="{{ url_for('static', path='img/logo.png') }}" alt="ReconClaw rakun maskotu" width="36" height="36">
         </a>
         <nav class="dock" id="dock" aria-label="Ana menü">
             <ul class="nav" id="nav">
-                <li><a class="dock-item" href="#overview" data-view="overview" aria-label="SYS_OVERVIEW"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span><span class="dock-tip"><b>SYS_OVERVIEW</b><kbd>0</kbd></span></a></li>
-                <li><a class="dock-item" href="#scan" data-view="scan" aria-label="NEW_SCAN"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></span><span class="dock-tip"><b>NEW_SCAN</b><kbd>1</kbd></span></a></li>
-                <li><a class="dock-item" href="#results" data-view="results" aria-label="SCAN_RESULTS"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span><span class="dock-tip"><b>SCAN_RESULTS</b><kbd>2</kbd></span></a></li>
-                <li><a class="dock-item" href="#history" data-view="history" aria-label="SCAN_HISTORY"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg></span><span class="dock-tip"><b>SCAN_HISTORY</b><kbd>3</kbd></span></a></li>
-                <li><a class="dock-item" href="#compare" data-view="compare" aria-label="SCAN_DIFF"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span><span class="dock-tip"><b>SCAN_DIFF</b><kbd>4</kbd></span></a></li>
-                <li><a class="dock-item" href="#map" data-view="map" aria-label="NETWORK_MAP"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg></span><span class="dock-tip"><b>NETWORK_MAP</b><kbd>5</kbd></span></a></li>
-                <li><a class="dock-item" href="#settings" data-view="settings" aria-label="SETTINGS"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>SETTINGS</b><kbd>6</kbd></span></a></li>
+                <li><a class="dock-item" href="#overview" data-view="overview" aria-label="OPERASYON MERKEZİ"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span><span class="dock-tip"><b>OPERASYON MERKEZİ</b><kbd>0</kbd></span></a></li>
+                <li><a class="dock-item" href="#scan" data-view="scan" aria-label="YENİ TARAMA"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></span><span class="dock-tip"><b>YENİ TARAMA</b><kbd>1</kbd></span></a></li>
+                <li><a class="dock-item" href="#results" data-view="results" aria-label="HEDEF DOSYASI"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span><span class="dock-tip"><b>HEDEF DOSYASI</b><kbd>2</kbd></span></a></li>
+                <li><a class="dock-item" href="#history" data-view="history" aria-label="ARŞİV"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg></span><span class="dock-tip"><b>ARŞİV</b><kbd>3</kbd></span></a></li>
+                <li><a class="dock-item" href="#compare" data-view="compare" aria-label="KARŞILAŞTIRMA"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span><span class="dock-tip"><b>KARŞILAŞTIRMA</b><kbd>4</kbd></span></a></li>
+                <li><a class="dock-item" href="#map" data-view="map" aria-label="AĞ KROKİSİ"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg></span><span class="dock-tip"><b>AĞ KROKİSİ</b><kbd>5</kbd></span></a></li>
+                <li><a class="dock-item" href="#settings" data-view="settings" aria-label="AYARLAR"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>AYARLAR</b><kbd>6</kbd></span></a></li>
             </ul>
         </nav>
         <div class="rail-foot">
@@ -46,19 +43,19 @@
     <main class="main">
         <div class="statusbar">
             <img class="mobile-logo" src="{{ url_for('static', path='img/logo.png') }}" alt="" width="28" height="28">
-            <span class="indicator" id="indGateway">GATEWAY_ONLINE</span>
-            <span class="indicator" id="indEngine">RECON_ENGINE_READY</span>
-            <span class="indicator" id="indDb">DATABASE_ONLINE</span>
+            <span class="indicator" id="indGateway">AĞ GEÇİDİ: AKTİF</span>
+            <span class="indicator" id="indEngine">MOTOR: HAZIR</span>
+            <span class="indicator" id="indDb">VERİTABANI: ÇEVRİMİÇİ</span>
             <span class="sb-spacer"></span>
             <span class="sb-clock">UTC <b id="utcClock">--:--:--</b></span>
-            <span class="sb-clock up">UPTIME <b id="uptime">00:00:00</b></span>
+            <span class="sb-clock up">ÇALIŞMA <b id="uptime">00:00:00</b></span>
         </div>
         <header class="topbar">
             <div style="display:flex;gap:12px;align-items:flex-start">
                 <div>
-                    <div class="crumbs">RECONCLAW / <b id="crumb">SYS_OVERVIEW</b></div>
-                    <h1><span id="viewTitle">OPERATIONS_CENTER</span> <span class="live">LIVE</span></h1>
-                    <p id="viewSub">ReconClaw Central Intelligence &amp; Security Monitoring Console</p>
+                    <div class="crumbs">RECONCLAW / DOSYA <b id="crumb">RC-00</b></div>
+                    <h1><span id="viewTitle">OPERASYON MERKEZİ</span> <span class="live">CANLI</span></h1>
+                    <p id="viewSub">Hedef envanteri, tehdit durumu ve son istihbarat</p>
                 </div>
             </div>
             <div class="top-actions">
@@ -66,7 +63,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                     <span>Ara veya komut çalıştır...</span><kbd>Ctrl K</kbd>
                 </button>
-                <a class="btn" href="#scan">⚡ NEW SCAN</a>
+                <a class="btn primary" href="#scan">+ YENİ TARAMA</a>
                 <button type="button" class="icon-btn bell" id="bellBtn" title="Güvenlik bildirimleri" aria-label="Bildirimler">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                     <span class="count" id="bellCount" hidden>0</span>
@@ -91,9 +88,9 @@
             <section class="features" id="featuresBlock">
                 <button type="button" class="feat-close" id="hideFeatures" title="Tanıtımı gizle (Ctrl+K ile geri açılır)" aria-label="Tanıtımı gizle">✕</button>
                 <div class="feat-head">
-                    <span class="feat-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg> Rakun gibi keşfeder 🦝</span>
-                    <h2>Keşiften rapora, ihtiyacın olan her şey</h2>
-                    <p>ReconClaw; port tarama, risk analizi ve raporlamayı tek bir panelde birleştirir.</p>
+                    <span class="feat-badge">Dosya özeti</span>
+                    <h2>ReconClaw yetenekleri</h2>
+                    <p>Port keşfi, risk analizi ve raporlama tek panelde. Kartlar ilgili bölüme götürür.</p>
                 </div>
                 <div class="feat-tabs" role="tablist" id="featTabs">
                     <button type="button" role="tab" data-ftab="recon" class="on" aria-selected="true">Keşif</button>
@@ -162,17 +159,17 @@
                 </div>
             </section>
             <div class="stats">
-                <div class="stat"><div class="stat-label">DOMAINS_SCANNED</div><div class="stat-value skeleton" id="sDomains">0</div><div class="stat-sub" id="sScans">0 tarama</div><svg class="spark" id="spkScans" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
-                <div class="stat c-pink"><div class="stat-label">VULNERABILITIES</div><div class="stat-value skeleton" id="sVulns">0</div><div class="stat-sub">CVE + eklenti bulguları</div><svg class="spark" id="spkVulns" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
-                <div class="stat c-red"><div class="stat-label">CRITICAL_FINDINGS</div><div class="stat-value skeleton" id="sCritical">0</div><div class="stat-sub">CVE imza eşleşmesi</div></div>
-                <div class="stat c-yellow"><div class="stat-label">HIGH_RISK</div><div class="stat-value skeleton" id="sHighRisk">0</div><div class="stat-sub">yüksek/kritik hedef</div><svg class="spark" id="spkRisk" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
-                <div class="stat c-green"><div class="stat-label">ACTIVE_SCANS</div><div class="stat-value skeleton" id="sActive">0</div><div class="stat-sub" id="sOpen">0 açık port</div><svg class="spark" id="spkOpen" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
-                <div class="stat c-violet"><div class="stat-label">DB_STATUS</div><div class="stat-value skeleton" id="sDb">—</div><div class="stat-sub">SQLite</div></div>
+                <div class="stat"><div class="stat-label">HEDEF</div><div class="stat-value skeleton" id="sDomains">0</div><div class="stat-sub" id="sScans">0 tarama</div><svg class="spark" id="spkScans" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
+                <div class="stat c-pink"><div class="stat-label">ZAFİYET</div><div class="stat-value skeleton" id="sVulns">0</div><div class="stat-sub">CVE + eklenti bulguları</div><svg class="spark" id="spkVulns" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
+                <div class="stat c-red"><div class="stat-label">KRİTİK BULGU</div><div class="stat-value skeleton" id="sCritical">0</div><div class="stat-sub">CVE imza eşleşmesi</div></div>
+                <div class="stat c-yellow"><div class="stat-label">YÜKSEK RİSK</div><div class="stat-value skeleton" id="sHighRisk">0</div><div class="stat-sub">yüksek/kritik hedef</div><svg class="spark" id="spkRisk" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
+                <div class="stat c-green"><div class="stat-label">AKTİF TARAMA</div><div class="stat-value skeleton" id="sActive">0</div><div class="stat-sub" id="sOpen">0 açık port</div><svg class="spark" id="spkOpen" viewBox="0 0 100 30" preserveAspectRatio="none"></svg></div>
+                <div class="stat c-violet"><div class="stat-label">VERİTABANI</div><div class="stat-value skeleton" id="sDb">—</div><div class="stat-sub">SQLite</div></div>
             </div>
 
             <div class="grid two">
                 <section class="panel">
-                    <h3>THREAT_ASSESSMENT</h3>
+                    <h3>Tehdit değerlendirmesi</h3>
                     <div class="threat">
                         <svg class="donut" id="postureDonut" viewBox="0 0 120 120" role="img" aria-label="Ortalama risk"></svg>
                         <svg class="donut" id="severityDonut" viewBox="0 0 120 120" role="img" aria-label="Bulgu dağılımı"></svg>
@@ -180,25 +177,25 @@
                     </div>
                 </section>
                 <section class="panel" style="--c: var(--green)">
-                    <h3>LIVE_SECURITY_EVENT_FEED</h3>
+                    <h3>Olay kaydı</h3>
                     <ul class="feed" id="feed"><li class="empty">Henüz güvenlik olayı yok. Olay akışını doldurmak için hedef tarayın.</li></ul>
                 </section>
                 <section class="panel" style="--c: var(--pink)">
-                    <h3>VULNERABILITY_TRENDS</h3>
+                    <h3>Risk eğilimi</h3>
                     <div id="trendChart"><div class="empty">Trend için en az bir tarama gerekli.</div></div>
                     <p class="muted small">Çizgi: risk skoru · Sütun: bulgu sayısı · Noktaya tıklayarak raporu açın</p>
                 </section>
                 <section class="panel" style="--c: var(--violet)">
-                    <h3>TOP_EXPOSED_PORTS</h3>
+                    <h3>En çok açık port</h3>
                     <div class="hbars" id="topPorts"><div class="empty">Açık port verisi yok.</div></div>
                 </section>
                 <section class="panel wide" style="--c: var(--cyan)">
-                    <div class="panel-head"><h3>SCAN_ACTIVITY</h3><span class="muted small" id="activitySum">Son 1 yıl</span></div>
+                    <div class="panel-head"><h3>Operasyon takvimi</h3><span class="muted small" id="activitySum">Son 1 yıl</span></div>
                     <div class="heatmap" id="heatmap"></div>
                     <div class="heat-legend">Az <i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i> Çok</div>
                 </section>
                 <section class="panel wide" style="--c: var(--orange)">
-                    <div class="panel-head"><h3>TARGET_RISK_BOARD</h3><span class="muted small">Her hedefin en güncel taraması</span></div>
+                    <div class="panel-head"><h3>Hedef risk tablosu</h3><span class="muted small">Her hedefin en güncel taraması</span></div>
                     <div class="table-wrap">
                         <table>
                             <thead><tr><th>Hedef</th><th>IP</th><th>Açık</th><th>Skor</th><th>Seviye</th><th>Son tarama</th></tr></thead>
@@ -214,7 +211,7 @@
             <div class="grid">
                 <div class="scan-layout">
                     <section class="panel">
-                        <h3>SCAN_CONFIGURATION</h3>
+                        <h3>Operasyon parametreleri</h3>
                         <form class="scan-form" id="scanForm" autocomplete="off">
                             <label class="field grow">
                                 <span>Hedef (IP / Domain)</span>
@@ -238,20 +235,20 @@
                             <label class="check" title="Açık portlarda HTTP başlık ve TLS sertifika kontrollerini çalıştırır">
                                 <input type="checkbox" id="usePlugins" checked> Eklentiler
                             </label>
-                            <button type="submit" class="btn primary" id="scanBtn">⚡ TARAMAYI BAŞLAT</button>
+                            <button type="submit" class="btn primary" id="scanBtn">TARAMAYI BAŞLAT</button>
                         </form>
                         <div class="chips" id="recentTargets"></div>
                         <p class="muted small" id="pluginInfo" style="margin:12px 0 0">Etkin eklentiler yükleniyor...</p>
                     </section>
                     <section class="panel radar-box" style="--c: var(--green)">
                         <div class="radar-scope" id="radar"><div class="sweep"></div><div class="core"></div></div>
-                        <div class="radar-status" id="radarStatus">STANDBY<small>Hedef bekleniyor</small></div>
+                        <div class="radar-status" id="radarStatus">BEKLEMEDE<small>Hedef bekleniyor</small></div>
                     </section>
                 </div>
                 <section class="panel" style="--c: var(--green)">
-                    <h3>&gt;_ INTEL_TERMINAL</h3>
+                    <h3>Terminal</h3>
                     <div class="terminal" id="terminal" aria-live="polite">
-                        <div class="log muted">[SYS] Aurora asenkron motor hazır. Hedef bekleniyor...</div>
+                        <div class="log muted">[SYS] Motor hazır. Hedef bekleniyor.</div>
                     </div>
                 </section>
             </div>
@@ -263,14 +260,14 @@
             <div class="grid split" id="resultView" hidden>
                 <section class="panel wide">
                     <div class="panel-head">
-                        <h3>TARGET_PROFILE <span class="muted small" id="rScanId"></span></h3>
+                        <h3>Hedef profili <span class="muted small" id="rScanId"></span></h3>
                         <div class="actions">
-                            <button type="button" class="btn sm" id="exportJson">⬇ JSON</button>
-                            <button type="button" class="btn sm" id="exportCsv">⬇ CSV</button>
-                            <button type="button" class="btn sm" id="exportPdf">🖨 PDF RAPOR</button>
-                            <button type="button" class="btn sm pink" id="diffPrev">⇄ ÖNCEKİYLE KARŞILAŞTIR</button>
-                            <button type="button" class="btn sm pink" id="showMap">◎ AĞ HARİTASI</button>
-                            <button type="button" class="btn sm" id="rescan">↻ TEKRAR TARA</button>
+                            <button type="button" class="btn sm" id="exportJson">JSON</button>
+                            <button type="button" class="btn sm" id="exportCsv">CSV</button>
+                            <button type="button" class="btn sm" id="exportPdf">PDF RAPOR</button>
+                            <button type="button" class="btn sm pink" id="diffPrev">ÖNCEKİYLE KARŞILAŞTIR</button>
+                            <button type="button" class="btn sm pink" id="showMap">AĞ KROKİSİ</button>
+                            <button type="button" class="btn sm" id="rescan">TEKRAR TARA</button>
                         </div>
                     </div>
                     <div class="profile">
@@ -292,16 +289,16 @@
                     </div>
                 </section>
                 <section class="panel alert">
-                    <h3>CVE_ALERTS</h3>
+                    <h3>CVE uyarıları</h3>
                     <ul class="list" id="cveList"></ul>
                 </section>
                 <section class="panel rec">
-                    <h3>RECOMMENDATIONS</h3>
+                    <h3>Öneriler</h3>
                     <ul class="list" id="recList"></ul>
                 </section>
                 <section class="panel wide" style="--c: var(--yellow)">
                     <div class="panel-head">
-                        <h3>PLUGIN_FINDINGS</h3>
+                        <h3>Eklenti bulguları</h3>
                         <div class="chips" id="sevFilter" style="margin:0"></div>
                     </div>
                     <div class="table-wrap">
@@ -318,10 +315,10 @@
         <section data-page="history" hidden>
             <section class="panel">
                 <div class="panel-head">
-                    <h3>SCAN_ARCHIVE</h3>
+                    <h3>Operasyon arşivi</h3>
                     <div class="actions">
                         <input type="search" id="historySearch" placeholder="Hedef / IP ara... ( / )" style="width:220px">
-                        <button type="button" class="btn sm pink" id="compareSelected" disabled>⇄ SEÇİLİ 2 TARAMAYI KARŞILAŞTIR</button>
+                        <button type="button" class="btn sm pink" id="compareSelected" disabled>SEÇİLİ 2 TARAMAYI KARŞILAŞTIR</button>
                     </div>
                 </div>
                 <div class="table-wrap">
@@ -337,11 +334,11 @@
         <!-- [04] KARŞILAŞTIRMA -->
         <section data-page="compare" hidden>
             <section class="panel">
-                <h3>SCAN_DIFF</h3>
+                <h3>Karşılaştırma</h3>
                 <form class="scan-form" id="compareForm">
                     <label class="field grow"><span>Eski tarama (baz)</span><select id="cmpOld"></select></label>
                     <label class="field grow"><span>Yeni tarama</span><select id="cmpNew"></select></label>
-                    <button type="submit" class="btn primary">⇄ KARŞILAŞTIR</button>
+                    <button type="submit" class="btn primary">KARŞILAŞTIR</button>
                 </form>
                 <div id="diffOut" style="margin-top:16px"><div class="empty">Aynı hedefin iki taramasını seçerek hangi portların açılıp kapandığını, yeni/çözülen bulguları ve risk değişimini görün.</div></div>
             </section>
@@ -351,7 +348,7 @@
         <section data-page="map" hidden>
             <section class="panel">
                 <div class="panel-head">
-                    <h3>NETWORK_MAP</h3>
+                    <h3>Ağ krokisi</h3>
                     <label class="field" style="min-width:260px"><select id="mapSelect"></select></label>
                 </div>
                 <div class="map-layout">
@@ -366,28 +363,26 @@
         <section data-page="settings" hidden>
             <div class="settings">
                 <section class="panel">
-                    <h3>APPEARANCE</h3>
+                    <h3>Görünüm</h3>
                     <p class="muted small">Tema ve vurgu rengi bu tarayıcıda saklanır.</p>
                     <div class="seg" id="themeSeg">
-                        <button type="button" data-theme-pref="dark">🌙 Karanlık</button>
-                        <button type="button" data-theme-pref="light">☀️ Aydınlık</button>
-                        <button type="button" data-theme-pref="system">💻 Sistem</button>
+                        <button type="button" data-theme-pref="dark">Karanlık</button>
+                        <button type="button" data-theme-pref="light">Kâğıt</button>
+                        <button type="button" data-theme-pref="system">Sistem</button>
                     </div>
                     <div class="swatches" id="accentSwatches">
-                        <button type="button" class="swatch" data-accent="copper" title="Bakır (rakun)"></button>
-                        <button type="button" class="swatch" data-accent="cyan" title="Camgöbeği"></button>
-                        <button type="button" class="swatch" data-accent="violet" title="Mor"></button>
-                        <button type="button" class="swatch" data-accent="green" title="Yeşil"></button>
-                        <button type="button" class="swatch" data-accent="pink" title="Pembe"></button>
-                        <button type="button" class="swatch" data-accent="amber" title="Kehribar"></button>
+                        <button type="button" class="swatch" data-accent="ink" title="Mürekkep (varsayılan)"></button>
+                        <button type="button" class="swatch" data-accent="copper" title="Bakır"></button>
+                        <button type="button" class="swatch" data-accent="signal" title="Sinyal kırmızısı"></button>
+                        <button type="button" class="swatch" data-accent="olive" title="Haki"></button>
+                        <button type="button" class="swatch" data-accent="steel" title="Çelik mavisi"></button>
                     </div>
-                    <label class="toggle-row"><span>Hareketli arka plan (parçacık ağı)</span><input type="checkbox" id="fxToggle"></label>
                     <label class="toggle-row"><span>Genel bakışta özellik tanıtımı</span><input type="checkbox" id="featToggle"></label>
                     <p class="muted small" style="margin-top:14px">Klavye kısayolları için <kbd>?</kbd> tuşuna basın.</p>
                 </section>
 
                 <section class="panel">
-                    <h3>SCAN_DEFAULTS</h3>
+                    <h3>Tarama varsayılanları</h3>
                     <div class="form-stack">
                         <label class="field"><span>Varsayılan port kapsamı</span>
                             <select id="defMode"><option value="common">Yaygın portlar</option><option value="range">1 → Maks. port</option></select>
@@ -400,7 +395,7 @@
                 </section>
 
                 <section class="panel">
-                    <h3>PROFILE</h3>
+                    <h3>Profil</h3>
                     <form class="form-stack" id="profileForm">
                         <label class="field"><span>Ad</span><input type="text" id="pName" maxlength="80" required></label>
                         <label class="field"><span>E-posta</span><input type="email" id="pEmail" disabled></label>
@@ -410,7 +405,7 @@
                 </section>
 
                 <section class="panel">
-                    <h3>SECURITY</h3>
+                    <h3>Güvenlik</h3>
                     <form class="form-stack" id="passwordForm">
                         <label class="field" id="curPwField"><span>Mevcut parola</span><input type="password" id="curPw" autocomplete="current-password"></label>
                         <label class="field"><span id="newPwLabel">Yeni parola</span><input type="password" id="newPw" autocomplete="new-password" minlength="8" required></label>
@@ -422,7 +417,7 @@
                 </section>
 
                 <section class="panel">
-                    <h3>API_ACCESS</h3>
+                    <h3>API erişimi</h3>
                     <p class="muted small">API anahtarı ile arayüz olmadan (curl, script, CI) tarama yapabilirsiniz. Anahtar yalnızca oluşturulduğunda bir kez gösterilir.</p>
                     <div class="form-stack">
                         <div class="token-box" id="tokenBox" hidden></div>
@@ -435,7 +430,7 @@
                 </section>
 
                 <section class="panel danger-zone">
-                    <h3>DANGER_ZONE</h3>
+                    <h3>Tehlikeli bölge</h3>
                     <div class="form-stack">
                         <button type="button" class="btn danger" id="clearHistory">TÜM TARAMA GEÇMİŞİNİ SİL</button>
                         <button type="button" class="btn danger" id="deleteAccount">HESABI KALICI OLARAK SİL</button>
@@ -443,7 +438,7 @@
                 </section>
             </div>
         </section>
-        <footer class="app-foot">🦝 ReconClaw v{{ version }} {{ codename }} · Developed by <b>John Doe</b></footer>
+        <footer class="app-foot"><span>ReconClaw v{{ version }} · Geliştirici: John Doe</span><span>Sınıflandırma: Gizli · Dağıtım: Sınırlı</span></footer>
     </main>
 </div>
 
@@ -463,7 +458,7 @@
 <!-- Kısayollar (?) -->
 <div class="modal-back" id="helpModal" hidden>
     <div class="shortcuts" role="dialog" aria-label="Klavye kısayolları">
-        <h3>⌨ KLAVYE KISAYOLLARI</h3>
+        <h3>Klavye kısayolları</h3>
         <dl>
             <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Komut paleti</dd>
             <dt><kbd>0</kbd> … <kbd>6</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
