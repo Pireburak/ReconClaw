@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from core import auth, config, oauth
+from core import auth, config, oauth, plans, verify
 from core.db_manager import (
     db_ok, delete_scans, get_recent_scans, get_scan_report, get_user_reports, init_db, save_scan,
 )
@@ -24,7 +24,7 @@ from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "6.0"
+VERSION = "6.1"
 CODENAME = "Aurora"
 STARTED_AT = time.time()
 
@@ -81,6 +81,17 @@ async def auth_error_handler(request: Request, exc: auth.AuthError):
     return JSONResponse({"detail": str(exc)}, status_code=400)
 
 
+@app.exception_handler(plans.PlanError)
+async def plan_error_handler(request: Request, exc: plans.PlanError):
+    # 402 Payment Required: arayüz kullanıcıyı abonelik sayfasına yönlendirir
+    return JSONResponse({"detail": str(exc), "upgrade": True}, status_code=402)
+
+
+@app.exception_handler(verify.VerifyError)
+async def verify_error_handler(request: Request, exc: verify.VerifyError):
+    return JSONResponse({"detail": str(exc)}, status_code=400)
+
+
 # ---------------------------------------------------------------- yardımcılar
 class RateLimiter:
     """Anahtar başına (kullanıcı / IP) kayan pencereli basit istek sınırlayıcı."""
@@ -89,13 +100,14 @@ class RateLimiter:
         self.limit, self.window = limit, window
         self.hits = defaultdict(deque)
 
-    def allow(self, key) -> bool:
-        if self.limit <= 0:
+    def allow(self, key, limit: int | None = None) -> bool:
+        limit = self.limit if limit is None else limit
+        if limit <= 0:
             return True
         now, hits = time.monotonic(), self.hits[key]
         while hits and hits[0] <= now - self.window:
             hits.popleft()
-        if len(hits) >= self.limit:
+        if len(hits) >= limit:
             return False
         hits.append(now)
         return True
@@ -126,6 +138,8 @@ def current_user(request: Request):
     user = optional_user(request)
     if user is None:
         raise HTTPException(status_code=401, detail="Oturum açmanız gerekiyor.")
+    if _bearer(request):
+        plans.require(user, "api", "API erişimi Pro Max ve üzeri planlarda kullanılabilir.")
     return user
 
 
@@ -169,6 +183,8 @@ async def printable_report(request: Request, scan_id: int):
     user = optional_user(request)
     if user is None:
         return RedirectResponse("/login", status_code=303)
+    if not plans.effective_plan(user).exports:
+        return RedirectResponse("/#plans", status_code=303)
     report = await run_in_threadpool(get_scan_report, scan_id, user["id"])
     if report is None:
         raise HTTPException(status_code=404, detail="Tarama raporu bulunamadı.")
@@ -275,6 +291,7 @@ class AccountDelete(BaseModel):
 async def me(user=Depends(current_user)):
     data = auth.public_user(user)
     data["sessions"] = auth.count_sessions(user["id"])
+    data["subscription"] = plans.subscription(user)
     return data
 
 
@@ -294,6 +311,7 @@ async def change_password(body: PasswordChange, request: Request, user=Depends(c
 
 @app.post("/api/me/token", tags=["account"])
 async def create_api_token(user=Depends(current_user)):
+    plans.require(user, "api", "API anahtarı Pro Max ve üzeri planlarda kullanılabilir.")
     return {"token": auth.rotate_api_token(user["id"])}
 
 
@@ -330,8 +348,18 @@ class ScanRequest(BaseModel):
 @app.post("/api/scan", tags=["scan"])
 async def scan(req: ScanRequest, user=Depends(current_user)):
     global active_scans
-    if not scan_limiter.allow(user["id"]):
-        raise HTTPException(status_code=429, detail=f"Dakikada en fazla {config.SCAN_RATE_LIMIT} tarama başlatabilirsiniz.")
+    plan = plans.check_scan_quota(user, req.max_port)
+    per_minute = plan.per_minute
+    if config.SCAN_RATE_LIMIT and (not per_minute or config.SCAN_RATE_LIMIT < per_minute):
+        per_minute = config.SCAN_RATE_LIMIT  # sunucu genelindeki üst sınır
+    if not scan_limiter.allow(user["id"], per_minute):
+        raise HTTPException(status_code=429, detail=f"{plan.name} planında dakikada en fazla {per_minute} tarama başlatılabilir.")
+    try:
+        verify.ensure_allowed(user["id"], req.target)
+    except verify.VerifyError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
     started = time.perf_counter()
     ports = range(1, req.max_port + 1) if req.max_port else COMMON_PORTS
@@ -349,7 +377,7 @@ async def scan(req: ScanRequest, user=Depends(current_user)):
     try:
         result = await scanner.run()
         findings = []
-        if req.plugins and result.open_ports:
+        if req.plugins and plan.plugins and result.open_ports:
             findings = await run_plugins(result.target, result.ip, result.open_ports, timeout=max(req.timeout, 3.0))
     finally:
         active_scans -= 1
@@ -371,6 +399,7 @@ async def scan(req: ScanRequest, user=Depends(current_user)):
         "analysis": analysis["ports"],
     }
     report["scan_id"] = await run_in_threadpool(save_scan, report, user["id"])
+    await run_in_threadpool(plans.record_scan, user["id"])
     return report
 
 
@@ -407,6 +436,7 @@ def _csv_cell(value):
 
 @app.get("/api/scans/{scan_id}/csv", tags=["scan"])
 async def scan_csv(scan_id: int, user=Depends(current_user)):
+    plans.require(user, "exports", "PDF ve CSV rapor Pro ve üzeri planlarda kullanılabilir.")
     report = await run_in_threadpool(get_scan_report, scan_id, user["id"])
     if report is None:
         raise HTTPException(status_code=404, detail="Tarama raporu bulunamadı.")
@@ -426,6 +456,7 @@ async def scan_csv(scan_id: int, user=Depends(current_user)):
 
 @app.get("/api/compare", tags=["scan"])
 async def compare(old: int, new: int, user=Depends(current_user)):
+    plans.require(user, "compare", "Tarama karşılaştırma Pro ve üzeri planlarda kullanılabilir.")
     a = await run_in_threadpool(get_scan_report, old, user["id"])
     b = await run_in_threadpool(get_scan_report, new, user["id"])
     if a is None or b is None:
@@ -445,6 +476,68 @@ async def stats(user=Depends(current_user)):
     return data
 
 
+# ---------------------------------------------------------------- abonelik
+class CheckoutRequest(BaseModel):
+    plan: str = Field(..., examples=["pro"])
+    period: str = Field("monthly", pattern="^(monthly|yearly)$")
+
+
+class TargetRequest(BaseModel):
+    host: str = Field(..., min_length=1, max_length=255)
+
+
+@app.get("/api/plans", tags=["billing"])
+async def list_plans():
+    return {"plans": [p.to_dict() for p in plans.PLANS.values()], "currency": "TRY", "payment_mode": "demo",
+            "require_target_verification": config.REQUIRE_TARGET_VERIFICATION}
+
+
+@app.get("/api/billing", tags=["billing"])
+async def billing(user=Depends(current_user)):
+    return {**plans.subscription(user), "payments": plans.payments(user["id"])}
+
+
+@app.post("/api/billing/checkout", tags=["billing"])
+async def billing_checkout(body: CheckoutRequest, user=Depends(current_user)):
+    if body.plan not in plans.PLANS:
+        raise HTTPException(status_code=422, detail="Geçersiz plan.")
+    result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period)
+    return {**result, **plans.subscription(auth.get_user(user["id"]))}
+
+
+@app.post("/api/billing/cancel", tags=["billing"])
+async def billing_cancel(user=Depends(current_user)):
+    await run_in_threadpool(plans.checkout, user["id"], "free")
+    return plans.subscription(auth.get_user(user["id"]))
+
+
+@app.get("/api/targets", tags=["billing"])
+async def targets(user=Depends(current_user)):
+    plan = plans.effective_plan(user)
+    return {"targets": verify.list_targets(user["id"]), "limit": plan.targets,
+            "required": config.REQUIRE_TARGET_VERIFICATION, "well_known": verify.WELL_KNOWN}
+
+
+@app.post("/api/targets", tags=["billing"])
+async def add_target(body: TargetRequest, user=Depends(current_user)):
+    try:
+        return await run_in_threadpool(verify.add_target, user, body.host)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@app.post("/api/targets/{target_id}/verify", tags=["billing"])
+async def verify_target(target_id: int, user=Depends(current_user)):
+    return await verify.verify_target(user["id"], target_id)
+
+
+@app.delete("/api/targets/{target_id}", tags=["billing"])
+async def delete_target(target_id: int, user=Depends(current_user)):
+    if not verify.delete_target(user["id"], target_id):
+        raise HTTPException(status_code=404, detail="Hedef bulunamadı.")
+    return {"deleted": 1}
+
+
 @app.get("/api/plugins", tags=["scan"])
 async def plugins():
     enabled = set(enabled_names())
@@ -457,7 +550,8 @@ async def plugins():
 @app.get("/api/health", tags=["dashboard"])
 async def health():
     return {"status": "ok", "version": VERSION, "db": db_ok(), "uptime": int(time.time() - STARTED_AT),
-            "private_targets": config.ALLOW_PRIVATE_TARGETS}
+            "private_targets": config.ALLOW_PRIVATE_TARGETS,
+            "target_verification": config.REQUIRE_TARGET_VERIFICATION}
 
 
 if __name__ == "__main__":

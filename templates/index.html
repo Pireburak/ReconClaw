@@ -29,6 +29,7 @@
                 <li><a class="dock-item" href="#compare" data-view="compare" aria-label="KARŞILAŞTIRMA"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></span><span class="dock-tip"><b>KARŞILAŞTIRMA</b><kbd>4</kbd></span></a></li>
                 <li><a class="dock-item" href="#map" data-view="map" aria-label="AĞ KROKİSİ"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5.5M12 11.5l5.5 5.5"/></svg></span><span class="dock-tip"><b>AĞ KROKİSİ</b><kbd>5</kbd></span></a></li>
                 <li><a class="dock-item" href="#settings" data-view="settings" aria-label="AYARLAR"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>AYARLAR</b><kbd>6</kbd></span></a></li>
+                <li><a class="dock-item" href="#plans" data-view="plans" aria-label="ABONELİK"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.29l4.27-3.66a.5.5 0 0 1 .82.52l-2.83 10.25a1 1 0 0 1-.96.73H5.8a1 1 0 0 1-.97-.73L2.02 6.02a.5.5 0 0 1 .81-.52L7.1 9.16a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/></svg></span><span class="dock-tip"><b>ABONELİK</b><kbd>7</kbd></span></a></li>
             </ul>
         </nav>
         <div class="rail-foot">
@@ -47,6 +48,7 @@
             <span class="indicator" id="indEngine">MOTOR: HAZIR</span>
             <span class="indicator" id="indDb">VERİTABANI: ÇEVRİMİÇİ</span>
             <span class="sb-spacer"></span>
+            <span class="sb-clock">KOTA <b id="quota">—</b></span>
             <span class="sb-clock">UTC <b id="utcClock">--:--:--</b></span>
             <span class="sb-clock up">ÇALIŞMA <b id="uptime">00:00:00</b></span>
         </div>
@@ -72,6 +74,7 @@
                     <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
                     <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
                 </button>
+                <a class="plan-chip" href="#plans" id="planChip" title="Abonelik planınız">FREE</a>
                 <a class="user-chip" href="#settings" title="{{ user.email }}">
                     <span class="avatar" id="avatar">{% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="" referrerpolicy="no-referrer">{% else %}{{ user.name[:1] | upper }}{% endif %}</span>
                     <span id="userName">{{ user.name }}</span>
@@ -226,14 +229,14 @@
                             </label>
                             <label class="field narrow" id="maxPortField" hidden>
                                 <span>Maks. Port</span>
-                                <input type="number" id="max_port" value="1024" min="1" max="65535">
+                                <input type="number" id="max_port" value="100" min="1" max="65535">
                             </label>
                             <label class="field narrow">
                                 <span>Zaman aşımı (sn)</span>
                                 <input type="number" id="timeout" value="1" min="0.2" max="5" step="0.1">
                             </label>
                             <label class="check" title="Açık portlarda HTTP başlık ve TLS sertifika kontrollerini çalıştırır">
-                                <input type="checkbox" id="usePlugins" checked> Eklentiler
+                                <input type="checkbox" id="usePlugins" checked> Eklentiler <span class="lock" id="pluginsLock" hidden>PRO</span>
                             </label>
                             <button type="submit" class="btn primary" id="scanBtn">TARAMAYI BAŞLAT</button>
                         </form>
@@ -359,6 +362,59 @@
             </section>
         </section>
 
+        <!-- [07] ABONELİK -->
+        <section data-page="plans" hidden>
+            <div class="grid">
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Mevcut abonelik</h3>
+                        <span class="demo-tag">DEMO ÖDEME MODU · KART BİLGİSİ ALINMAZ</span>
+                    </div>
+                    <div class="sub-summary" id="subSummary"><div class="empty">Yükleniyor...</div></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Erişim seviyeleri</h3>
+                        <div class="seg" id="periodSeg">
+                            <button type="button" class="on" data-period="monthly">Aylık</button>
+                            <button type="button" data-period="yearly">Yıllık · 2 ay bedava</button>
+                        </div>
+                    </div>
+                    <div class="plan-grid" id="planGrid"></div>
+                    <div class="table-wrap">
+                        <table class="compare-table">
+                            <thead id="planTableHead"></thead>
+                            <tbody id="planTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <h3>Doğrulanmış hedefler <span class="muted small" id="targetCount"></span></h3>
+                        <span class="muted small" id="verifyMode"></span>
+                    </div>
+                    <p class="muted small" style="margin-top:0">Bir hedefin size ait olduğunu kanıtlayın: alan adına bir <b>DNS TXT</b> kaydı ekleyin ya da siteye bir <b>doğrulama dosyası</b> koyun. Sunucu yöneticisi doğrulamayı zorunlu kıldıysa yalnızca bu listedeki hedefler taranabilir.</p>
+                    <form class="scan-form" id="targetForm" autocomplete="off">
+                        <label class="field grow"><span>Hedef (alan adı / IP)</span><input type="text" id="targetHost" placeholder="ör. ornek.com" required></label>
+                        <button type="submit" class="btn">HEDEF EKLE</button>
+                    </form>
+                    <div id="targetList" style="margin-top:14px"></div>
+                </section>
+
+                <section class="panel">
+                    <h3>Ödeme geçmişi</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>Tarih</th><th>Plan</th><th>Dönem</th><th>Tutar</th><th>Durum</th></tr></thead>
+                            <tbody id="paymentList"><tr><td colspan="6" class="empty">Kayıt yok.</td></tr></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+
         <!-- [06] AYARLAR -->
         <section data-page="settings" hidden>
             <div class="settings">
@@ -418,6 +474,7 @@
 
                 <section class="panel">
                     <h3>API erişimi</h3>
+                    <p class="lock-note" id="apiLock" hidden>API erişimi <b>Pro Max</b> ve üzeri planlarda açılır. <a href="#plans">Planları gör</a></p>
                     <p class="muted small">API anahtarı ile arayüz olmadan (curl, script, CI) tarama yapabilirsiniz. Anahtar yalnızca oluşturulduğunda bir kez gösterilir.</p>
                     <div class="form-stack">
                         <div class="token-box" id="tokenBox" hidden></div>
@@ -442,6 +499,31 @@
     </main>
 </div>
 
+<!-- Ödeme onayı (demo) -->
+<div class="modal-back" id="checkoutModal" hidden>
+    <div class="shortcuts" role="dialog" aria-label="Plan değişikliği">
+        <h3 id="checkoutTitle">Plan değişikliği</h3>
+        <div id="checkoutBody"></div>
+        <p class="lock-note">Demo ödeme modu: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir. Gerçek ödeme altyapısı bağlandığında bu adım ödeme sayfasına yönlenir.</p>
+        <div class="actions" style="justify-content:flex-end;margin-top:14px">
+            <button type="button" class="btn" data-close>VAZGEÇ</button>
+            <button type="button" class="btn primary" id="checkoutConfirm">ONAYLA</button>
+        </div>
+    </div>
+</div>
+
+<!-- Plan sınırı -->
+<div class="modal-back" id="upgradeModal" hidden>
+    <div class="shortcuts" role="dialog" aria-label="Planınızı yükseltin">
+        <h3>Erişim seviyeniz yetersiz</h3>
+        <p id="upgradeText" style="margin:0"></p>
+        <div class="actions" style="justify-content:flex-end;margin-top:16px">
+            <button type="button" class="btn" data-close>KAPAT</button>
+            <a class="btn primary" href="#plans" data-close>PLANLARI GÖR</a>
+        </div>
+    </div>
+</div>
+
 <!-- Komut paleti (Ctrl+K) -->
 <div class="modal-back" id="paletteModal" hidden>
     <div class="palette" role="dialog" aria-label="Komut paleti">
@@ -461,7 +543,7 @@
         <h3>Klavye kısayolları</h3>
         <dl>
             <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Komut paleti</dd>
-            <dt><kbd>0</kbd> … <kbd>6</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
+            <dt><kbd>0</kbd> … <kbd>7</kbd></dt><dd>Menü sayfaları arasında geçiş</dd>
             <dt><kbd>N</kbd></dt><dd>Yeni tarama</dd>
             <dt><kbd>T</kbd></dt><dd>Aydınlık / karanlık tema</dd>
             <dt><kbd>/</kbd></dt><dd>Geçmişte ara</dd>

@@ -80,6 +80,32 @@ def init_db():
                 expires_at TEXT NOT NULL,
                 user_agent TEXT
             );
+            CREATE TABLE IF NOT EXISTS usage (
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                day     TEXT NOT NULL,
+                scans   INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (user_id, day)
+            );
+            CREATE TABLE IF NOT EXISTS payments (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                plan       TEXT NOT NULL,
+                period     TEXT NOT NULL,
+                amount     INTEGER NOT NULL,
+                currency   TEXT NOT NULL,
+                status     TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS targets (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                host        TEXT NOT NULL,
+                token       TEXT NOT NULL,
+                method      TEXT,
+                verified_at TEXT,
+                created_at  TEXT NOT NULL,
+                UNIQUE (user_id, host)
+            );
             CREATE TABLE IF NOT EXISTS oauth_states (
                 state      TEXT PRIMARY KEY,
                 provider   TEXT NOT NULL,
@@ -93,6 +119,12 @@ def init_db():
             conn.execute("ALTER TABLE scans ADD COLUMN report TEXT")
         if "user_id" not in columns:
             conn.execute("ALTER TABLE scans ADD COLUMN user_id INTEGER")
+        # v6.1: abonelik planı
+        user_columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+        if "plan" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'")
+        if "plan_expires" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN plan_expires TEXT")
 
 
 def save_scan(report, user_id=None):

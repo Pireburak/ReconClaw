@@ -1,12 +1,12 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v6.0 Aurora</h1>
+<h1 align="center">🦝 ReconClaw v6.1 Aurora</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Port Tarama ve Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v6.0%20Aurora-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v6.1%20Aurora-E8751A?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
@@ -60,6 +60,7 @@
   - [PDF Rapor](#11-pdf-rapor)
   - [Kâğıt Tema ve Vurgu Renkleri](#12-kâğıt-tema-ve-vurgu-renkleri)
   - [Telefon](#13-telefon)
+- [Abonelik Planları](#-abonelik-planları)
 - [Nasıl Çalışır?](#️-nasıl-çalışır)
 - [Risk Değerlendirme Modeli](#-risk-değerlendirme-modeli)
 - [Eklentiler](#-eklentiler)
@@ -243,7 +244,7 @@ Tüm taramalar en yeniden eskiye listelenir. Hedef veya IP'ye göre **anlık ara
 | Kısayol | İşlev |
 |---------|-------|
 | `Ctrl` + `K` | Komut paleti |
-| `0` … `6` | Bölümler arasında geçiş (0 = Operasyon Merkezi … 6 = Ayarlar) |
+| `0` … `7` | Bölümler arasında geçiş (0 = Operasyon Merkezi … 7 = Abonelik) |
 | `N` | Yeni tarama |
 | `T` | Karanlık / kâğıt tema |
 | `/` | Arşivde ara |
@@ -296,6 +297,56 @@ Tema ve renk tercihi tarayıcıda saklanır. Sayfa açılırken erken yüklendi�
 <p align="center"><img src="docs/screenshots/15-mobil.jpg" alt="Telefon görünümü" width="320"></p>
 
 Arayüz telefonda da tam çalışır: sol ikon rayı ekranın altına **sekme çubuğu** olarak iner, tablolar yatay kaydırılır, giriş ekranında form üste, dosya özeti alta geçer.
+
+---
+
+## 💳 Abonelik Planları
+
+ReconClaw v6.1 ile **5 kademeli üyelik** sistemi geldi. Her yeni hesap **Free** planla başlar; sınırlar yalnızca arayüzde değil **sunucu tarafında** uygulanır (API ile de aşılamaz). Sınırı aşan bir istek `HTTP 402` döner ve arayüz kullanıcıyı **Abonelik** sayfasına yönlendirir.
+
+<p align="center"><img src="docs/screenshots/16-abonelik.png" alt="Abonelik planları" width="100%"></p>
+
+| Özellik | 🆓 Free | ⭐ Pro | 💎 Pro Max | 🚀 Ultra | 👑 Ultra Max |
+|---------|:------:|:-----:|:---------:|:-------:|:-----------:|
+| **Aylık fiyat** | **₺0** | **₺299** | **₺599** | **₺999** | **₺1.999** |
+| Yıllık fiyat *(2 ay bedava)* | ₺0 | ₺2.990 | ₺5.990 | ₺9.990 | ₺19.990 |
+| Günlük tarama | 5 | 50 | 200 | 1.000 | ∞ |
+| Dakikalık tarama | 2 | 5 | 10 | 20 | ∞ |
+| Port aralığı | 1–100 | 1–1024 | 1–10000 | 1–65535 | 1–65535 |
+| HTTP / TLS eklentileri | — | ✅ | ✅ | ✅ | ✅ |
+| PDF / CSV rapor | — | ✅ | ✅ | ✅ | ✅ |
+| Tarama karşılaştırma | — | ✅ | ✅ | ✅ | ✅ |
+| API anahtarı | — | — | ✅ | ✅ | ✅ |
+| Doğrulanmış hedef | 1 | 3 | 10 | 25 | ∞ |
+
+- **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez.
+- Ücretli planın süresi dolunca hesap otomatik olarak **Free** sınırlarına döner; API anahtarı da çalışmayı bırakır.
+- Üst barda planı gösteren rozet ve `KOTA 3/5` sayacı bulunur; kilitli düğmelerde **PRO** etiketi görünür.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/17-odeme.png" alt="Demo ödeme onayı"></td>
+<td width="50%"><img src="docs/screenshots/18-yukselt.png" alt="Plan yükseltme penceresi"></td>
+</tr>
+<tr>
+<td align="center"><sub>Demo ödeme onayı</sub></td>
+<td align="center"><sub>Kilitli özellikte yükseltme penceresi</sub></td>
+</tr>
+</table>
+
+> [!NOTE]
+> Ödeme şimdilik **demo modundadır**: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir ve `payments` tablosuna `demo` durumlu bir kayıt düşülür. Gerçek ödeme altyapısı (iyzico, Lemon Squeezy vb.) `core/plans.py` içindeki `checkout()` fonksiyonunun yerine bağlanacak şekilde tasarlandı.
+
+### 🎯 Hedef sahipliği doğrulama
+
+İnternete açık bir sunucuda kimsenin başkasına ait sistemi taramaması için `.env` dosyasında `REQUIRE_TARGET_VERIFICATION=true` yapın. Bu durumda yalnızca sahipliği kanıtlanmış hedefler (ve herkese açık test sunucusu `scanme.nmap.org`) taranabilir. **Abonelik → Doğrulanmış hedefler** bölümünden hedef ekleyin ve size verilen anahtarı iki yoldan biriyle yayınlayın:
+
+| Yöntem | Yapılacak |
+|--------|-----------|
+| **DNS** | Alan adına `TXT` kaydı: `reconclaw-verify=<anahtar>` |
+| **Dosya** | `https://<hedef>/.well-known/reconclaw-verify.txt` adresine anahtarı içeren dosya |
+
+Ardından **DOĞRULA**'ya basın. DNS sorgusu DNS-over-HTTPS ile yapılır; iç ağ adresleri `ALLOW_PRIVATE_TARGETS=false` iken doğrulanamaz (SSRF koruması).
 
 ---
 
@@ -407,7 +458,7 @@ Port taraması bittikten sonra eklentiler, ilgilendikleri açık portlarda ek ko
 
 Etkileşimli API dokümantasyonu (Swagger): **http://127.0.0.1:8000/docs**
 
-Tüm `/api/*` uç noktaları oturum ister. Tarayıcıda giriş çerezi kullanılır; script ve curl için **Ayarlar → API erişimi**'nden oluşturulan anahtar `Authorization: Bearer rc_...` başlığıyla gönderilir.
+Tüm `/api/*` uç noktaları oturum ister. API anahtarı **Pro Max** ve üzeri planlarda kullanılabilir. Tarayıcıda giriş çerezi kullanılır; script ve curl için **Ayarlar → API erişimi**'nden oluşturulan anahtar `Authorization: Bearer rc_...` başlığıyla gönderilir.
 
 ### `POST /api/scan`
 
@@ -476,6 +527,12 @@ curl -X POST http://127.0.0.1:8000/api/scan \
 | `POST /auth/register` · `POST /auth/login` · `POST /auth/logout` | E-posta ile kayıt, giriş, çıkış |
 | `GET /auth/providers` | Hangi sosyal giriş yöntemlerinin açık olduğu |
 | `GET /auth/{google\|github\|microsoft\|apple}/login` | Sosyal giriş |
+| `GET /api/plans` | Plan kataloğu ve fiyatlar (oturum gerektirmez) |
+| `GET /api/billing` | Mevcut plan, bitiş tarihi, bugünkü kullanım ve ödeme geçmişi |
+| `POST /api/billing/checkout` | `{"plan": "pro", "period": "monthly\|yearly"}` ile plana geç (demo ödeme) |
+| `POST /api/billing/cancel` | Aboneliği iptal et, Free plana dön |
+| `GET /api/targets` · `POST /api/targets` | Doğrulama hedeflerini listele / ekle |
+| `POST /api/targets/{id}/verify` · `DELETE /api/targets/{id}` | Hedefi DNS veya dosya ile doğrula / sil |
 | `GET /api/health` | Sağlık kontrolü (oturum gerektirmez) |
 
 <details>
@@ -513,7 +570,8 @@ Tüm ayarlar ortam değişkenleri veya proje kökündeki `.env` dosyasıyla yap�
 | `SESSION_DAYS` | `7` | "Beni hatırla" ile açılan oturumun ömrü (gün) |
 | `ALLOW_SIGNUP` | `true` | Yeni kayıtlara izin ver. Kendi hesabınızı açtıktan sonra kapatabilirsiniz |
 | `ALLOW_PRIVATE_TARGETS` | `true` | İç ağ adreslerinin taranması. **İnternete açık sunucuda `false` yapın** |
-| `SCAN_RATE_LIMIT` | `10` | Kullanıcı başına dakikada en fazla tarama (0 = sınırsız) |
+| `SCAN_RATE_LIMIT` | `0` | Plan sınırlarına ek, tüm kullanıcılar için dakikalık üst sınır (0 = kapalı, yalnızca plan sınırları) |
+| `REQUIRE_TARGET_VERIFICATION` | `false` | Yalnızca sahipliği doğrulanmış hedefler taransın. **Herkese açık sunucuda `true` yapın** |
 | `RECONCLAW_DB` | `data/reconclaw_v4.db` | Veritabanı dosyasının yolu |
 | `GOOGLE_CLIENT_ID` / `_SECRET` | — | Google ile giriş |
 | `GITHUB_CLIENT_ID` / `_SECRET` | — | GitHub ile giriş |
@@ -628,7 +686,7 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 - Giriş / kayıt ekranında
 - PDF raporların başlığında
 - Tarayıcı sekmesinde (favicon) ve iPhone/iPad ana ekranında (apple-touch-icon)
-- Sunucu açılırken konsolda: `🦝 ReconClaw v6.0 Aurora -> http://127.0.0.1:8000`
+- Sunucu açılırken konsolda: `🦝 ReconClaw v6.1 Aurora -> http://127.0.0.1:8000`
 
 ### 💬 Birisi "Neden rakun?" diye sorarsa
 
@@ -637,7 +695,16 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 🌠 v6.0 Aurora *(mevcut sürüm)*
+### 💳 v6.1 Aurora *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| 5 kademeli abonelik | Free, Pro (₺299), Pro Max (₺599), Ultra (₺999), Ultra Max (₺1.999); yıllık ödemede 2 ay bedava |
+| Sunucu taraflı sınırlar | Günlük/dakikalık tarama, port aralığı, eklenti, rapor, karşılaştırma ve API kilidi (`HTTP 402`) |
+| Demo ödeme | Kart bilgisi olmadan plan geçişi ve ödeme geçmişi; gerçek ödeme altyapısına hazır |
+| Hedef doğrulama | DNS TXT veya `.well-known` dosyası ile sahiplik kanıtı (`REQUIRE_TARGET_VERIFICATION`) |
+
+### 🌠 v6.0 Aurora
 
 Tarama motoru ve API aynı kaldı; v6.0 baştan sona bir **arayüz** sürümüdür.
 
@@ -728,7 +795,7 @@ ReconClaw/
 │   ├── fonts/              # Gömülü yazı tipleri (OFL lisansı: fonts/OFL.txt)
 │   ├── img/                # 🦝 Maskot: banner.jpg, logo.png, apple-touch-icon.png
 │   └── favicon.png
-├── tests/                  # 49 otomatik test (pytest)
+├── tests/                  # 61 otomatik test (pytest)
 ├── docs/screenshots/       # README ekran görüntüleri
 ├── deploy/Caddyfile        # HTTPS ters vekil ayarı
 ├── Dockerfile · docker-compose.yml
@@ -749,10 +816,13 @@ Uygulama ilk açılışta `data/reconclaw_v4.db` dosyasını ve tabloları otoma
 | `scans`      | `id`, `user_id`, `target`, `ip_address`, `open_count`, `risk_score`, `risk_level`, `duration`, `scan_time`, `report` (tam JSON rapor) |
 | `open_ports` | `id`, `scan_id`, `port`, `protocol`, `service`, `banner`, `risk`                 |
 | `findings`   | `id`, `scan_id`, `plugin`, `port`, `severity`, `title`, `detail`                 |
-| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `created_at`, `last_login` |
+| `users`      | `id`, `email`, `name`, `password_hash` (scrypt), `avatar_url`, `api_token` (SHA-256), `plan`, `plan_expires`, `created_at`, `last_login` |
 | `identities` | `id`, `user_id`, `provider` (google/github/…), `subject`                          |
 | `sessions`   | `token_hash`, `user_id`, `created_at`, `expires_at`, `user_agent`                |
 | `oauth_states` | `state`, `provider`, `verifier`, `created_at` (10 dk geçerli, tek kullanımlık) |
+| `usage`      | `user_id`, `day`, `scans` (günlük tarama sayacı)                                  |
+| `payments`   | `id`, `user_id`, `plan`, `period`, `amount`, `currency`, `status` (`demo`), `created_at` |
+| `targets`    | `id`, `user_id`, `host`, `token`, `method` (dns/file), `verified_at`, `created_at` |
 
 ---
 
@@ -770,6 +840,7 @@ pytest
 | `test_auth.py` | 10 | scrypt, kayıt/giriş/çıkış, doğrulama, parola değişimi, hesap silme, OAuth state ve hesap bağlama |
 | `test_plugins.py` | 6 | HTTP başlık ve TLS eklentileri, eklenti yükleyici |
 | `test_insights.py` | 4 | Panel istatistikleri, aktivite takvimi, tarama karşılaştırma |
+| `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
 
 ---
 

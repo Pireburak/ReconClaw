@@ -54,5 +54,10 @@ ALLOW_SIGNUP = _bool("ALLOW_SIGNUP", True)
 # Sunucu internete açıksa KAPATIN; aksi halde ziyaretçiler sunucunuzun iç ağını tarayabilir.
 ALLOW_PRIVATE_TARGETS = _bool("ALLOW_PRIVATE_TARGETS", True)
 
-# Kullanıcı başına dakikada en fazla kaç tarama başlatılabilir (0 = sınırsız)
-SCAN_RATE_LIMIT = int(env("SCAN_RATE_LIMIT", "10") or 0)
+# Dakikalık tarama sınırı abonelik planından gelir. Bu değer tüm planlar için ek bir
+# sunucu geneli üst sınırdır (0 = kapalı, yalnızca plan sınırları geçerli).
+SCAN_RATE_LIMIT = int(env("SCAN_RATE_LIMIT", "0") or 0)
+
+# Yalnızca sahipliği kanıtlanmış (DNS TXT veya doğrulama dosyası) hedeflerin taranmasına izin ver.
+# İnternete açık, herkesin kayıt olabildiği bir sunucuda AÇIN.
+REQUIRE_TARGET_VERIFICATION = _bool("REQUIRE_TARGET_VERIFICATION", False)
