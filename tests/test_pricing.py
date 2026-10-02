@@ -13,7 +13,7 @@ def fixed_rates(monkeypatch):
 
 def test_turkey_keeps_try_prices_and_is_cheapest():
     tr = pricing.region_of("TR")
-    assert pricing.local_price(5500, tr) == 5500 and pricing.local_price(5500, tr, yearly=True) == 55000
+    assert pricing.local_price(1999, tr) == 1999 and pricing.local_price(1999, tr, yearly=True) == 19990
     for country in ("DE", "US", "SA", "GB", "BR"):
         region = pricing.region_of(country)
         for plan in plans.PLANS.values():
@@ -34,7 +34,7 @@ def test_currency_by_country_and_price_tags():
     de = pricing.region_of("DE")
     assert pricing.local_price(299, de) == 24.99           # (299 + 950) / 52 = 24.02 → 24,99 €
     assert pricing.local_price(299, de, yearly=True) == 249.9
-    assert pricing.local_price(5500, pricing.region_of("US")) == 143.99  # (5500 + 950) / 45 = 143.3
+    assert pricing.local_price(1999, pricing.region_of("US")) == 65.99  # (1999 + 950) / 45 = 65.5
 
 
 def test_country_detection(monkeypatch):
@@ -64,7 +64,7 @@ def client(tmp_path, monkeypatch):
 def test_plans_endpoint_detects_region_and_previews(client):
     data = client.get("/api/plans").json()
     assert data["detected"]["country"] == "TR" and data["pricing"]["currency"] == "TRY"
-    assert data["pricing"]["prices"]["ultra_max"]["monthly"] == 5500
+    assert data["pricing"]["prices"]["ultra_max"]["monthly"] == 1999
     preview = client.get("/api/plans?country=DE").json()
     assert preview["pricing"]["currency"] == "EUR" and preview["detected"]["country"] == "TR"
     assert preview["pricing"]["prices"]["pro"]["monthly"] == 24.99

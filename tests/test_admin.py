@@ -92,7 +92,7 @@ def test_admin_manages_users_and_audit(app_client):
     # Süresiz Ultra Max ataması (ödeme kaydı oluşmaz) ve MRR'a yansıması
     updated = app_client.patch(f"/api/admin/users/{member['id']}", json={"plan": "ultra_max"}).json()
     assert updated["plan"] == "ultra_max" and updated["plan_expires"] is None and updated["paid"] == 0
-    assert app_client.get("/api/admin/overview").json()["mrr"] == 5500
+    assert app_client.get("/api/admin/overview").json()["mrr"] == 1999
 
     # Askıya alınan kullanıcı giriş yapamaz
     assert app_client.patch(f"/api/admin/users/{member['id']}", json={"disabled": True}).json()["disabled"] is True
