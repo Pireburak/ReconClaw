@@ -12,6 +12,7 @@ const VIEWS = {
     compare: ["KARŞILAŞTIRMA", "İki tarama arasındaki değişim: açılan/kapanan portlar, yeni/çözülen bulgular"],
     map: ["AĞ KROKİSİ", "Hedefin açık servis topolojisi"],
     settings: ["AYARLAR", "Görünüm, tarama varsayılanları, hesap güvenliği ve API erişimi"],
+    plans: ["ABONELİK", "Erişim seviyeleri, kullanım kotası, doğrulanmış hedefler ve ödemeler"],
 };
 const DEFAULTS_KEY = "rc-scan-defaults";
 
@@ -42,7 +43,11 @@ function riskColor(score) {
     return `var(--${{ "risk-low": "green", "risk-medium": "yellow", "risk-high": "orange", "risk-critical": "red" }[riskClass(score)]})`;
 }
 
+let lastUpgrade = { text: "", at: 0 };
+
 function toast(message, type = "ok") {
+    // Plan sınırı penceresi zaten açıldıysa aynı hatayı bir de bildirim olarak gösterme
+    if (type === "err" && message === lastUpgrade.text && Date.now() - lastUpgrade.at < 2000) return;
     const el = document.createElement("div");
     el.className = `toast ${type}`;
     el.textContent = message;
@@ -62,6 +67,10 @@ async function api(url, options = {}) {
         throw new Error("Oturum sona erdi.");
     }
     const data = await res.json().catch(() => ({}));
+    if (res.status === 402) {
+        showUpgrade(data.detail || "Bu özellik mevcut planınızda yok.");
+        throw new Error(data.detail || "Plan sınırı");
+    }
     if (!res.ok) {
         const detail = Array.isArray(data.detail) ? data.detail.map((d) => d.msg).join(", ") : data.detail;
         throw new Error(detail || `HTTP ${res.status}`);
@@ -100,6 +109,7 @@ function route() {
         if (name === "map") fillMapSelect();
     });
     if (name === "settings") loadSettings();
+    if (name === "plans") loadPlans();
     if (name === "scan") setTimeout(() => $("target").focus(), 50);
     window.scrollTo({ top: 0 });
 }
@@ -331,6 +341,7 @@ function applyScanDefaults() {
     $("timeout").value = d.timeout;
     $("usePlugins").checked = d.plugins;
     $("maxPortField").hidden = d.mode !== "range";
+    applyPlanLimits();
 }
 
 async function startScan(event) {
@@ -361,6 +372,7 @@ async function startScan(event) {
         renderResult(data);
         radarDone(data);
         toast(`Tarama tamamlandı — risk %${data.overall_risk}`);
+        loadSubscription();
         setTimeout(() => go("results"), 1600);
     } catch (err) {
         log(`Hata: ${err.message}`, "err");
@@ -711,6 +723,186 @@ function showMapDetail(port) {
         <p style="margin:12px 0 0"><button type="button" class="btn sm" id="mapBack">HEDEF ÖZETİ</button></p>`;
 }
 
+// ------------------------------------------------------------------ abonelik
+let subscription = null;
+let planCatalog = null;
+let billingPeriod = "monthly";
+let pendingCheckout = null;
+const FEATURE_ROWS = [
+    ["Günlük tarama", (p) => p.daily_scans ? p.daily_scans.toLocaleString("tr-TR") : "Sınırsız"],
+    ["Dakikalık tarama", (p) => p.per_minute ? p.per_minute : "Sınırsız"],
+    ["Port aralığı", (p) => `1–${p.max_port.toLocaleString("tr-TR")}`],
+    ["Eklentiler (HTTP / TLS)", (p) => p.plugins],
+    ["PDF ve CSV rapor", (p) => p.exports],
+    ["Tarama karşılaştırma", (p) => p.compare],
+    ["API anahtarı", (p) => p.api],
+    ["Doğrulanmış hedef", (p) => p.targets ? p.targets : "Sınırsız"],
+];
+
+const tl = (n) => `₺${Number(n).toLocaleString("tr-TR")}`;
+
+function currentPlan() {
+    return subscription?.plan || { id: "free", name: "Free", level: 1, max_port: 100, plugins: false, exports: false, compare: false, api: false, daily_scans: 5 };
+}
+
+function planAllows(feature) {
+    return Boolean(currentPlan()[feature]);
+}
+
+function showUpgrade(text) {
+    lastUpgrade = { text, at: Date.now() };
+    $("upgradeText").textContent = text;
+    openModal("upgradeModal");
+}
+
+function applySubscription(sub) {
+    if (!sub) return;
+    subscription = sub;
+    const plan = sub.plan;
+    $("planChip").textContent = plan.name.toUpperCase();
+    $("planChip").dataset.level = plan.level;
+    $("quota").textContent = plan.daily_scans ? `${sub.usage.scans_today}/${plan.daily_scans}` : `${sub.usage.scans_today}/∞`;
+    applyPlanLimits();
+}
+
+function applyPlanLimits() {
+    const plan = currentPlan();
+    const input = $("max_port");
+    input.max = plan.max_port;
+    if (Number(input.value) > plan.max_port) input.value = plan.max_port;
+    $("usePlugins").disabled = !plan.plugins;
+    if (!plan.plugins) $("usePlugins").checked = false;
+    $("pluginsLock").hidden = plan.plugins;
+    for (const [id, feature] of [["exportCsv", "exports"], ["exportPdf", "exports"], ["diffPrev", "compare"]]) {
+        $(id).classList.toggle("locked", !plan[feature]);
+        $(id).title = plan[feature] ? "" : "Pro ve üzeri planlarda";
+    }
+    $("apiLock").hidden = plan.api;
+    $("newToken").disabled = !plan.api;
+}
+
+async function loadSubscription() {
+    try {
+        me = await api("/api/me");
+        applySubscription(me.subscription);
+    } catch { /* yoksay */ }
+}
+
+async function loadPlans() {
+    try {
+        planCatalog = planCatalog || await api("/api/plans");
+        const [billing, targets] = await Promise.all([api("/api/billing"), api("/api/targets")]);
+        applySubscription(billing);
+        renderSubSummary(billing);
+        renderPlanCards();
+        renderPayments(billing.payments);
+        renderTargets(targets);
+    } catch (err) {
+        toast(err.message, "err");
+    }
+}
+
+function renderSubSummary(b) {
+    const plan = b.plan;
+    const used = b.usage.scans_today;
+    const pct = plan.daily_scans ? Math.min(100, (used / plan.daily_scans) * 100) : 4;
+    const color = pct >= 90 ? "var(--red)" : pct >= 70 ? "var(--yellow)" : "var(--green)";
+    $("subSummary").innerHTML = `
+        <div class="sub-plan">
+            <span class="muted small">ERİŞİM SEVİYESİ ${plan.level}</span>
+            <b>${esc(plan.name)}</b>
+            <span class="muted small">${esc(plan.tagline)}</span>
+        </div>
+        <dl class="facts">
+            <dt>Ücret</dt><dd>${plan.price_monthly ? `${tl(plan.price_monthly)} / ay` : "Ücretsiz"}</dd>
+            <dt>Yenileme</dt><dd>${b.expires ? esc(b.expires.slice(0, 10)) : "—"}${b.expired ? ' <span class="badge sev-high">SÜRESİ DOLDU</span>' : ""}</dd>
+            <dt>Bugünkü tarama</dt><dd><span class="meter" style="--c:${color}"><span class="bar"><i style="width:${pct}%"></i></span><b>${used} / ${plan.daily_scans || "∞"}</b></span></dd>
+            <dt>Port aralığı</dt><dd>1–${plan.max_port.toLocaleString("tr-TR")}</dd>
+        </dl>
+        <div class="actions">
+            ${plan.id !== "free" ? '<button type="button" class="btn danger sm" id="cancelPlan">ABONELİĞİ İPTAL ET</button>' : ""}
+        </div>`;
+}
+
+function renderPlanCards() {
+    const plans = planCatalog.plans;
+    const cur = currentPlan();
+    $("planGrid").innerHTML = plans.map((p) => {
+        const price = billingPeriod === "yearly" ? p.price_yearly : p.price_monthly;
+        const isCur = p.id === cur.id;
+        const action = isCur ? '<button type="button" class="btn block" disabled>MEVCUT PLAN</button>'
+            : `<button type="button" class="btn block ${p.level > cur.level ? "primary" : ""}" data-plan="${p.id}">${p.level > cur.level ? "YÜKSELT" : "BU PLANA GEÇ"}</button>`;
+        return `
+        <article class="plan-card${isCur ? " current" : ""}${p.id === "pro_max" ? " featured" : ""}">
+            ${p.id === "pro_max" ? '<span class="plan-flag">EN ÇOK TERCİH EDİLEN</span>' : ""}
+            <span class="plan-level">SEVİYE ${p.level}</span>
+            <h4>${esc(p.name)}</h4>
+            <p class="muted small">${esc(p.tagline)}</p>
+            <div class="plan-price">${p.price_monthly ? tl(price) : "₺0"}<small>${p.price_monthly ? (billingPeriod === "yearly" ? " / yıl" : " / ay") : ""}</small></div>
+            ${billingPeriod === "yearly" && p.price_monthly ? `<span class="muted small">aylık ${tl(Math.round(price / 12))} karşılığı</span>` : '<span class="muted small">&nbsp;</span>'}
+            <ul class="plan-feats">
+                ${FEATURE_ROWS.map(([label, fn]) => {
+                    const v = fn(p);
+                    return `<li class="${v === false ? "off" : ""}"><span>${label}</span><b>${v === true ? "✓" : v === false ? "—" : esc(v)}</b></li>`;
+                }).join("")}
+            </ul>
+            ${action}
+        </article>`;
+    }).join("");
+    $("planTableHead").innerHTML = `<tr><th>Özellik</th>${plans.map((p) => `<th${p.id === cur.id ? ' class="cur"' : ""}>${esc(p.name)}</th>`).join("")}</tr>`;
+    $("planTable").innerHTML = [["Aylık ücret", (p) => p.price_monthly ? tl(p.price_monthly) : "₺0"], ["Yıllık ücret", (p) => p.price_yearly ? tl(p.price_yearly) : "₺0"], ...FEATURE_ROWS]
+        .map(([label, fn]) => `<tr><td>${label}</td>${plans.map((p) => {
+            const v = fn(p);
+            return `<td${p.id === cur.id ? ' class="cur"' : ""}>${v === true ? "✓" : v === false ? '<span class="muted">—</span>' : esc(v)}</td>`;
+        }).join("")}</tr>`).join("");
+}
+
+function renderPayments(list) {
+    $("paymentList").innerHTML = list.length
+        ? list.map((p) => `<tr><td>${p.id}</td><td>${esc(p.created_at)}</td><td>${esc(planCatalog.plans.find((x) => x.id === p.plan)?.name || p.plan)}</td>
+            <td>${p.period === "yearly" ? "Yıllık" : "Aylık"}</td><td>${tl(p.amount)}</td><td><span class="badge sev-info">${esc(p.status.toUpperCase())}</span></td></tr>`).join("")
+        : '<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>';
+}
+
+function renderTargets(t) {
+    $("targetCount").textContent = `${t.targets.length} / ${t.limit || "∞"}`;
+    $("verifyMode").textContent = t.required ? "Bu sunucuda doğrulama ZORUNLU" : "Bu sunucuda doğrulama isteğe bağlı";
+    $("targetList").innerHTML = t.targets.length
+        ? t.targets.map((x) => `
+            <div class="target-row">
+                <div class="target-head">
+                    <b>${esc(x.host)}</b>
+                    ${x.verified_at ? `<span class="badge risk-low">DOĞRULANDI · ${esc(x.method === "dns" ? "DNS" : "DOSYA")}</span>` : '<span class="badge sev-medium">BEKLİYOR</span>'}
+                    <span class="actions" style="margin-left:auto">
+                        ${x.verified_at ? "" : `<button type="button" class="btn sm primary" data-verify="${x.id}">DOĞRULA</button>`}
+                        <button type="button" class="btn sm danger" data-untarget="${x.id}">SİL</button>
+                    </span>
+                </div>
+                ${x.verified_at ? "" : `
+                <div class="target-help">
+                    <div><span class="muted small">YÖNTEM 1 · DNS TXT KAYDI</span><code>${esc(x.host)}  TXT  "${esc(x.token)}"</code></div>
+                    <div><span class="muted small">YÖNTEM 2 · DOĞRULAMA DOSYASI</span><code>http(s)://${esc(x.host)}${esc(t.well_known)}  →  ${esc(x.token)}</code></div>
+                </div>`}
+            </div>`).join("")
+        : '<div class="empty">Henüz hedef eklenmedi.</div>';
+}
+
+function openCheckout(planId) {
+    const p = planCatalog.plans.find((x) => x.id === planId);
+    const cur = currentPlan();
+    const price = billingPeriod === "yearly" ? p.price_yearly : p.price_monthly;
+    pendingCheckout = { plan: p.id, period: billingPeriod };
+    $("checkoutTitle").textContent = p.level > cur.level ? `${p.name} planına yükselt` : `${p.name} planına geç`;
+    $("checkoutBody").innerHTML = `
+        <dl class="facts" style="margin-bottom:12px">
+            <dt>Mevcut plan</dt><dd>${esc(cur.name)}</dd>
+            <dt>Yeni plan</dt><dd><b>${esc(p.name)}</b> · Seviye ${p.level}</dd>
+            <dt>Dönem</dt><dd>${p.price_monthly ? (billingPeriod === "yearly" ? "Yıllık (365 gün)" : "Aylık (30 gün)") : "—"}</dd>
+            <dt>Tutar</dt><dd><b>${p.price_monthly ? tl(price) : "₺0"}</b></dd>
+        </dl>`;
+    openModal("checkoutModal");
+}
+
 // ------------------------------------------------------------------ ayarlar
 function markThemeSeg() {
     const pref = window.RCTheme.pref();
@@ -785,7 +977,7 @@ function openModal(id) {
 }
 
 function closeModals() {
-    ["paletteModal", "helpModal"].forEach((id) => { $(id).hidden = true; });
+    ["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => { $(id).hidden = true; });
     $("bellPop").hidden = true;
 }
 
@@ -829,6 +1021,7 @@ async function loadSettings() {
         $("newPwLabel").textContent = me.has_password ? "Yeni parola" : "Parola belirle (e-posta ile giriş için)";
         $("sessionInfo").textContent = `Aktif oturum: ${me.sessions}`;
         $("revokeToken").disabled = !me.has_api_token;
+        applySubscription(me.subscription);
     } catch (err) {
         toast(err.message, "err");
     }
@@ -872,12 +1065,21 @@ $("trendChart").addEventListener("click", (e) => { const pt = e.target.closest("
 
 $("exportJson").addEventListener("click", () => currentReport && download(
     `reconclaw-${currentReport.target}-${currentReport.scan_id}.json`, JSON.stringify(currentReport, null, 2), "application/json"));
-$("exportCsv").addEventListener("click", () => { if (currentReport) window.location.href = `/api/scans/${currentReport.scan_id}/csv`; });
-$("exportPdf").addEventListener("click", () => currentReport && window.open(`/reports/${currentReport.scan_id}`, "_blank", "noopener"));
+$("exportCsv").addEventListener("click", () => {
+    if (!currentReport) return;
+    if (!planAllows("exports")) return showUpgrade("CSV dışa aktarma Pro ve üzeri planlarda kullanılabilir.");
+    window.location.href = `/api/scans/${currentReport.scan_id}/csv`;
+});
+$("exportPdf").addEventListener("click", () => {
+    if (!currentReport) return;
+    if (!planAllows("exports")) return showUpgrade("PDF rapor Pro ve üzeri planlarda kullanılabilir.");
+    window.open(`/reports/${currentReport.scan_id}`, "_blank", "noopener");
+});
 $("showMap").addEventListener("click", () => go("map"));
 $("rescan").addEventListener("click", () => { if (currentReport) { $("target").value = currentReport.target; go("scan"); } });
 $("diffPrev").addEventListener("click", async () => {
     if (!currentReport) return;
+    if (!planAllows("compare")) return showUpgrade("Tarama karşılaştırma Pro ve üzeri planlarda kullanılabilir.");
     await loadHistory();
     const prev = previousScanOf(currentReport);
     if (!prev) return toast("Bu hedefin daha eski bir taraması yok. Tekrar tarayıp karşılaştırabilirsiniz.", "err");
@@ -946,7 +1148,7 @@ $("paletteInput").addEventListener("keydown", (e) => {
     else if (e.key === "Enter") { e.preventDefault(); runPalette(paletteSel); }
 });
 $("paletteList").addEventListener("click", (e) => { const li = e.target.closest(".item"); if (li) runPalette(Number(li.dataset.i)); });
-["paletteModal", "helpModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
+["paletteModal", "helpModal", "checkoutModal", "upgradeModal"].forEach((id) => $(id).addEventListener("click", (e) => { if (e.target.id === id) closeModals(); }));
 $("bellBtn").addEventListener("click", (e) => {
     e.stopPropagation();
     const pop = $("bellPop");
@@ -960,6 +1162,70 @@ $("bellBtn").addEventListener("click", (e) => {
 $("bellList").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#bellPop")) $("bellPop").hidden = true; });
 
+$("periodSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-period]");
+    if (!b) return;
+    billingPeriod = b.dataset.period;
+    document.querySelectorAll("#periodSeg button").forEach((x) => x.classList.toggle("on", x === b));
+    if (planCatalog) renderPlanCards();
+});
+$("planGrid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-plan]");
+    if (b) openCheckout(b.dataset.plan);
+});
+$("checkoutConfirm").addEventListener("click", async () => {
+    if (!pendingCheckout) return;
+    $("checkoutConfirm").disabled = true;
+    try {
+        const r = await api("/api/billing/checkout", { method: "POST", body: pendingCheckout });
+        closeModals();
+        toast(`${r.plan.name} planı etkinleşti${r.expires ? ` · ${r.expires.slice(0, 10)} tarihine kadar` : ""}.`);
+        loadPlans();
+    } catch (err) {
+        toast(err.message, "err");
+    } finally {
+        $("checkoutConfirm").disabled = false;
+    }
+});
+$("subSummary").addEventListener("click", async (e) => {
+    if (e.target.id !== "cancelPlan") return;
+    if (!confirm("Aboneliğiniz iptal edilip Free plana geçilecek. Emin misiniz?")) return;
+    try {
+        await api("/api/billing/cancel", { method: "POST" });
+        toast("Abonelik iptal edildi, Free plana geçildi.");
+        loadPlans();
+    } catch (err) { toast(err.message, "err"); }
+});
+$("targetForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+        await api("/api/targets", { method: "POST", body: { host: $("targetHost").value } });
+        $("targetHost").value = "";
+        toast("Hedef eklendi. Doğrulama anahtarını DNS kaydına veya dosyaya ekleyin.");
+        loadPlans();
+    } catch (err) { toast(err.message, "err"); }
+});
+$("targetList").addEventListener("click", async (e) => {
+    const v = e.target.closest("[data-verify]");
+    const d = e.target.closest("[data-untarget]");
+    try {
+        if (v) {
+            v.disabled = true;
+            v.textContent = "KONTROL EDİLİYOR...";
+            const r = await api(`/api/targets/${v.dataset.verify}/verify`, { method: "POST" });
+            toast(`${r.host} doğrulandı (${r.method === "dns" ? "DNS" : "dosya"}).`);
+        } else if (d) {
+            if (!confirm("Hedef listeden silinsin mi?")) return;
+            await api(`/api/targets/${d.dataset.untarget}`, { method: "DELETE" });
+        } else return;
+        loadPlans();
+    } catch (err) {
+        toast(err.message, "err");
+        if (v) { v.disabled = false; v.textContent = "DOĞRULA"; }
+    }
+});
+document.querySelectorAll("#checkoutModal [data-close], #upgradeModal [data-close]").forEach((b) => b.addEventListener("click", closeModals));
+
 document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -969,7 +1235,7 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") { closeModals(); return; }
     if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const views = Object.keys(VIEWS);
-    if (/^[0-6]$/.test(e.key)) go(views[Number(e.key)]);
+    if (/^[0-7]$/.test(e.key)) go(views[Number(e.key)]);
     else if (e.key === "n" || e.key === "N") go("scan");
     else if (e.key === "t" || e.key === "T") window.RCTheme.toggle();
     else if (e.key === "?") openModal("helpModal");
@@ -989,6 +1255,7 @@ $("saveDefaults").addEventListener("click", () => {
     };
     try { localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d)); } catch { /* yoksay */ }
     applyScanDefaults();
+loadSubscription();
     toast("Tarama varsayılanları kaydedildi.");
 });
 $("profileForm").addEventListener("submit", async (e) => {

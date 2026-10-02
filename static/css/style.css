@@ -645,3 +645,61 @@ pre.code { margin: 0; padding: 11px; overflow-x: auto; font-size: .7rem; backgro
 @media print {
     .classbar { position: static; }
 }
+
+/* =====================================================================
+   Abonelik: plan rozeti, kilitler, plan kartları, hedef doğrulama
+   ===================================================================== */
+.plan-chip {
+    display: inline-flex; align-items: center; height: 36px; padding: 0 10px;
+    font-size: .62rem; font-weight: 600; letter-spacing: .2em; text-decoration: none; white-space: nowrap;
+    color: var(--text); border: 1px solid var(--line-2); border-radius: 2px;
+}
+.plan-chip::before { content: ""; width: 6px; height: 6px; margin-right: 8px; background: var(--muted); }
+.plan-chip[data-level="2"]::before { background: var(--green); }
+.plan-chip[data-level="3"]::before { background: var(--blue); }
+.plan-chip[data-level="4"]::before { background: var(--yellow); }
+.plan-chip[data-level="5"]::before { background: var(--red); }
+.plan-chip:hover { border-color: var(--text); }
+.lock { margin-left: 4px; padding: 0 4px; font-size: .56rem; font-weight: 600; letter-spacing: .14em; color: var(--yellow); border: 1px solid currentColor; }
+.lock-note { margin: 0 0 10px; padding: 8px 10px; font-size: .7rem; color: var(--muted); border-left: 2px solid var(--yellow); background: var(--panel-2); }
+.btn.locked { opacity: .55; }
+.btn.locked::after { content: "PRO"; margin-left: 2px; padding: 0 3px; font-size: .5rem; color: var(--yellow); border: 1px solid currentColor; }
+.demo-tag { font-size: .56rem; font-weight: 600; letter-spacing: .2em; color: var(--yellow); border: 1px dashed currentColor; padding: 3px 8px; }
+
+.sub-summary { display: grid; grid-template-columns: minmax(180px, auto) 1fr auto; align-items: center; gap: 20px; }
+.sub-plan { display: flex; flex-direction: column; gap: 2px; padding-right: 20px; border-right: 1px solid var(--line); }
+.sub-plan b { font-family: "Barlow Condensed", sans-serif; font-size: 2.2rem; font-weight: 700; letter-spacing: .04em; line-height: 1; text-transform: uppercase; }
+
+.plan-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); margin-bottom: 14px; }
+.plan-card { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 18px 16px 16px; border-right: 1px solid var(--line); background: var(--panel); }
+.plan-card:last-child { border-right: none; }
+.plan-card.featured { background: var(--panel-2); box-shadow: inset 0 2px 0 var(--cyan); }
+.plan-card.current { box-shadow: inset 0 2px 0 var(--green); }
+.plan-flag { position: absolute; top: -9px; left: 16px; padding: 1px 6px; font-size: .52rem; font-weight: 600; letter-spacing: .16em; color: var(--on-accent); background: var(--cyan); }
+.plan-level { font-size: .56rem; font-weight: 600; letter-spacing: .22em; color: var(--muted); }
+.plan-card h4 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.plan-card > p { margin: 0; min-height: 2.4em; }
+.plan-price { margin-top: 6px; font-family: "Barlow Condensed", sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; }
+.plan-price small { font-family: "IBM Plex Mono", monospace; font-size: .7rem; font-weight: 400; color: var(--muted); }
+.plan-feats { flex: 1; margin: 10px 0 12px; padding: 10px 0 0; list-style: none; border-top: 1px dashed var(--line-2); font-size: .68rem; }
+.plan-feats li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+.plan-feats li span { color: var(--muted); }
+.plan-feats li.off b { color: var(--faint); }
+.compare-table td.cur, .compare-table th.cur { background: color-mix(in srgb, var(--green) 8%, transparent); }
+.compare-table td:not(:first-child), .compare-table th:not(:first-child) { text-align: center; }
+
+.target-row { padding: 12px; border: 1px solid var(--line); border-bottom: none; }
+.target-row:last-child { border-bottom: 1px solid var(--line); }
+.target-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.target-help { display: grid; gap: 8px; margin-top: 10px; }
+.target-help code { display: block; margin-top: 3px; padding: 7px 9px; font-size: .7rem; word-break: break-all; color: #cfcabd; background: var(--terminal-bg); border: 1px solid var(--line); }
+
+@media (max-width: 1200px) {
+    .plan-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .plan-card { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 860px) {
+    .sub-summary { grid-template-columns: 1fr; }
+    .sub-plan { border-right: none; border-bottom: 1px solid var(--line); padding: 0 0 12px; }
+    .plan-chip { padding: 0 8px; letter-spacing: .1em; }
+}

@@ -61,6 +61,7 @@ def test_scans_are_private_per_user(client):
 
 
 def test_csv_report_compare_stats_and_delete(client):
+    client.post("/api/billing/checkout", json={"plan": "pro"})
     first = client.post("/api/scan", json={"target": "127.0.0.1", "max_port": 3, "timeout": 0.3}).json()
     second = client.post("/api/scan", json={"target": "127.0.0.1", "max_port": 3, "timeout": 0.3}).json()
 
@@ -92,6 +93,7 @@ def test_private_targets_can_be_blocked(client, monkeypatch):
 
 
 def test_api_token(client):
+    client.post("/api/billing/checkout", json={"plan": "pro_max"})
     token = client.post("/api/me/token").json()["token"]
     client.post("/auth/logout")
     headers = {"Authorization": f"Bearer {token}"}
