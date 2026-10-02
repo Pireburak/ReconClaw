@@ -93,7 +93,6 @@ function route() {
     $("viewTitle").textContent = VIEWS[name][0];
     $("viewSub").textContent = VIEWS[name][1];
     $("crumb").textContent = VIEWS[name][0] === "OPERATIONS_CENTER" ? "SYS_OVERVIEW" : VIEWS[name][0];
-    closeMenu();
     closeModals();
     if (name === "overview") loadStats();
     if (name === "history" || name === "compare" || name === "map") loadHistory().then(() => {
@@ -110,9 +109,26 @@ function go(view) {
     else location.hash = view;
 }
 
-function closeMenu() {
-    $("app").classList.remove("menu-open");
-    $("scrim").hidden = true;
+// ------------------------------------------------------------------ özellik tanıtımı
+const FEAT_KEY = "rc-hide-features";
+
+function featuresVisible() {
+    try { return localStorage.getItem(FEAT_KEY) !== "1"; } catch { return true; }
+}
+
+function setFeatures(show) {
+    try { localStorage.setItem(FEAT_KEY, show ? "0" : "1"); } catch { /* yoksay */ }
+    $("featuresBlock").hidden = !show;
+    $("featToggle").checked = show;
+}
+
+function selectFeatureTab(name) {
+    document.querySelectorAll("#featTabs [data-ftab]").forEach((b) => {
+        const on = b.dataset.ftab === name;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-selected", on);
+    });
+    document.querySelectorAll("[data-fpanel]").forEach((p) => { p.hidden = p.dataset.fpanel !== name; });
 }
 
 // ------------------------------------------------------------------ saat & durum
@@ -721,7 +737,8 @@ function paletteSource() {
             window.RCTheme.setAccent(list[(list.indexOf(window.RCTheme.accent()) + 1) % list.length]);
         } },
         { ico: "✨", label: "Hareketli arka planı aç / kapat", run: () => { RCFX.set(!RCFX.enabled()); markThemeSeg(); } },
-        { ico: "⇤", label: "Yan menüyü daralt / genişlet", hint: "[", run: toggleCollapse },
+        { ico: "🦝", label: featuresVisible() ? "Özellik tanıtımını gizle" : "Özellik tanıtımını göster",
+            run: () => { setFeatures(!featuresVisible()); go("overview"); } },
         ...(currentReport ? [
             { ico: "🖨", label: `PDF rapor: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportPdf").click() },
             { ico: "⬇", label: `CSV indir: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportCsv").click() },
@@ -782,11 +799,6 @@ function runPalette(i) {
     else if (q) { $("target").value = q; go("scan"); }
 }
 
-function toggleCollapse() {
-    const on = $("app").classList.toggle("collapsed");
-    try { localStorage.setItem("rc-collapsed", on ? "1" : "0"); } catch { /* yoksay */ }
-}
-
 function isTyping(e) {
     const t = e.target;
     return t.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(t.tagName);
@@ -828,8 +840,22 @@ async function loadSettings() {
 window.addEventListener("hashchange", route);
 document.addEventListener("rc-theme", markThemeSeg);
 $("themeBtn").addEventListener("click", () => window.RCTheme.toggle());
-$("menuBtn").addEventListener("click", () => { $("app").classList.add("menu-open"); $("scrim").hidden = false; });
-$("scrim").addEventListener("click", closeMenu);
+$("featTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ftab]");
+    if (b) selectFeatureTab(b.dataset.ftab);
+});
+$("featTabs").addEventListener("keydown", (e) => {
+    // Sekmeler arasında ok tuşlarıyla gezinme
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const tabs = [...document.querySelectorAll("#featTabs [data-ftab]")];
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus();
+    selectFeatureTab(next.dataset.ftab);
+});
+$("hideFeatures").addEventListener("click", () => { setFeatures(false); toast("Tanıtım gizlendi. Ayarlar veya Ctrl+K ile geri açabilirsiniz."); });
+$("featToggle").addEventListener("change", (e) => setFeatures(e.target.checked));
 $("logoutBtn").addEventListener("click", async () => {
     await fetch("/auth/logout", { method: "POST" });
     window.location.href = "/login";
@@ -915,7 +941,6 @@ $("mapOut").addEventListener("keydown", (e) => {
     if (node && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); showMapDetail(Number(node.dataset.port)); }
 });
 $("mapDetail").addEventListener("click", (e) => { if (e.target.id === "mapBack") showMapDetail(null); });
-$("collapseBtn").addEventListener("click", toggleCollapse);
 $("paletteBtn").addEventListener("click", () => openModal("paletteModal"));
 $("paletteInput").addEventListener("input", () => { paletteSel = 0; renderPalette(); });
 $("paletteInput").addEventListener("keydown", (e) => {
@@ -944,13 +969,12 @@ document.addEventListener("keydown", (e) => {
         $("paletteModal").hidden ? openModal("paletteModal") : closeModals();
         return;
     }
-    if (e.key === "Escape") { closeModals(); closeMenu(); return; }
+    if (e.key === "Escape") { closeModals(); return; }
     if (isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     const views = Object.keys(VIEWS);
     if (/^[0-6]$/.test(e.key)) go(views[Number(e.key)]);
     else if (e.key === "n" || e.key === "N") go("scan");
     else if (e.key === "t" || e.key === "T") window.RCTheme.toggle();
-    else if (e.key === "[") toggleCollapse();
     else if (e.key === "?") openModal("helpModal");
     else if (e.key === "/") { e.preventDefault(); go("history"); setTimeout(() => $("historySearch").focus(), 80); }
 });
@@ -1035,7 +1059,7 @@ $("deleteAccount").addEventListener("click", async () => {
 });
 
 // ------------------------------------------------------------------ başlat
-try { if (localStorage.getItem("rc-collapsed") === "1") $("app").classList.add("collapsed"); } catch { /* yoksay */ }
+setFeatures(featuresVisible());
 applyScanDefaults();
 loadPlugins();
 loadRecentTargets();

@@ -107,6 +107,56 @@
         svg.innerHTML = `<path class="a" d="${line} L100,30 L0,30 Z"/><path class="l" d="${line}"/>`;
     }
 
+    // Animated Dock: fare yaklaştıkça ikonlar büyür (macOS dock gibi, dikey eksende).
+    // Mesafe [-150, 0, 150] px -> boyut [44, 72, 44]; yumuşak geçiş için yay (spring) fiziği.
+    function initDock() {
+        const dock = document.getElementById("dock");
+        if (!dock) return;
+        const items = [...document.querySelectorAll(".rail .dock-item")];
+        const MIN = 44, MAX = 72, RANGE = 150;
+        const state = items.map(() => ({ size: MIN, vel: 0 }));
+        const wide = window.matchMedia("(min-width: 861px)");
+        let mouseY = Infinity, raf = 0;
+
+        function step() {
+            let moving = false;
+            items.forEach((el, i) => {
+                const st = state[i];
+                let target = MIN;
+                if (mouseY !== Infinity) {
+                    const r = el.getBoundingClientRect();
+                    const d = Math.abs(mouseY - (r.top + r.height / 2));
+                    if (d < RANGE) target = MIN + (MAX - MIN) * (1 - d / RANGE);
+                }
+                // Yay: kütle 0.1, sertlik 150, sönüm 12 (bileşendeki değerler); kararlılık için 4 alt adım
+                for (let k = 0; k < 4; k++) {
+                    const acc = (150 * (target - st.size) - 12 * st.vel) / 0.1;
+                    st.vel += acc * (1 / 240);
+                    st.size += st.vel * (1 / 240);
+                }
+                if (Math.abs(target - st.size) > 0.2 || Math.abs(st.vel) > 0.2) moving = true;
+                else { st.size = target; st.vel = 0; }
+                el.style.setProperty("--size", `${st.size.toFixed(2)}px`);
+                el.style.setProperty("--icon", (1 + ((st.size - MIN) / (MAX - MIN)) * 0.5).toFixed(3));
+            });
+            raf = moving ? requestAnimationFrame(step) : 0;
+        }
+        const kick = () => { if (!raf) raf = requestAnimationFrame(step); };
+
+        document.getElementById("sidebar").addEventListener("mousemove", (e) => {
+            if (!wide.matches || reduced) return;
+            mouseY = e.clientY;
+            kick();
+        });
+        document.getElementById("sidebar").addEventListener("mouseleave", () => { mouseY = Infinity; kick(); });
+        wide.addEventListener("change", () => {
+            mouseY = Infinity;
+            items.forEach((el) => { el.style.removeProperty("--size"); el.style.removeProperty("--icon"); });
+            state.forEach((st) => { st.size = MIN; st.vel = 0; });
+        });
+    }
+    initDock();
+
     window.RCFX = {
         enabled,
         set(on) {

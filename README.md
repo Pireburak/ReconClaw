@@ -104,8 +104,8 @@ Tarama motoru, API ve kullanım aynı; v6.0 tamamen **arayüz** sürümüdür.
 |---------|----------|
 | 🌠 **Aurora arka plan** | Yavaşça hareket eden ışık bulutları ve vurgu renginde parçacık ağı (Ayarlar'dan kapatılabilir, sekme arka plandayken durur, "hareketi azalt" tercihine uyar) |
 | ⌘ **Komut paleti (Ctrl+K)** | Sayfalara geçiş, tema/vurgu değiştirme, PDF/CSV dışa aktarma, eski raporları açma ve hedefleri tek tuşla yeniden tarama. Palete bir hedef yazıp Enter'a basınca doğrudan tarama sayfasına gider |
-| ⌨️ **Klavye kısayolları** | `0`–`6` sayfalar, `N` yeni tarama, `T` tema, `[` menüyü daralt, `/` geçmişte ara, `?` yardım |
-| 🎨 **5 vurgu rengi** | Camgöbeği, mor, yeşil, pembe, kehribar; hem aydınlık hem karanlık temada |
+| ⌨️ **Klavye kısayolları** | `0`–`6` sayfalar, `N` yeni tarama, `T` tema, `/` geçmişte ara, `?` yardım |
+| 🎨 **6 vurgu rengi** | Bakır (varsayılan), camgöbeği, mor, yeşil, pembe, kehribar; hem aydınlık hem karanlık temada |
 | 📊 **Canlı kartlar** | Sayarak artan rakamlar, her kartta son taramalardan mini trend grafiği (sparkline), yüklenirken iskelet animasyonu |
 | 🗓️ **Tarama aktivite haritası** | GitHub tarzı, son 1 yılın gün gün tarama yoğunluğu |
 | 🔔 **Bildirim zili** | Görülmemiş kritik/yüksek olay sayısı ve açılır liste |
@@ -113,8 +113,11 @@ Tarama motoru, API ve kullanım aynı; v6.0 tamamen **arayüz** sürümüdür.
 | 🎯 **Yeni risk göstergesi** | 270°'lik dolan yay, işaret çizgileri ve risk seviyesi; port tablosunda animasyonlu risk çubukları |
 | 🔎 **Bulgu filtreleri** | Eklenti bulgularını şiddete göre tek tıkla süzme, IP'yi kopyalama butonu |
 | 🕸️ **Etkileşimli ağ haritası** | Porta tıklayınca diğer düğümler solar, yan panelde banner, CVE ve bulgular görünür; klavyeyle de gezilebilir |
-| ⇤ **Daraltılabilir menü** | Sadece ikonlardan oluşan ince menü; tercih hatırlanır |
 | 💨 **Dumanlı giriş ekranı** | Fareyi izleyen WebGL duman arka planı (vurgu rengini ve temayı takip eder), dönen ışıklı cam kart, kayan etiketli alanlar ve ok animasyonlu buton. WebGL yoksa Aurora arka planına düşer |
+| 🦝 **Rakun arayüzü** | Sol üstte dönen ışık halkalı rakun maskotu ve maskotla uyumlu yeni varsayılan **Bakır** vurgu rengi |
+| 🧲 **Animated Dock** | Sol menü macOS tarzı dock oldu: fare yaklaştıkça ikonlar yay animasyonuyla büyür, üzerine gelince etiket ve kısayol görünür; telefonda alt bara dönüşür |
+| 🧭 **Özellik tanıtımı** | Girişten sonra ilk ekranda Keşif / Analiz / Güvenlik sekmeli özellik kartları; ✕ ile gizlenir, Ayarlar veya Ctrl+K ile geri açılır |
+| 📟 **Durum çubuğu** | Ağ geçidi, motor ve veritabanı durumu ile UTC saati ve çalışma süresi üstte tek satırda |
 
 ---
 
@@ -511,7 +514,7 @@ pytest
 **🌠 v6.0 Aurora** *(mevcut sürüm)*
 - [x] Aurora arka plan, cam paneller, sayfa geçiş animasyonları
 - [x] Komut paleti (Ctrl+K) ve klavye kısayolları
-- [x] Vurgu rengi seçici, daraltılabilir menü, bildirim zili
+- [x] Vurgu rengi seçici, rakun temalı Animated Dock menü, bildirim zili
 - [x] Sparkline kartlar, aktivite ısı haritası, radar tarama ekranı
 - [x] Etkileşimli ağ haritası, bulgu filtreleri, yeni risk göstergesi
 - [x] 🦝 Yeni maskot: kartal yerine rakun (logo, favicon, rapor başlığı, README banner'ı)
