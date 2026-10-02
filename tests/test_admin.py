@@ -28,6 +28,9 @@ def register(client, email, password="parola123"):
     client.cookies.clear()
     res = client.post("/auth/register", json={"email": email, "password": password})
     assert res.status_code == 200, res.text
+    if email == ADMIN:
+        auth.sync_admins()  # açılışta yapılan senkronizasyon (parolalı kayıt anında yönetici olmaz)
+        return client.get("/api/me").json()
     return res.json()["user"]
 
 
@@ -42,6 +45,19 @@ def test_admin_email_gets_unlimited_admin_plan(app_client):
     assert app_client.post("/api/me/token").status_code == 200
     # Yönetici için demo ödeme kapalı
     assert app_client.post("/api/billing/checkout", json={"plan": "pro"}).status_code == 400
+
+
+def test_password_signup_with_admin_email_is_not_instant_admin(app_client):
+    # E-posta doğrulanmadığı için adresi önce alan kişi yönetici olamaz
+    res = app_client.post("/auth/register", json={"email": ADMIN, "password": "parola123"})
+    assert res.json()["user"]["role"] == "user"
+    # Sağlayıcının doğruladığı e-postayla sosyal giriş ise anında yönetici olur
+    uid = auth.login_with_identity("github", "42", "oauth-yonetici@example.com", "Sahip", True)
+    assert auth.get_user(uid)["role"] == "user"  # listede değil
+    import core.config as cfg
+    cfg.ADMIN_EMAILS.add("oauth-sahip@example.com")
+    uid = auth.login_with_identity("github", "43", "oauth-sahip@example.com", "Sahip", True)
+    assert auth.get_user(uid)["role"] == "admin"
 
 
 def test_regular_user_cannot_open_admin_panel(app_client):

@@ -96,7 +96,7 @@
     }
 
     // ------------------------------------------------------------------ ATT&CK
-    function renderAttack() {
+    function renderAttack(animate = true) {
         const a = intel.attack;
         if (!a.chain.length) {
             $("intelBody").innerHTML = `<div class="empty">${esc(a.narrative)}</div>`;
@@ -106,7 +106,7 @@
         const sel = all.find((t) => t.id === selectedTech) || all[0];
         selectedTech = sel.id;
         $("intelBody").innerHTML = `
-            <ol class="killchain">${a.chain.map((c, i) => `
+            <ol class="killchain${animate ? "" : " still"}">${a.chain.map((c, i) => `
                 <li style="animation-delay:${i * 0.07}s"><span class="muted small">${esc(c.tactic_id)}</span><b>${esc(c.tactic)}</b><span>${esc(c.technique)}</span></li>`).join("")}</ol>
             <div class="attack-matrix-wrap"><div class="attack-matrix">
                 ${a.tactics.map((t) => `
@@ -208,7 +208,7 @@
     });
     $("intelBody").addEventListener("click", (e) => {
         const t = e.target.closest("[data-tech]");
-        if (t) { selectedTech = t.dataset.tech; renderAttack(); return; }
+        if (t) { selectedTech = t.dataset.tech; renderAttack(false); return; }
         if (e.target.id === "aiSummary") return askAI({ refresh: true }, e.target);
         const q = e.target.closest("[data-q]");
         if (q) askAI({ question: q.dataset.q }, null);

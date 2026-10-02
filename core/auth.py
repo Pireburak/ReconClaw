@@ -105,7 +105,8 @@ def _claim_orphan_scans(conn, user_id):
         conn.execute("UPDATE scans SET user_id = ? WHERE user_id IS NULL", (user_id,))
 
 
-def create_user(email: str, name: str, password: str | None = None, avatar_url=None, check_signup=True):
+def create_user(email: str, name: str, password: str | None = None, avatar_url=None, check_signup=True,
+                verified_email: bool = False):
     email = email.strip().lower()
     name = (name or "").strip() or email.split("@")[0]
     if check_signup and not config.ALLOW_SIGNUP:
@@ -117,7 +118,10 @@ def create_user(email: str, name: str, password: str | None = None, avatar_url=N
     with closing(get_db_connection()) as conn, conn:
         if conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
             raise AuthError("Bu e-posta ile kayıtlı bir hesap zaten var.")
-        role = "admin" if email in config.ADMIN_EMAILS else "user"
+        # Kayıt anında yönetici yalnızca e-postası sağlayıcı tarafından doğrulanmış sosyal girişle olunur.
+        # Parolalı kayıtta e-posta doğrulanmadığından, ADMIN_EMAILS'teki adresi gerçek sahibinden önce
+        # alan biri yönetici olamaz; bu hesaplar açılıştaki sync_admins() veya manage.py ile yükseltilir.
+        role = "admin" if verified_email and email in config.ADMIN_EMAILS else "user"
         cur = conn.execute(
             "INSERT INTO users (email, name, password_hash, avatar_url, created_at, role) VALUES (?, ?, ?, ?, ?, ?)",
             (email, name[:80], hash_password(password) if password else None, avatar_url, _now().isoformat(" "), role),
@@ -206,7 +210,7 @@ def login_with_identity(provider: str, subject: str, email: str | None, name: st
     else:
         if not email:
             raise AuthError("Sağlayıcı e-posta adresinizi paylaşmadı; e-posta izni vererek tekrar deneyin.")
-        user_id = create_user(email, name, avatar_url=avatar_url)
+        user_id = create_user(email, name, avatar_url=avatar_url, verified_email=email_verified)
 
     with closing(get_db_connection()) as conn, conn:
         conn.execute("INSERT INTO identities (user_id, provider, subject) VALUES (?, ?, ?)",

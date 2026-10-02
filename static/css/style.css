@@ -854,3 +854,4 @@ tr.warn-row td:nth-child(2) { color: var(--red); }
     #intelTabs { display: flex; width: 100%; }
     #intelTabs button { flex: 1; padding: 7px 4px; font-size: .56rem; letter-spacing: .04em; }
 }
+.killchain.still li { animation: none; }

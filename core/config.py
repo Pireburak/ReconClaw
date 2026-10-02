@@ -62,8 +62,9 @@ SCAN_RATE_LIMIT = int(env("SCAN_RATE_LIMIT", "0") or 0)
 # İnternete açık, herkesin kayıt olabildiği bir sunucuda AÇIN.
 REQUIRE_TARGET_VERIFICATION = _bool("REQUIRE_TARGET_VERIFICATION", False)
 
-# v7.0: yönetici hesapları. Virgülle ayrılmış e-postalar; bu adreslerle açılan hesaplar
-# "Admin" olur: tüm plan sınırları kalkar ve Yönetim paneli açılır.
+# v7.0: yönetici hesapları. Virgülle ayrılmış e-postalar; bu hesaplar "Admin" olur: tüm plan
+# sınırları kalkar ve Yönetim paneli açılır. Var olan hesaplar uygulama açılırken yükseltilir;
+# kayıt anında ise yalnızca e-postası doğrulanmış sosyal giriş yönetici olur (bkz. auth.create_user).
 # Örnek: ADMIN_EMAILS=ben@ornek.com,asistan@ornek.com
 ADMIN_EMAILS = {e.strip().lower() for e in env("ADMIN_EMAILS").split(",") if e.strip()}
 
