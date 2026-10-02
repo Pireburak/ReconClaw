@@ -5,13 +5,13 @@ const SEVERITY = { critical: "Kritik", high: "Yüksek", medium: "Orta", low: "D�
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEV_COLOR = { critical: "var(--red)", high: "var(--orange)", medium: "var(--yellow)", low: "var(--blue)" };
 const VIEWS = {
-    overview: ["OPERATIONS_CENTER", "ReconClaw Central Intelligence & Security Monitoring Console"],
-    scan: ["NEW_SCAN", "Asenkron TCP keşfi, banner yakalama ve eklenti kontrolleri"],
-    results: ["SCAN_RESULTS", "Hedef profili, CVE uyarıları, öneriler ve eklenti bulguları"],
-    history: ["SCAN_HISTORY", "Kayıtlı taramalar — ara, aç, karşılaştır, sil"],
-    compare: ["SCAN_DIFF", "İki tarama arasındaki değişim: açılan/kapanan portlar, yeni/çözülen bulgular"],
-    map: ["NETWORK_MAP", "Hedef ve açık servislerin görsel topolojisi"],
-    settings: ["SETTINGS", "Görünüm, tarama varsayılanları, hesap güvenliği ve API erişimi"],
+    overview: ["OPERASYON MERKEZİ", "Hedef envanteri, tehdit durumu ve son istihbarat"],
+    scan: ["YENİ TARAMA", "Hedefi belirle, kapsamı seç, keşfi başlat"],
+    results: ["HEDEF DOSYASI", "Açık servisler, zafiyet eşleşmeleri, öneriler ve eklenti bulguları"],
+    history: ["ARŞİV", "Kayıtlı operasyonlar: ara, aç, karşılaştır, sil"],
+    compare: ["KARŞILAŞTIRMA", "İki tarama arasındaki değişim: açılan/kapanan portlar, yeni/çözülen bulgular"],
+    map: ["AĞ KROKİSİ", "Hedefin açık servis topolojisi"],
+    settings: ["AYARLAR", "Görünüm, tarama varsayılanları, hesap güvenliği ve API erişimi"],
 };
 const DEFAULTS_KEY = "rc-scan-defaults";
 
@@ -92,7 +92,7 @@ function route() {
     document.querySelectorAll("#nav a").forEach((a) => a.classList.toggle("active", a.dataset.view === name));
     $("viewTitle").textContent = VIEWS[name][0];
     $("viewSub").textContent = VIEWS[name][1];
-    $("crumb").textContent = VIEWS[name][0] === "OPERATIONS_CENTER" ? "SYS_OVERVIEW" : VIEWS[name][0];
+    $("crumb").textContent = `RC-${String(Object.keys(VIEWS).indexOf(name)).padStart(2, "0")}`;
     closeModals();
     if (name === "overview") loadStats();
     if (name === "history" || name === "compare" || name === "map") loadHistory().then(() => {
@@ -141,8 +141,8 @@ function setIndicators(stats) {
     uptimeBase = stats.uptime;
     uptimeAt = Date.now();
     $("indDb").classList.toggle("off", stats.db_status !== "ONLINE");
-    $("indDb").textContent = `DATABASE_${stats.db_status}`;
-    $("indEngine").textContent = stats.active_scans ? `RECON_ENGINE_BUSY (${stats.active_scans})` : "RECON_ENGINE_READY";
+    $("indDb").textContent = `VERİTABANI: ${stats.db_status === "ONLINE" ? "ÇEVRİMİÇİ" : "ÇEVRİMDIŞI"}`;
+    $("indEngine").textContent = stats.active_scans ? `MOTOR: MEŞGUL (${stats.active_scans})` : "MOTOR: HAZIR";
 }
 
 // ------------------------------------------------------------------ genel bakış
@@ -157,7 +157,7 @@ function donut(svg, segments, centerTop, centerBottom, centerColor) {
             const len = (seg.value / total) * c;
             arcs += `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${seg.color}" stroke-width="12"
                 stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-offset}" transform="rotate(-90 60 60)"
-                style="filter:drop-shadow(0 0 4px ${seg.color})"/>`;
+/>`;
             offset += len;
         });
     }
@@ -217,7 +217,7 @@ function renderStats(s) {
     RCFX.countUp($("sHighRisk"), s.high_risk_targets);
     RCFX.countUp($("sActive"), s.active_scans);
     $("sOpen").textContent = `${s.open_ports} açık port`;
-    RCFX.countUp($("sDb"), s.db_status);
+    RCFX.countUp($("sDb"), s.db_status === "ONLINE" ? "AKTİF" : "KOPUK");
     RCFX.sparkline($("spkScans"), s.trend.map((_, i) => i + 1));
     RCFX.sparkline($("spkVulns"), s.trend.map((t) => t.vulns));
     RCFX.sparkline($("spkRisk"), s.trend.map((t) => t.score));
@@ -293,7 +293,7 @@ function renderBell(events) {
                 <span class="dot"></span><span>${esc(e.text)}</span>
                 <span class="meta">${esc(e.time)} · ${esc(e.target)}</span>
             </li>`).join("")
-        : `<li class="empty">Kritik veya yüksek olay yok 🎉</li>`;
+        : `<li class="empty">Kritik veya yüksek olay yok.</li>`;
 }
 
 async function loadStats() {
@@ -301,7 +301,7 @@ async function loadStats() {
         renderStats(await api("/api/stats"));
     } catch (err) {
         $("indGateway").classList.add("off");
-        $("indGateway").textContent = "GATEWAY_OFFLINE";
+        $("indGateway").textContent = "AĞ GEÇİDİ: KOPUK";
     }
 }
 
@@ -344,7 +344,7 @@ async function startScan(event) {
     const btn = $("scanBtn");
     btn.disabled = true;
     btn.textContent = "TARANIYOR...";
-    $("indEngine").textContent = "RECON_ENGINE_BUSY";
+    $("indEngine").textContent = "MOTOR: MEŞGUL";
     radarStart(target, body.max_port || 27);
 
     const scope = body.max_port ? `1-${body.max_port}` : "yaygın portlar";
@@ -368,8 +368,8 @@ async function startScan(event) {
         radarDone(null, err.message);
     } finally {
         btn.disabled = false;
-        btn.textContent = "⚡ TARAMAYI BAŞLAT";
-        $("indEngine").textContent = "RECON_ENGINE_READY";
+        btn.textContent = "TARAMAYI BAŞLAT";
+        $("indEngine").textContent = "MOTOR: HAZIR";
     }
 }
 
@@ -379,7 +379,7 @@ function radarStart(target, portCount) {
     radar.classList.add("active");
     const t0 = Date.now();
     const update = () => {
-        $("radarStatus").innerHTML = `SCANNING<small>${esc(target)} · ${portCount} port · ${((Date.now() - t0) / 1000).toFixed(1)} sn</small>`;
+        $("radarStatus").innerHTML = `TARANIYOR<small>${esc(target)} · ${portCount} port · ${((Date.now() - t0) / 1000).toFixed(1)} sn</small>`;
     };
     update();
     clearInterval(scanTimer);
@@ -391,7 +391,7 @@ function radarDone(data, error) {
     const radar = $("radar");
     radar.classList.remove("active");
     if (!data) {
-        $("radarStatus").innerHTML = `<span style="color:var(--red)">FAILED</span><small>${esc(error || "")}</small>`;
+        $("radarStatus").innerHTML = `<span style="color:var(--red)">BAŞARISIZ</span><small>${esc(error || "")}</small>`;
         return;
     }
     // Açık portlar radarda risk renginde parlayan noktalar olarak belirir
@@ -407,14 +407,14 @@ function radarDone(data, error) {
         blip.style.animationDelay = `${i * 0.12}s`;
         radar.appendChild(blip);
     });
-    $("radarStatus").innerHTML = `<span style="color:${riskColor(data.overall_risk)}">COMPLETE · %${data.overall_risk}</span><small>${data.total_open} açık port · ${data.duration} sn</small>`;
+    $("radarStatus").innerHTML = `<span style="color:${riskColor(data.overall_risk)}">TAMAMLANDI · RİSK %${data.overall_risk}</span><small>${data.total_open} açık port · ${data.duration} sn</small>`;
 }
 
 async function loadRecentTargets() {
     try {
         const rows = await api("/api/history?limit=30");
         const targets = [...new Set(rows.map((r) => r.target))].slice(0, 6);
-        $("recentTargets").innerHTML = targets.map((t) => `<button type="button" class="chip" data-target="${esc(t)}">↻ ${esc(t)}</button>`).join("");
+        $("recentTargets").innerHTML = targets.map((t) => `<button type="button" class="chip" data-target="${esc(t)}">${esc(t)}</button>`).join("");
     } catch { /* yoksay */ }
 }
 
@@ -446,9 +446,9 @@ function setGauge(score, label) {
         <circle cx="85" cy="85" r="${r}" fill="none" stroke="var(--panel-2)" stroke-width="12" stroke-linecap="round"
             stroke-dasharray="${arc} ${c}" transform="rotate(135 85 85)"/>
         <circle class="arc" cx="85" cy="85" r="${r}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
-            stroke-dasharray="${arc} ${c}" stroke-dashoffset="${arc}" transform="rotate(135 85 85)" style="filter:drop-shadow(0 0 6px ${color})"/>
+            stroke-dasharray="${arc} ${c}" stroke-dashoffset="${arc}" transform="rotate(135 85 85)"/>
         <text x="85" y="88" text-anchor="middle" font-size="34" font-weight="800" style="fill:${color}">${score}</text>
-        <text x="85" y="108" text-anchor="middle" font-size="9" style="fill:var(--muted)">${esc(label || "RISK SCORE")}</text>
+        <text x="85" y="108" text-anchor="middle" font-size="9" style="fill:var(--muted)">${esc(label || "RİSK SKORU")}</text>
         <text x="46" y="150" text-anchor="middle" font-size="8" style="fill:var(--muted)">0</text>
         <text x="124" y="150" text-anchor="middle" font-size="8" style="fill:var(--muted)">100</text>
     </svg>`;
@@ -612,9 +612,9 @@ async function runCompare(oldId, newId) {
             <div class="diff-cols">
                 <div><h4 class="plus">▲ YENİ AÇILAN PORTLAR</h4><ul class="list">${portRows(d.opened, "plus", "+")}</ul></div>
                 <div><h4 class="minus">▼ KAPANAN PORTLAR</h4><ul class="list">${portRows(d.closed, "minus", "−")}</ul></div>
-                <div><h4>≠ SÜRÜMÜ DEĞİŞEN</h4><ul class="list">${listOr(d.changed, (c) => `<li>${c.port}/${esc(c.service)}: <span class="muted">${esc(c.old_banner || "—")}</span> → ${esc(c.new_banner || "—")}</li>`)}</ul></div>
-                <div><h4 class="plus">⚠ YENİ BULGULAR / CVE</h4><ul class="list">${listOr(d.new_cves, (c) => `<li class="plus">${esc(c)}</li>`)}${d.new_findings.map(findingLi).join("")}</ul></div>
-                <div><h4 class="minus">✔ ÇÖZÜLEN BULGULAR / CVE</h4><ul class="list">${listOr(d.resolved_cves, (c) => `<li class="minus">${esc(c)}</li>`)}${d.resolved_findings.map(findingLi).join("")}</ul></div>
+                <div><h4>~ SÜRÜMÜ DEĞİŞEN</h4><ul class="list">${listOr(d.changed, (c) => `<li>${c.port}/${esc(c.service)}: <span class="muted">${esc(c.old_banner || "—")}</span> → ${esc(c.new_banner || "—")}</li>`)}</ul></div>
+                <div><h4 class="plus">+ YENİ BULGULAR / CVE</h4><ul class="list">${listOr(d.new_cves, (c) => `<li class="plus">${esc(c)}</li>`)}${d.new_findings.map(findingLi).join("")}</ul></div>
+                <div><h4 class="minus">− ÇÖZÜLEN BULGULAR / CVE</h4><ul class="list">${listOr(d.resolved_cves, (c) => `<li class="minus">${esc(c)}</li>`)}${d.resolved_findings.map(findingLi).join("")}</ul></div>
             </div>`;
     } catch (err) {
         $("diffOut").innerHTML = `<div class="form-error">${esc(err.message)}</div>`;
@@ -658,7 +658,7 @@ async function drawMap(id) {
         links += `<line class="link ${hot.has(p.port) ? "hot" : ""}" data-port="${p.port}" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`;
         const n = findingCount[p.port];
         nodes += `<g class="node port" data-port="${p.port}" tabindex="0" style="animation-delay:${i * 0.06}s"><title>${p.port}/${esc(p.service)} — risk %${p.risk}</title>
-            <circle class="body" cx="${x}" cy="${y}" r="24" fill="var(--panel-solid)" stroke="${color(p.risk)}" stroke-width="3" style="filter:drop-shadow(0 0 6px ${color(p.risk)})"/>
+            <circle class="body" cx="${x}" cy="${y}" r="24" fill="var(--panel-solid)" stroke="${color(p.risk)}" stroke-width="2"/>
             <text x="${x}" y="${y + 4}" font-weight="700">${p.port}</text>
             <text class="sub" x="${x}" y="${y + 40}">${esc(p.service)}</text>
             ${n ? `<circle cx="${x + 18}" cy="${y - 18}" r="9" fill="var(--pink)"/><text x="${x + 18}" y="${y - 14}" font-size="10" style="fill:#fff">${n}</text>` : ""}
@@ -669,8 +669,8 @@ async function drawMap(id) {
         <circle class="ring" cx="${cx}" cy="${cy}" r="${radius}"/>
         ${links}
         <g class="node"><circle cx="60" cy="${cy}" r="30" fill="var(--panel-solid)" stroke="var(--violet)" stroke-width="2"/>
-            <text x="60" y="${cy + 5}" font-size="18">🛰</text><text class="sub" x="60" y="${cy + 48}">RECONCLAW</text></g>
-        <g class="node"><circle cx="${cx}" cy="${cy}" r="46" fill="var(--panel-solid)" stroke="${color(r.overall_risk)}" stroke-width="4" style="filter:drop-shadow(0 0 10px ${color(r.overall_risk)})"/>
+            <text x="60" y="${cy + 4}" font-weight="700">RC</text><text class="sub" x="60" y="${cy + 48}">KAYNAK</text></g>
+        <g class="node"><circle cx="${cx}" cy="${cy}" r="46" fill="var(--panel-solid)" stroke="${color(r.overall_risk)}" stroke-width="2"/>
             <text x="${cx}" y="${cy - 4}" font-weight="700">${esc(r.target.length > 16 ? r.target.slice(0, 15) + "…" : r.target)}</text>
             <text class="sub" x="${cx}" y="${cy + 12}">${esc(r.resolved_ip)}</text>
             <text class="sub" x="${cx}" y="${cy + 26}">risk %${r.overall_risk}</text></g>
@@ -708,7 +708,7 @@ function showMapDetail(port) {
         ${cves.length ? `<ul class="list" style="color:var(--red)">${cves.map((c) => `<li>${esc(c.replace(/^\[Port \d+\] /, ""))}</li>`).join("")}</ul>` : ""}
         ${findings.length ? `<ul class="list">${findings.map((f) => `<li><span class="badge sev-${esc(f.severity)}">${esc(SEVERITY[f.severity] || f.severity)}</span> ${esc(f.title)}</li>`).join("")}</ul>` : ""}
         ${!cves.length && !findings.length ? `<span class="muted small">Bu port için ek bulgu yok.</span>` : ""}
-        <p style="margin:12px 0 0"><button type="button" class="btn sm" id="mapBack">← HEDEF ÖZETİ</button></p>`;
+        <p style="margin:12px 0 0"><button type="button" class="btn sm" id="mapBack">HEDEF ÖZETİ</button></p>`;
 }
 
 // ------------------------------------------------------------------ ayarlar
@@ -717,7 +717,6 @@ function markThemeSeg() {
     document.querySelectorAll("#themeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.themePref === pref));
     const accent = window.RCTheme.accent();
     document.querySelectorAll("#accentSwatches .swatch").forEach((b) => b.classList.toggle("on", b.dataset.accent === accent));
-    $("fxToggle").checked = RCFX.enabled();
 }
 
 // ------------------------------------------------------------------ komut paleti & kısayollar
@@ -726,32 +725,31 @@ let paletteSel = 0;
 
 function paletteSource() {
     const nav = Object.entries(VIEWS).map(([key, [title, sub]], i) => ({
-        group: "SAYFALAR", ico: "▸", label: title === "OPERATIONS_CENTER" ? "SYS_OVERVIEW" : title, hint: `${i}`, keywords: sub,
+        group: "BÖLÜMLER", ico: `RC-0${i}`, label: title, hint: `${i}`, keywords: sub,
         run: () => go(key),
     }));
     const actions = [
-        { ico: "⚡", label: "Yeni tarama başlat", hint: "N", run: () => go("scan") },
-        { ico: "🌗", label: "Temayı değiştir (aydınlık / karanlık)", hint: "T", run: () => window.RCTheme.toggle() },
-        { ico: "🎨", label: "Vurgu rengini değiştir", run: () => {
+        { ico: "TRM", label: "Yeni tarama başlat", hint: "N", run: () => go("scan") },
+        { ico: "TMA", label: "Temayı değiştir (karanlık / kâğıt)", hint: "T", run: () => window.RCTheme.toggle() },
+        { ico: "RNK", label: "Vurgu rengini değiştir", run: () => {
             const list = window.RCTheme.accents;
             window.RCTheme.setAccent(list[(list.indexOf(window.RCTheme.accent()) + 1) % list.length]);
         } },
-        { ico: "✨", label: "Hareketli arka planı aç / kapat", run: () => { RCFX.set(!RCFX.enabled()); markThemeSeg(); } },
-        { ico: "🦝", label: featuresVisible() ? "Özellik tanıtımını gizle" : "Özellik tanıtımını göster",
+        { ico: "BRF", label: featuresVisible() ? "Özellik tanıtımını gizle" : "Özellik tanıtımını göster",
             run: () => { setFeatures(!featuresVisible()); go("overview"); } },
         ...(currentReport ? [
-            { ico: "🖨", label: `PDF rapor: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportPdf").click() },
-            { ico: "⬇", label: `CSV indir: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportCsv").click() },
-            { ico: "⇄", label: "Son raporu öncekiyle karşılaştır", run: () => $("diffPrev").click() },
+            { ico: "PDF", label: `PDF rapor: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportPdf").click() },
+            { ico: "CSV", label: `CSV indir: ${currentReport.target} #${currentReport.scan_id}`, run: () => $("exportCsv").click() },
+            { ico: "KRŞ", label: "Son raporu öncekiyle karşılaştır", run: () => $("diffPrev").click() },
         ] : []),
-        { ico: "⌨", label: "Klavye kısayolları", hint: "?", run: () => openModal("helpModal") },
-        { ico: "⏻", label: "Çıkış yap", run: () => $("logoutBtn").click() },
+        { ico: "KSY", label: "Klavye kısayolları", hint: "?", run: () => openModal("helpModal") },
+        { ico: "ÇKŞ", label: "Çıkış yap", run: () => $("logoutBtn").click() },
     ].map((a) => ({ group: "KOMUTLAR", ...a }));
     const targets = [...new Set(historyRows.map((r) => r.target))].slice(0, 8).map((t) => ({
-        group: "HEDEFİ TEKRAR TARA", ico: "↻", label: t, run: () => { $("target").value = t; go("scan"); setTimeout(startScan, 120); },
+        group: "HEDEFİ TEKRAR TARA", ico: "HDF", label: t, run: () => { $("target").value = t; go("scan"); setTimeout(startScan, 120); },
     }));
     const scans = historyRows.filter((r) => r.has_report).slice(0, 15).map((r) => ({
-        group: "RAPORLAR", ico: "📄", label: `#${r.id} ${r.target}`, hint: `risk ${r.risk_score} · ${r.scan_time.slice(5, 16)}`,
+        group: "RAPORLAR", ico: "DSY", label: `#${r.id} ${r.target}`, hint: `risk ${r.risk_score} · ${r.scan_time.slice(5, 16)}`,
         run: () => openScan(r.id),
     }));
     return [...nav, ...actions, ...targets, ...scans];
@@ -922,7 +920,6 @@ $("accentSwatches").addEventListener("click", (e) => {
     const b = e.target.closest("[data-accent]");
     if (b) window.RCTheme.setAccent(b.dataset.accent);
 });
-$("fxToggle").addEventListener("change", (e) => RCFX.set(e.target.checked));
 $("sevFilter").addEventListener("click", (e) => {
     const b = e.target.closest("[data-sev]");
     if (b) { sevFilter = b.dataset.sev; renderFindings(); }
@@ -1023,7 +1020,7 @@ $("newToken").addEventListener("click", async () => {
     try {
         const { token } = await api("/api/me/token", { method: "POST" });
         $("tokenBox").hidden = false;
-        $("tokenBox").textContent = `${token}\n\n⚠ Bu anahtarı şimdi kopyalayın, tekrar gösterilmeyecek.`;
+        $("tokenBox").textContent = `${token}\n\nBu anahtarı şimdi kopyalayın, tekrar gösterilmeyecek.`;
         curlExample(token);
         $("revokeToken").disabled = false;
         if (me) me.has_api_token = true;

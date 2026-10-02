@@ -6,60 +6,74 @@
     <title>{{ title }}</title>
     <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" type="image/png">
     <link rel="apple-touch-icon" href="{{ url_for('static', path='img/apple-touch-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}">
     <style>
-        :root { --c-low: #4d7c0f; --c-medium: #a16207; --c-high: #c2410c; --c-critical: #d41f4a; }
+        :root { --c-low: #4f6b2f; --c-medium: #8a6d12; --c-high: #b5541b; --c-critical: #b42318; --ink: #1d1b17; --muted: #6a655a; --line: #d2cab6; --paper: #f4f0e6; }
         * { box-sizing: border-box; }
-        body { margin: 0; padding: 32px 16px; color: #0f1b2d; background: #eef3fa; font: 13px/1.55 "Segoe UI", Roboto, Arial, sans-serif; }
-        .page { max-width: 900px; margin: 0 auto; padding: 36px 40px; background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 27, 45, .08); }
-        header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 16px; border-bottom: 3px solid #0e7490; }
-        h1 { margin: 0; font-size: 22px; letter-spacing: 1px; color: #0e7490; }
-        h2 { margin: 28px 0 10px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #0e7490; border-bottom: 1px solid #d5deeb; padding-bottom: 4px; }
-        .meta { font-size: 12px; color: #5a6a85; text-align: right; }
-        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
-        .box { padding: 12px; border: 1px solid #d5deeb; border-radius: 8px; }
-        .box span { display: block; font-size: 11px; color: #5a6a85; text-transform: uppercase; }
-        .box b { font-size: 20px; }
-        .level { display: inline-block; padding: 2px 10px; border-radius: 4px; color: #fff; font-weight: 700; background: var(--c-{{ r.risk_level.key }}); }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #e3e9f2; vertical-align: top; }
-        th { background: #f5f8fc; font-size: 11px; text-transform: uppercase; color: #5a6a85; }
-        td.mono { font-family: Consolas, monospace; }
-        .sev { font-weight: 700; text-transform: uppercase; font-size: 11px; }
-        .sev-high, .sev-critical { color: var(--c-critical); } .sev-medium { color: var(--c-medium); } .sev-low { color: #1d4ed8; } .sev-info { color: #5a6a85; }
-        ul { margin: 0; padding-left: 20px; }
+        body { margin: 0; padding: 28px 16px; color: var(--ink); background: #d9d3c4; font: 12.5px/1.6 "IBM Plex Mono", Consolas, monospace; }
+        .page { position: relative; max-width: 880px; margin: 0 auto; padding: 0 44px 34px; background: var(--paper); box-shadow: 0 10px 30px rgba(60, 50, 30, .2); }
+        .classline { margin: 0 -44px 28px; padding: 5px 0; text-align: center; font-size: 10px; font-weight: 600; letter-spacing: .32em; color: #f4e9e6; background: #9e1f17; }
+        .classline.bottom { margin: 28px -44px 0; }
+        .stamp { position: absolute; top: 74px; left: 56%; padding: 4px 16px; font: 700 22px "Courier Prime", monospace; letter-spacing: .24em; color: #b42318; border: 3px double #b42318; transform: rotate(8deg); opacity: .8; }
+        header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+        .doc-kicker { font-size: 10px; letter-spacing: .24em; color: var(--muted); text-transform: uppercase; }
+        h1 { margin: 4px 0 0; font: 700 26px/1.1 "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+        h2 { margin: 26px 0 10px; font: 600 15px "Barlow Condensed", sans-serif; letter-spacing: .14em; text-transform: uppercase; border-bottom: 1px solid var(--line); padding-bottom: 4px; counter-increment: sec; }
+        h2::before { content: counter(sec, decimal-leading-zero) "  "; font: 600 10px "IBM Plex Mono", monospace; color: var(--muted); }
+        .page { counter-reset: sec; }
+        .target { margin-top: 6px; font-size: 14px; }
+        .meta { display: grid; grid-template-columns: auto auto; gap: 1px 12px; font-size: 10.5px; color: var(--muted); text-align: left; }
+        .meta b { color: var(--ink); font-weight: 600; }
+        .summary { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; border: 1px solid var(--line); }
+        .box { padding: 10px 12px; border-right: 1px solid var(--line); }
+        .box:last-child { border-right: none; }
+        .box span { display: block; font-size: 9.5px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+        .box b { font: 600 22px "Barlow Condensed", sans-serif; }
+        .level { display: inline-block; padding: 1px 8px; color: #fff; font: 600 13px "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; background: var(--c-{{ r.risk_level.key }}); }
+        table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+        th { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); }
+        td.mono { font-family: "IBM Plex Mono", monospace; }
+        .sev { font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: .08em; }
+        .sev-high, .sev-critical { color: var(--c-critical); } .sev-medium { color: var(--c-medium); } .sev-low { color: #2f5f8f; } .sev-info { color: var(--muted); }
+        ul { margin: 0; padding-left: 18px; }
         li { margin-bottom: 4px; }
         .cve li { color: var(--c-critical); }
-        .none { color: #5a6a85; font-style: italic; }
-        footer { margin-top: 32px; padding-top: 12px; font-size: 11px; color: #5a6a85; border-top: 1px solid #d5deeb; }
-        .toolbar { max-width: 900px; margin: 0 auto 12px; display: flex; justify-content: flex-end; gap: 8px; }
-        .toolbar button, .toolbar a { padding: 8px 16px; font: inherit; font-weight: 700; color: #fff; background: #0e7490; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; }
-        .toolbar a { background: #5a6a85; }
+        .none { color: var(--muted); font-style: italic; }
+        footer { margin-top: 28px; padding-top: 10px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--line); }
+        .toolbar { max-width: 880px; margin: 0 auto 12px; display: flex; justify-content: flex-end; gap: 8px; }
+        .toolbar button, .toolbar a { padding: 7px 14px; font: 600 11px "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--paper); background: var(--ink); border: 1px solid var(--ink); cursor: pointer; text-decoration: none; }
+        .toolbar a { color: var(--ink); background: transparent; }
         @media print {
             body { padding: 0; background: #fff; }
-            .page { box-shadow: none; padding: 0; max-width: none; }
+            .page { box-shadow: none; max-width: none; background: #fff; }
             .toolbar { display: none; }
             h2 { break-after: avoid; }
             tr { break-inside: avoid; }
+            .classline { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-        @media (max-width: 640px) { .page { padding: 20px 16px; } .summary { grid-template-columns: 1fr 1fr; } header { flex-direction: column; } .meta { text-align: left; } }
+        @media (max-width: 640px) { .page { padding: 0 16px 20px; } .classline { margin-left: -16px; margin-right: -16px; } .summary { grid-template-columns: 1fr 1fr; } header { flex-direction: column; align-items: flex-start; } .stamp { top: 40px; left: auto; right: 12px; font-size: 16px; } }
     </style>
 </head>
 <body>
 <div class="toolbar">
-    <a href="/#results">← Panele dön</a>
-    <button type="button" id="printBtn">🖨 Yazdır / PDF olarak kaydet</button>
+    <a href="/#results">Panele dön</a>
+    <button type="button" id="printBtn">Yazdır / PDF kaydet</button>
 </div>
 <article class="page">
+    <div class="classline">GİZLİ // DAĞITIM: SINIRLI // GİZLİ</div>
+    <div class="stamp" aria-hidden="true">GİZLİ</div>
     <header>
         <div>
-            <h1><img src="{{ url_for('static', path='img/logo.png') }}" alt="" width="40" height="40" style="vertical-align:middle;margin-right:8px">ReconClaw Güvenlik Değerlendirme Raporu</h1>
-            <div style="margin-top:6px;font-size:16px"><b>{{ r.target }}</b> <span style="color:#5a6a85">({{ r.resolved_ip }})</span></div>
+            <div class="doc-kicker">ReconClaw · Güvenlik değerlendirme dosyası</div>
+            <h1>Hedef dosyası #{{ r.scan_id }}</h1>
+            <div class="target"><b>{{ r.target }}</b> <span style="color:var(--muted)">({{ r.resolved_ip }})</span></div>
         </div>
         <div class="meta">
-            Rapor #{{ r.scan_id }}<br>
-            Tarama: {{ r.scan_time }}<br>
-            Oluşturulma: {{ generated }}<br>
-            Hazırlayan: {{ user.name }}
+            <span>Dosya no</span><b>RC-{{ "%05d" | format(r.scan_id) }}</b>
+            <span>Tarama</span><b>{{ r.scan_time }}</b>
+            <span>Düzenleme</span><b>{{ generated }}</b>
+            <span>Hazırlayan</span><b>{{ user.name }}</b>
         </div>
     </header>
 
@@ -114,6 +128,7 @@
         Bu rapor ReconClaw v{{ version }} tarafından otomatik üretilmiştir. Risk skoru hızlı bir ön değerlendirmedir;
         kapsamlı bir sızma testinin yerini tutmaz. Yalnızca sahibi olunan veya yazılı izin alınan sistemler taranmalıdır.
     </footer>
+    <div class="classline bottom">GİZLİ // DAĞITIM: SINIRLI // GİZLİ</div>
 </article>
 <script src="{{ url_for('static', path='js/report.js') }}"></script>
 </body>

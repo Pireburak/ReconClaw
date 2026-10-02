@@ -1,17 +1,19 @@
 "use strict";
-// Giriş sayfası: fareyi izleyen WebGL "duman" arka planı. Renk, temanın vurgu rengini (--cyan)
-// ve arka planını (--bg) takip eder. WebGL yoksa CSS aurora arka planı görünür kalır.
+// Erişim sayfası arka planı: yavaşça kayan topoğrafik harita (eş yükselti çizgileri).
+// Fare, imlecin altında hafif bir tepe oluşturur. Çizgi rengi temanın vurgu rengini (--cyan),
+// zemin rengi --bg değişkenini izler. WebGL yoksa düz arka plan kalır.
 (function () {
     const canvas = document.getElementById("smokeCanvas");
     if (!canvas) return;
     const gl = canvas.getContext("webgl", { antialias: false, premultipliedAlpha: false });
-    if (!gl) { canvas.remove(); return; }
+    if (!gl || !gl.getExtension("OES_standard_derivatives")) { canvas.remove(); return; }
 
     const VERTEX = `
         attribute vec2 a_position;
         void main() { gl_Position = vec4(a_position, 0.0, 1.0); }`;
 
     const FRAGMENT = `
+        #extension GL_OES_standard_derivatives : enable
         precision mediump float;
         uniform vec2 iResolution;
         uniform float iTime;
@@ -20,20 +22,36 @@
         uniform vec3 u_bg;
         uniform float u_strength;
 
-        void main() {
-            vec2 fragCoord = gl_FragCoord.xy;
-            vec2 uv = (2.0 * fragCoord - iResolution.xy) / min(iResolution.x, iResolution.y);
-            float time = iTime * 0.5;
-            vec2 ripple = 2.0 * (iMouse / iResolution) - 1.0;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p) {
+            vec2 i = floor(p), f = fract(p);
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+                       mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+        }
+        float fbm(vec2 p) {
+            float v = 0.0, a = 0.5;
+            for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; }
+            return v;
+        }
+        float contour(float v) {
+            float d = abs(fract(v - 0.5) - 0.5) / max(fwidth(v), 1e-4);
+            return 1.0 - min(d, 1.0);
+        }
 
-            vec2 d = uv;
-            for (float i = 1.0; i < 8.0; i++) {
-                d.x += 0.5 / i * cos(i * 2.0 * d.y + time + ripple.x * 3.1415);
-                d.y += 0.5 / i * cos(i * 2.0 * d.x + time + ripple.y * 3.1415);
-            }
-            float wave = abs(sin(d.x + d.y + time));
-            float glow = smoothstep(0.9, 0.2, wave);
-            gl_FragColor = vec4(mix(u_bg, u_color, glow * u_strength), 1.0);
+        void main() {
+            float s = min(iResolution.x, iResolution.y);
+            vec2 uv = gl_FragCoord.xy / s;
+            vec2 m = iMouse / s;
+            float t = iTime * 0.025;
+            float h = fbm(uv * 2.1 + vec2(t, -t * 0.7));
+            vec2 dm = uv - m;
+            h += 0.16 * exp(-dot(dm, dm) * 16.0);          // imlecin altında tepe
+            float v = h * 24.0;
+            float minor = contour(v);
+            float major = contour(v / 5.0);                 // her 5. çizgi belirgin
+            float ink = max(minor * 0.45, major) * u_strength;
+            gl_FragColor = vec4(mix(u_bg, u_color, ink), 1.0);
         }`;
 
     function compile(type, source) {
@@ -79,7 +97,7 @@
         const light = document.documentElement.dataset.theme === "light";
         gl.uniform3f(uColor, ...hexToRgb(css.getPropertyValue("--cyan")));
         gl.uniform3f(uBg, ...hexToRgb(css.getPropertyValue("--bg")));
-        gl.uniform1f(uStrength, light ? 0.45 : 0.85);
+        gl.uniform1f(uStrength, light ? 0.32 : 0.26);
     }
     applyColors();
     document.addEventListener("rc-theme", () => { applyColors(); if (!running) draw(performance.now()); });
@@ -112,8 +130,8 @@
 
     function draw(now) {
         const dpr = resize();
-        mouse.x += (mouse.tx - mouse.x) * 0.06;
-        mouse.y += (mouse.ty - mouse.y) * 0.06;
+        mouse.x += (mouse.tx - mouse.x) * 0.05;
+        mouse.y += (mouse.ty - mouse.y) * 0.05;
         gl.uniform2f(uRes, canvas.width, canvas.height);
         gl.uniform1f(uTime, (now - t0) / 1000);
         gl.uniform2f(uMouse, mouse.x * dpr, mouse.y * dpr);

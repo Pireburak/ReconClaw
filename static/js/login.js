@@ -15,9 +15,11 @@ function setMode(next) {
     $("nameField").hidden = !register;
     $("strengthBox").hidden = !register;
     $("password").autocomplete = register ? "new-password" : "current-password";
-    $("submitText").textContent = register ? "HESAP OLUŞTUR" : "GİRİŞ YAP";
-    $("authTitle").textContent = register ? "Aramıza katıl" : "Tekrar hoş geldin";
-    $("authSub").textContent = register ? "için ücretsiz hesabını oluştur" : "paneline devam etmek için giriş yap";
+    $("submitText").textContent = register ? "KAYDI OLUŞTUR" : "ERİŞİM İSTE";
+    $("authTitle").textContent = register ? "Yeni operatör kaydı" : "Erişim terminali";
+    $("authSub").textContent = register
+        ? "Operatör dosyası açmak için bilgilerinizi girin."
+        : "Devam etmek için kimlik bilgilerinizi girin.";
     showError("");
 }
 
@@ -97,6 +99,17 @@ $("authForm").addEventListener("submit", async (event) => {
     };
     setTimeout(step, 300);
 })();
+
+// Yetenek özeti sekmeleri
+$("capTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ftab]");
+    if (!b) return;
+    document.querySelectorAll("#capTabs [data-ftab]").forEach((t) => {
+        t.classList.toggle("on", t === b);
+        t.setAttribute("aria-selected", t === b);
+    });
+    document.querySelectorAll(".cap-list").forEach((l) => { l.hidden = l.dataset.fpanel !== b.dataset.ftab; });
+});
 
 // OAuth hatası sonrası adres çubuğundaki ?error= parametresini temizle
 if (window.location.search) history.replaceState(null, "", "/login");
