@@ -785,7 +785,24 @@ const FEATURE_ROWS = [
     ["AI Analist", (p) => p.ai ? (p.ai_daily ? `${p.ai_daily} / gün` : "Sınırsız") : false],
 ];
 
-const tl = (n) => `₺${Number(n).toLocaleString("tr-TR")}`;
+const REGION_KEY = "rc-price-region";
+let pricingRegion = "";
+try { pricingRegion = localStorage.getItem(REGION_KEY) || ""; } catch { /* yoksay */ }
+
+function money(value, currency = "TRY") {
+    const whole = currency === "TRY" || currency === "JPY" || Number(value) % 1 === 0;
+    try {
+        return new Intl.NumberFormat("tr-TR", { style: "currency", currency, minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 }).format(value);
+    } catch {
+        return `${Number(value).toLocaleString("tr-TR")} ${currency}`;
+    }
+}
+
+// Bölgesel fiyat: önizlenen bölge (liste) veya ödemenin alınacağı bölge (checkout)
+function priceOf(planId, yearly, checkout = false) {
+    const pr = checkout ? planCatalog.checkout_pricing : planCatalog.pricing;
+    return { value: pr.prices[planId][yearly ? "yearly" : "monthly"], currency: pr.currency };
+}
 
 function currentPlan() {
     return subscription?.plan || { id: "free", name: "Free", level: 1, max_port: 100, plugins: false, exports: false, compare: false, api: false, daily_scans: 5 };
@@ -837,7 +854,12 @@ async function loadSubscription() {
 
 async function loadPlans() {
     try {
-        planCatalog = planCatalog || await api("/api/plans");
+        const wanted = pricingRegion ? `?country=${encodeURIComponent(pricingRegion)}` : "";
+        if (!planCatalog || planCatalog._region !== wanted) {
+            planCatalog = await api(`/api/plans${wanted}`);
+            planCatalog._region = wanted;
+            renderRegionSelect();
+        }
         const [billing, targets] = await Promise.all([api("/api/billing"), api("/api/targets")]);
         applySubscription(billing);
         renderSubSummary(billing);
@@ -861,7 +883,8 @@ function renderSubSummary(b) {
             <span class="muted small">${esc(plan.tagline)}</span>
         </div>
         <dl class="facts">
-            <dt>Ücret</dt><dd>${plan.price_monthly ? `${tl(plan.price_monthly)} / ay` : "Ücretsiz"}</dd>
+            <dt>Ücret</dt><dd>${plan.price_monthly && planCatalog?.checkout_pricing.prices[plan.id]
+                ? `${money(priceOf(plan.id, false, true).value, planCatalog.checkout_pricing.currency)} / ay` : b.admin ? "—" : "Ücretsiz"}</dd>
             <dt>Yenileme</dt><dd>${b.expires ? esc(b.expires.slice(0, 10)) : "—"}${b.expired ? ' <span class="badge sev-high">SÜRESİ DOLDU</span>' : ""}</dd>
             <dt>Bugünkü tarama</dt><dd><span class="meter" style="--c:${color}"><span class="bar"><i style="width:${pct}%"></i></span><b>${used} / ${plan.daily_scans || "∞"}</b></span></dd>
             <dt>Port aralığı</dt><dd>1–${plan.max_port.toLocaleString("tr-TR")}</dd>
@@ -876,7 +899,7 @@ function renderPlanCards() {
     const plans = planCatalog.plans;
     const cur = currentPlan();
     $("planGrid").innerHTML = plans.map((p) => {
-        const price = billingPeriod === "yearly" ? p.price_yearly : p.price_monthly;
+        const { value: price, currency } = priceOf(p.id, billingPeriod === "yearly");
         const isCur = p.id === cur.id;
         const action = isCur ? '<button type="button" class="btn block" disabled>MEVCUT PLAN</button>'
             : cur.id === "admin" ? '<button type="button" class="btn block" disabled>YÖNETİCİ HESABI</button>'
@@ -887,8 +910,8 @@ function renderPlanCards() {
             <span class="plan-level">SEVİYE ${p.level}</span>
             <h4>${esc(p.name)}</h4>
             <p class="muted small">${esc(p.tagline)}</p>
-            <div class="plan-price">${p.price_monthly ? tl(price) : "₺0"}<small>${p.price_monthly ? (billingPeriod === "yearly" ? " / yıl" : " / ay") : ""}</small></div>
-            ${billingPeriod === "yearly" && p.price_monthly ? `<span class="muted small">aylık ${tl(Math.round(price / 12))} karşılığı</span>` : '<span class="muted small">&nbsp;</span>'}
+            <div class="plan-price">${money(price, currency)}<small>${p.price_monthly ? (billingPeriod === "yearly" ? " / yıl" : " / ay") : ""}</small></div>
+            ${billingPeriod === "yearly" && p.price_monthly ? `<span class="muted small">aylık ${money(Math.round((price / 12) * 100) / 100, currency)} karşılığı</span>` : '<span class="muted small">&nbsp;</span>'}
             <ul class="plan-feats">
                 ${FEATURE_ROWS.map(([label, fn]) => {
                     const v = fn(p);
@@ -899,17 +922,28 @@ function renderPlanCards() {
         </article>`;
     }).join("");
     $("planTableHead").innerHTML = `<tr><th>Özellik</th>${plans.map((p) => `<th${p.id === cur.id ? ' class="cur"' : ""}>${esc(p.name)}</th>`).join("")}</tr>`;
-    $("planTable").innerHTML = [["Aylık ücret", (p) => p.price_monthly ? tl(p.price_monthly) : "₺0"], ["Yıllık ücret", (p) => p.price_yearly ? tl(p.price_yearly) : "₺0"], ...FEATURE_ROWS]
+    $("planTable").innerHTML = [["Aylık ücret", (p) => money(priceOf(p.id, false).value, planCatalog.pricing.currency)],
+        ["Yıllık ücret", (p) => money(priceOf(p.id, true).value, planCatalog.pricing.currency)], ...FEATURE_ROWS]
         .map(([label, fn]) => `<tr><td>${label}</td>${plans.map((p) => {
             const v = fn(p);
             return `<td${p.id === cur.id ? ' class="cur"' : ""}>${v === true ? "✓" : v === false ? '<span class="muted">—</span>' : esc(v)}</td>`;
         }).join("")}</tr>`).join("");
 }
 
+function renderRegionSelect() {
+    const det = planCatalog.detected;
+    const sel = $("regionSelect");
+    sel.innerHTML = `<option value="">Otomatik · ${esc(det.name)} (${esc(det.currency)})</option>`
+        + planCatalog.regions.map((r) => `<option value="${r.country}">${esc(r.name)} (${esc(r.currency)})</option>`).join("");
+    sel.value = pricingRegion;
+    const pr = planCatalog.pricing;
+    sel.title = pr.currency === "TRY" ? "Türkiye fiyatları" : `1 ${pr.currency} = ${pr.rate.toFixed(2)} TL · kaynak: ${pr.rate_source}`;
+}
+
 function renderPayments(list) {
     $("paymentList").innerHTML = list.length
         ? list.map((p) => `<tr><td>${p.id}</td><td>${esc(p.created_at)}</td><td>${esc(planCatalog.plans.find((x) => x.id === p.plan)?.name || p.plan)}</td>
-            <td>${p.period === "yearly" ? "Yıllık" : "Aylık"}</td><td>${tl(p.amount)}</td><td><span class="badge sev-info">${esc(p.status.toUpperCase())}</span></td></tr>`).join("")
+            <td>${p.period === "yearly" ? "Yıllık" : "Aylık"}</td><td>${money(p.amount, p.currency || "TRY")}${p.country && p.country !== "TR" ? ` <span class="muted small">${esc(p.country)}</span>` : ""}</td><td><span class="badge sev-info">${esc(p.status.toUpperCase())}</span></td></tr>`).join("")
         : '<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>';
 }
 
@@ -939,7 +973,9 @@ function renderTargets(t) {
 function openCheckout(planId) {
     const p = planCatalog.plans.find((x) => x.id === planId);
     const cur = currentPlan();
-    const price = billingPeriod === "yearly" ? p.price_yearly : p.price_monthly;
+    const { value: price, currency } = priceOf(p.id, billingPeriod === "yearly", true);
+    const det = planCatalog.detected;
+    const previewing = planCatalog.pricing.country !== det.country;
     pendingCheckout = { plan: p.id, period: billingPeriod };
     $("checkoutTitle").textContent = p.level > cur.level ? `${p.name} planına yükselt` : `${p.name} planına geç`;
     $("checkoutBody").innerHTML = `
@@ -947,8 +983,10 @@ function openCheckout(planId) {
             <dt>Mevcut plan</dt><dd>${esc(cur.name)}</dd>
             <dt>Yeni plan</dt><dd><b>${esc(p.name)}</b> · Seviye ${p.level}</dd>
             <dt>Dönem</dt><dd>${p.price_monthly ? (billingPeriod === "yearly" ? "Yıllık (365 gün)" : "Aylık (30 gün)") : "—"}</dd>
-            <dt>Tutar</dt><dd><b>${p.price_monthly ? tl(price) : "₺0"}</b></dd>
-        </dl>`;
+            <dt>Tutar</dt><dd><b>${money(price, currency)}</b></dd>
+            <dt>Bölge</dt><dd>${esc(det.name)} (IP adresinize göre)</dd>
+        </dl>
+        ${previewing ? `<p class="lock-note">Şu an ${esc(planCatalog.pricing.name)} fiyatlarını önizliyorsunuz; ödeme bulunduğunuz bölgenin (${esc(det.name)}) fiyatıyla alınır.</p>` : ""}`;
     openModal("checkoutModal");
 }
 
@@ -1222,6 +1260,11 @@ $("bellList").addEventListener("click", (e) => { const li = e.target.closest("li
 $("bellAlerts").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#bellPop")) $("bellPop").hidden = true; });
 
+$("regionSelect").addEventListener("change", (e) => {
+    pricingRegion = e.target.value;
+    try { localStorage.setItem(REGION_KEY, pricingRegion); } catch { /* yoksay */ }
+    loadPlans();
+});
 $("periodSeg").addEventListener("click", (e) => {
     const b = e.target.closest("[data-period]");
     if (!b) return;
@@ -1239,7 +1282,7 @@ $("checkoutConfirm").addEventListener("click", async () => {
     try {
         const r = await api("/api/billing/checkout", { method: "POST", body: pendingCheckout });
         closeModals();
-        toast(`${r.plan.name} planı etkinleşti${r.expires ? ` · ${r.expires.slice(0, 10)} tarihine kadar` : ""}.`);
+        toast(`${r.plan.name} planı etkinleşti${r.amount ? ` · ${money(r.amount, r.currency)}` : ""}${r.expires ? ` · ${r.expires.slice(0, 10)} tarihine kadar` : ""}.`);
         loadPlans();
     } catch (err) {
         toast(err.message, "err");
