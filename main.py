@@ -15,12 +15,12 @@ from urllib.parse import parse_qsl, quote
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from core import admin, ai, audit, auth, captcha, config, intel, monitor, oauth, plans, pricing, recon, verify
+from core import admin, ai, audit, auth, captcha, config, intel, mailer, monitor, oauth, paytr, plans, pricing, recon, verify
 from core.db_manager import (
     db_ok, delete_scans, get_recent_scans, get_scan_report, get_share_token, get_shared_report, get_user_reports,
     init_db, save_scan, set_share_token,
@@ -29,7 +29,7 @@ from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "8.2"
+VERSION = "9.0"
 CODENAME = "Cortex"
 STARTED_AT = time.time()
 
@@ -69,15 +69,19 @@ def _asset_version() -> str:
 
 templates.env.globals["asset_v"] = _asset_version()
 
-# Turnstile açıksa yalnızca Cloudflare'in doğrulama adresine izin verilir
+# Dış kaynaklara yalnızca ilgili özellik açıksa izin verilir: Turnstile (bot koruması) ve PayTR (ödeme iFrame'i)
 TURNSTILE_ORIGIN = "https://challenges.cloudflare.com"
-_ts = f" {TURNSTILE_ORIGIN}" if captcha.enabled() else ""
-_frames = TURNSTILE_ORIGIN if captcha.enabled() else "'none'"
+_scripts = [o for o, on in ((TURNSTILE_ORIGIN, captcha.enabled()), (paytr.ORIGIN, paytr.enabled())) if on]
+_ts = "".join(f" {o}" for o in _scripts)
+# PayTR iFrame'i ödeme bitince kendi sitemizdeki dönüş sayfasına (/odeme/sonuc) geçer: 'self' de gerekir
+_frames = " ".join((["'self'"] if paytr.enabled() else []) + _scripts) or "'none'"
 CSP = (
     f"default-src 'self'; script-src 'self'{_ts}; style-src 'self' 'unsafe-inline'; "
     f"font-src 'self'; img-src 'self' data: https:; connect-src 'self'{_ts}; frame-src {_frames}; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
+# Ödeme dönüş sayfası PayTR iFrame'inin içinde açılır: yalnızca kendi sitemizin çerçevelemesine izin verilir
+CSP_SELF_FRAME = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'")
 
 
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -166,6 +170,13 @@ active_scans = 0
 
 
 def client_ip(request: Request) -> str:
+    """Ziyaretçinin IP adresi. Cloudflare arkasında (TRUST_PROXY_IP) gerçek IP CF-Connecting-IP başlığındadır."""
+    if config.TRUST_PROXY_IP:
+        forwarded = request.headers.get("cf-connecting-ip", "").strip()
+        try:
+            return str(ipaddress.ip_address(forwarded))
+        except ValueError:
+            pass
     return request.client.host if request.client else "?"
 
 
@@ -232,7 +243,103 @@ async def login_page(request: Request, error: str = ""):
         "title": "ReconClaw | Giriş", "version": VERSION, "codename": CODENAME, "error": error[:200],
         "providers": oauth.provider_status(), "allow_signup": config.ALLOW_SIGNUP,
         "turnstile_key": config.TURNSTILE_SITE_KEY if captcha.enabled() else "",
+        "company": company_info(request), "reset_enabled": mailer.enabled(),
     })
+
+
+# ---------------------------------------------------------------- herkese açık sayfalar
+LEGAL_PAGES = {
+    "mesafeli-satis": "Mesafeli Satış Sözleşmesi",
+    "on-bilgilendirme": "Ön Bilgilendirme Formu",
+    "iade": "İptal ve İade Koşulları",
+    "kvkk": "KVKK Aydınlatma Metni",
+    "gizlilik": "Gizlilik ve Çerez Politikası",
+    "kullanim": "Kullanım Şartları",
+}
+LEGAL_UPDATED = "6 Ekim 2026"
+
+
+def company_info(request: Request) -> dict:
+    """Yasal sayfalarda ve iletişimde gösterilen satıcı bilgileri (.env: COMPANY_*)."""
+    return {
+        "name": config.COMPANY_NAME, "title": config.COMPANY_TITLE, "address": config.COMPANY_ADDRESS,
+        "phone": config.COMPANY_PHONE, "email": config.COMPANY_EMAIL, "tax_office": config.COMPANY_TAX_OFFICE,
+        "tax_no": config.COMPANY_TAX_NO, "mersis": config.COMPANY_MERSIS, "kep": config.COMPANY_KEP,
+        "site": _site_url(request), "year": datetime.now().year, "updated": LEGAL_UPDATED,
+        "payment": paytr.enabled(),
+    }
+
+
+def _public(request: Request, template: str, title: str, **extra):
+    return templates.TemplateResponse(request, template, {
+        "title": f"{title} | ReconClaw", "heading": title, "company": company_info(request),
+        "signed_in": optional_user(request) is not None,
+        "canonical": f"{_site_url(request)}{request.url.path}", **extra,
+    })
+
+
+def _fmt_money(value: float, currency: str) -> str:
+    if currency == "TRY":
+        return "₺" + f"{value:,.0f}".replace(",", ".") if value == int(value) else "₺" + f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return "€" + f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+@app.get("/yasal/{slug}", include_in_schema=False)
+async def legal_page(request: Request, slug: str):
+    if slug not in LEGAL_PAGES:
+        raise HTTPException(status_code=404, detail="Sayfa bulunamadı.")
+    return _public(request, f"legal/{slug}.html", LEGAL_PAGES[slug])
+
+
+@app.get("/iletisim", include_in_schema=False)
+async def contact_page(request: Request):
+    return _public(request, "contact.html", "İletişim")
+
+
+@app.get("/fiyatlandirma", include_in_schema=False)
+async def pricing_page(request: Request):
+    region = await visitor_region(request)
+    catalog = [p for p in plans.PLANS.values() if p.public]
+    prices = {p.id: {"monthly": _fmt_money(pricing.local_price(p.price_monthly, region), region["currency"]),
+                     "yearly": _fmt_money(pricing.local_price(p.price_monthly, region, yearly=True), region["currency"])}
+              for p in catalog}
+    return _public(request, "pricing.html", "Fiyatlandırma", plans=catalog, prices=prices, region=region,
+                   description="ReconClaw ağ keşfi ve risk analizi planları: Free, Pro, Pro Max, Ultra ve Ultra Max.")
+
+
+@app.get("/sifremi-unuttum", include_in_schema=False)
+async def forgot_page(request: Request):
+    if not mailer.enabled():
+        return RedirectResponse("/login", status_code=303)
+    return _public(request, "password.html", "Şifremi unuttum", token="",
+                   turnstile_key=config.TURNSTILE_SITE_KEY if captcha.enabled() else "")
+
+
+@app.get("/sifre-sifirla", include_in_schema=False)
+async def reset_page(request: Request, t: str = ""):
+    response = _public(request, "password.html", "Yeni parola", token=t[:100])
+    response.headers["Referrer-Policy"] = "no-referrer"  # jeton başka siteye sızmasın
+    response.headers["X-Robots-Tag"] = "noindex"
+    return response
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots(request: Request):
+    return PlainTextResponse(
+        "User-agent: *\n"
+        "Allow: /login\nAllow: /fiyatlandirma\nAllow: /iletisim\nAllow: /yasal/\n"
+        "Disallow: /api/\nDisallow: /share/\nDisallow: /reports/\nDisallow: /odeme/\nDisallow: /sifre-sifirla\n"
+        "Disallow: /docs\nDisallow: /redoc\nDisallow: /openapi.json\n")
+
+
+@app.get("/.well-known/security.txt", include_in_schema=False)
+async def security_txt(request: Request):
+    site = _site_url(request)
+    contact = config.COMPANY_EMAIL or ""
+    lines = [f"Contact: mailto:{contact}" if contact else f"Contact: {site}/iletisim",
+             f"Expires: {datetime.now().year + 1}-12-31T23:59:59Z", "Preferred-Languages: tr, en",
+             f"Canonical: {site}/.well-known/security.txt", f"Policy: {site}/yasal/kullanim"]
+    return PlainTextResponse("\n".join(lines) + "\n")
 
 
 @app.get("/reports/{scan_id}", include_in_schema=False)
@@ -282,16 +389,19 @@ class Credentials(BaseModel):
 
 class Registration(Credentials):
     name: str = Field("", max_length=80)
+    accept_terms: bool | None = None  # arayüz Kullanım Şartları / KVKK onayını gönderir
 
 
 @app.post("/auth/register", tags=["auth"])
 async def register(body: Registration, request: Request, response: Response):
     if not login_limiter.allow(("register", client_ip(request))):
         raise HTTPException(status_code=429, detail="Çok fazla deneme. Birkaç dakika sonra tekrar deneyin.")
+    if body.accept_terms is False:
+        raise HTTPException(status_code=400, detail="Kayıt için Kullanım Şartları'nı kabul etmeniz gerekiyor.")
     await captcha.check(body.captcha, body.website, client_ip(request))
     user_id = await run_in_threadpool(auth.create_user, body.email, body.name, body.password)
     start_session(response, request, user_id, body.remember)
-    audit.log("register", user_id, ip=client_ip(request))
+    audit.log("register", user_id, detail="şartlar onaylandı" if body.accept_terms else "", ip=client_ip(request))
     return {"ok": True, "user": auth.public_user(auth.get_user(user_id))}
 
 
@@ -310,6 +420,50 @@ async def login(body: Credentials, request: Request, response: Response):
     start_session(response, request, user_id, body.remember)
     audit.log("login", user_id, ip=client_ip(request))
     return {"ok": True, "user": auth.public_user(auth.get_user(user_id))}
+
+
+class ForgotRequest(BaseModel):
+    email: str = Field(..., max_length=254)
+    captcha: str | None = Field(None, max_length=2048)
+    website: str | None = Field(None, max_length=200)
+
+
+class ResetRequest(BaseModel):
+    token: str = Field(..., min_length=20, max_length=100)
+    password: str = Field(..., max_length=256)
+
+
+RESET_SENT = "Bu adrese kayıtlı bir hesap varsa sıfırlama bağlantısı gönderildi. Gelen kutunuzu (ve spam klasörünü) kontrol edin."
+
+
+@app.post("/auth/forgot", tags=["auth"])
+async def forgot_password(body: ForgotRequest, request: Request):
+    """Şifre sıfırlama bağlantısı gönderir. Hesabın var olup olmadığı yanıttan anlaşılmaz."""
+    if not mailer.enabled():
+        raise HTTPException(status_code=404, detail="Not Found")
+    if not login_limiter.allow(("forgot", client_ip(request)), 5):
+        raise HTTPException(status_code=429, detail="Çok fazla deneme. Birkaç dakika sonra tekrar deneyin.")
+    await captcha.check(body.captcha, body.website, client_ip(request))
+    result = await run_in_threadpool(auth.create_reset_token, body.email)
+    if result is not None:
+        user, token = result
+        link = f"{_site_url(request)}/sifre-sifirla?t={token}"
+        text = (f"Merhaba {user['name'] or ''},\n\nReconClaw hesabınız için parola sıfırlama isteği aldık. "
+                f"Yeni parola belirlemek için aşağıdaki bağlantıyı açın (30 dakika geçerlidir, tek kullanımlıktır):\n\n"
+                f"{link}\n\nBu isteği siz yapmadıysanız bu e-postayı yok sayabilirsiniz; parolanız değişmez.\n\n"
+                f"İstek IP adresi: {client_ip(request)}\n— {config.COMPANY_NAME}")
+        await run_in_threadpool(mailer.send, user["email"], "ReconClaw parola sıfırlama", text)
+        audit.log("password_reset_request", user["id"], ip=client_ip(request))
+    return {"ok": True, "message": RESET_SENT}
+
+
+@app.post("/auth/reset", tags=["auth"])
+async def reset_password(body: ResetRequest, request: Request):
+    if not login_limiter.allow(("reset", client_ip(request))):
+        raise HTTPException(status_code=429, detail="Çok fazla deneme. Birkaç dakika sonra tekrar deneyin.")
+    user_id = await run_in_threadpool(auth.reset_with_token, body.token, body.password)
+    audit.log("password_reset", user_id, ip=client_ip(request))
+    return {"ok": True}
 
 
 @app.post("/auth/logout", tags=["auth"])
@@ -662,6 +816,7 @@ async def stats(user=Depends(current_user)):
 class CheckoutRequest(BaseModel):
     plan: str = Field(..., examples=["pro"])
     period: str = Field("monthly", pattern="^(monthly|yearly)$")
+    accept_terms: bool = False  # Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi onayı
 
 
 class TargetRequest(BaseModel):
@@ -688,7 +843,8 @@ async def list_plans(request: Request, country: str = ""):
         if region["currency"] != "TRY":
             await pricing.refresh_rates()
     catalog = list(plans.PLANS.values())
-    return {"plans": [p.to_dict() for p in catalog], "currency": region["currency"], "payment_mode": "demo",
+    return {"plans": [p.to_dict() for p in catalog], "currency": region["currency"],
+            "payment_mode": "paytr" if paytr.enabled() else "demo",
             "pricing": pricing.price_list(catalog, region), "detected": detected,
             "checkout_pricing": pricing.price_list(catalog, detected),
             "regions": pricing.supported_regions(),
@@ -707,11 +863,81 @@ async def billing_checkout(body: CheckoutRequest, request: Request, user=Depends
     if plans.is_admin(user):
         raise HTTPException(status_code=400, detail="Yönetici hesapları zaten sınırsız; ödeme akışını denemek için normal bir hesap kullanın.")
     region = await visitor_region(request)  # ödeme her zaman IP'den tespit edilen bölgenin fiyatıyla
+    if paytr.enabled() and body.plan != "free":
+        return await paytr_checkout(body, request, user, region)
     result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period, region)
     audit.log("plan_checkout", user["id"],
               detail=f"{body.plan} · {body.period} · {result['amount']} {result['currency']} ({region['country']})",
               ip=client_ip(request))
     return {**result, **plans.subscription(auth.get_user(user["id"]))}
+
+
+def _site_url(request: Request) -> str:
+    return config.PUBLIC_URL or str(request.base_url).rstrip("/")
+
+
+async def paytr_checkout(body: CheckoutRequest, request: Request, user, region: dict) -> dict:
+    """Gerçek ödeme: bekleyen sipariş oluşturulur, PayTR'den güvenli ödeme iFrame adresi alınır.
+    Plan burada DEĞİL, PayTR'nin imzalı bildirimi geldiğinde etkinleşir."""
+    if not body.accept_terms:
+        raise HTTPException(status_code=400, detail="Devam etmek için Ön Bilgilendirme Formu ve Mesafeli Satış "
+                                                    "Sözleşmesi'ni onaylamanız gerekiyor.")
+    order = await run_in_threadpool(plans.create_pending, user["id"], body.plan, body.period, region)
+    site = _site_url(request)
+    fields = paytr.token_fields(
+        merchant_oid=order["merchant_oid"], email=user["email"], amount=order["amount"],
+        currency=order["currency"], user_ip=client_ip(request),
+        item_name=f"ReconClaw {order['plan'].name} ({'Yıllık' if body.period == 'yearly' else 'Aylık'})",
+        user_name=user["name"] or user["email"],
+        ok_url=f"{site}/odeme/sonuc?durum=basarili", fail_url=f"{site}/odeme/sonuc?durum=basarisiz")
+    try:
+        iframe_url = await paytr.get_iframe_url(fields)
+    except paytr.PaymentError as exc:
+        await run_in_threadpool(plans.complete_payment, order["merchant_oid"], False, None, str(exc))
+        raise HTTPException(status_code=502, detail=str(exc))
+    audit.log("plan_checkout", user["id"],
+              detail=f"{body.plan} · {body.period} · {order['amount']} {order['currency']} ({region['country']}) "
+                     f"· PayTR {order['merchant_oid']}", ip=client_ip(request))
+    return {"mode": "paytr", "iframe_url": iframe_url, "merchant_oid": order["merchant_oid"],
+            "amount": order["amount"], "currency": order["currency"], "resizer": paytr.RESIZER_JS}
+
+
+@app.post("/odeme/paytr/bildirim", include_in_schema=False)
+async def paytr_notify(request: Request):
+    """PayTR Bildirim URL'si (sunucudan sunucuya). İmza doğrulanmadan hiçbir işlem yapılmaz;
+    PayTR yalnızca düz metin "OK" yanıtını kabul eder, aksi halde bildirimi tekrar gönderir."""
+    form = dict(parse_qsl((await request.body()).decode("utf-8", "replace"), keep_blank_values=True))
+    if not paytr.enabled() or not paytr.verify_callback(form):
+        audit.log("payment_bad_hash", None, detail=form.get("merchant_oid", "")[:64], ip=client_ip(request))
+        return PlainTextResponse("PAYTR notification failed: bad hash", status_code=400)
+    if form.get("test_mode") == "1" and not config.PAYTR_TEST_MODE:
+        return PlainTextResponse("OK")  # canlı mağazada test bildirimi plan açmaz
+    success = form.get("status") == "success"
+    try:
+        paid_minor = int(form.get("payment_amount") or form.get("total_amount") or 0)
+    except ValueError:
+        paid_minor = None
+    note = "" if success else f"{form.get('failed_reason_code', '')} {form.get('failed_reason_msg', '')}".strip()
+    row = await run_in_threadpool(plans.complete_payment, form["merchant_oid"], success, paid_minor, note)
+    if row is not None and row["status"] in ("paid", "failed"):
+        audit.log("payment_paid" if row["status"] == "paid" else "payment_failed", row["user_id"],
+                  detail=f"{row['plan']} · {row['amount']} {row['currency']} · {form['merchant_oid']}"
+                         + (f" · {row.get('note') or note}" if row["status"] == "failed" else ""),
+                  ip=client_ip(request))
+    return PlainTextResponse("OK")
+
+
+@app.get("/odeme/sonuc", include_in_schema=False)
+async def payment_result(request: Request, durum: str = ""):
+    """PayTR iFrame'i ödeme bitince buraya döner; sayfa üst pencereyi uygulamaya yönlendirir.
+    Bu sayfa ödemenin kanıtı değildir — plan yalnızca imzalı bildirimle açılır."""
+    ok = durum == "basarili"
+    response = templates.TemplateResponse(request, "payment_result.html", {
+        "title": "ReconClaw | Ödeme", "ok": ok, "next": f"/?odeme={'basarili' if ok else 'basarisiz'}#plans",
+    })
+    response.headers["Content-Security-Policy"] = CSP_SELF_FRAME
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    return response
 
 
 @app.post("/api/billing/cancel", tags=["billing"])
@@ -902,4 +1128,6 @@ async def health():
 if __name__ == "__main__":
     host, port = config.env("HOST", "127.0.0.1"), int(config.env("PORT", "8000"))
     print(f"\n🦝 ReconClaw v{VERSION} {CODENAME} -> http://{host}:{port}\n")
-    uvicorn.run("main:app", host=host, port=port, proxy_headers=True, forwarded_allow_ips="*")
+    # X-Forwarded-For yalnızca önümüzdeki vekil sunucudan (Caddy / Nginx) kabul edilir; "*" başlığı sahtelemeye açar
+    uvicorn.run("main:app", host=host, port=port, proxy_headers=True,
+                forwarded_allow_ips=config.env("FORWARDED_ALLOW_IPS", "127.0.0.1") or "127.0.0.1")

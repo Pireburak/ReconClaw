@@ -938,10 +938,16 @@ function renderRegionSelect() {
     sel.title = pr.currency === "TRY" ? "Türkiye fiyatları" : `1 ${pr.currency} = ${pr.rate.toFixed(2)} TL · kaynak: ${pr.rate_source}`;
 }
 
+const PAY_STATUS = { paid: ["ÖDENDİ", "risk-low"], pending: ["BEKLİYOR", "sev-medium"], failed: ["BAŞARISIZ", "sev-high"], demo: ["DEMO", "sev-info"] };
+function payBadge(status) {
+    const [label, cls] = PAY_STATUS[status] || [String(status).toUpperCase(), "sev-info"];
+    return `<span class="badge ${cls}">${esc(label)}</span>`;
+}
+
 function renderPayments(list) {
     $("paymentList").innerHTML = list.length
         ? list.map((p) => `<tr><td>${p.id}</td><td>${esc(p.created_at)}</td><td>${esc(planCatalog.plans.find((x) => x.id === p.plan)?.name || p.plan)}</td>
-            <td>${p.period === "yearly" ? "Yıllık" : "Aylık"}</td><td>${money(p.amount, p.currency || "TRY")}${p.country && p.country !== "TR" ? ` <span class="muted small">${esc(p.country)}</span>` : ""}</td><td><span class="badge sev-info">${esc(p.status.toUpperCase())}</span></td></tr>`).join("")
+            <td>${p.period === "yearly" ? "Yıllık" : "Aylık"}</td><td>${money(p.amount, p.currency || "TRY")}${p.country && p.country !== "TR" ? ` <span class="muted small">${esc(p.country)}</span>` : ""}</td><td>${payBadge(p.status)}</td></tr>`).join("")
         : '<tr><td colspan="6" class="empty">Kayıt yok.</td></tr>';
 }
 
@@ -985,7 +991,43 @@ function openCheckout(planId) {
             <dt>Bölge</dt><dd>${esc(det.name)} (IP adresinize göre)</dd>
         </dl>
         ${previewing ? `<p class="lock-note">Şu an ${esc(planCatalog.pricing.name)} fiyatlarını önizliyorsunuz; ödeme bulunduğunuz bölgenin (${esc(det.name)}) fiyatıyla alınır.</p>` : ""}`;
+    const real = planCatalog.payment_mode === "paytr" && p.price_monthly > 0;
+    $("checkoutConsentRow").hidden = !real;
+    $("checkoutConsent").checked = false;
+    $("checkoutNote").textContent = real
+        ? "Ödeme PayTR güvenli ödeme sayfasında alınır; kart bilgileriniz ReconClaw'a ulaşmaz ve saklanmaz. Plan, ödeme onaylanınca otomatik etkinleşir."
+        : "Demo ödeme modu: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir.";
+    $("paytrBox").hidden = true;
+    $("paytrBox").innerHTML = "";
+    $("checkoutModal").querySelector(".shortcuts").classList.remove("wide");
+    $("checkoutActions").hidden = false;
+    $("checkoutConfirm").textContent = real ? "ÖDEMEYE GEÇ" : "ONAYLA";
     openModal("checkoutModal");
+}
+
+// PayTR güvenli ödeme iFrame'i (yükseklik, PayTR'nin iframeResizer betiğiyle ayarlanır)
+function showPaytr(r) {
+    const box = $("paytrBox");
+    box.innerHTML = "";
+    const frame = document.createElement("iframe");
+    frame.id = "paytriframe";
+    frame.src = r.iframe_url;
+    frame.title = "PayTR güvenli ödeme";
+    frame.setAttribute("frameborder", "0");
+    frame.setAttribute("scrolling", "no");
+    box.appendChild(frame);
+    box.hidden = false;
+    box.closest(".shortcuts").classList.add("wide");
+    $("checkoutActions").hidden = true;
+    $("checkoutConsentRow").hidden = true;
+    const resize = () => window.iFrameResize && window.iFrameResize({}, "#paytriframe");
+    if (window.iFrameResize) resize();
+    else if (r.resizer) {
+        const s = document.createElement("script");
+        s.src = r.resizer;
+        s.onload = resize;
+        document.head.appendChild(s);
+    }
 }
 
 // ------------------------------------------------------------------ ayarlar
@@ -1278,7 +1320,13 @@ $("checkoutConfirm").addEventListener("click", async () => {
     if (!pendingCheckout) return;
     $("checkoutConfirm").disabled = true;
     try {
-        const r = await api("/api/billing/checkout", { method: "POST", body: pendingCheckout });
+        const body = { ...pendingCheckout, accept_terms: $("checkoutConsent").checked };
+        if (!$("checkoutConsentRow").hidden && !body.accept_terms) {
+            toast("Devam etmek için sözleşmeleri onaylayın.", "err");
+            return;
+        }
+        const r = await api("/api/billing/checkout", { method: "POST", body });
+        if (r.mode === "paytr") { showPaytr(r); return; }
         closeModals();
         toast(`${r.plan.name} planı etkinleşti${r.amount ? ` · ${money(r.amount, r.currency)}` : ""}${r.expires ? ` · ${r.expires.slice(0, 10)} tarihine kadar` : ""}.`);
         loadPlans();
@@ -1432,6 +1480,20 @@ loadSubscription();
 loadAlerts();
 route();
 tick();
+// PayTR dönüşü: /?odeme=basarili#plans (plan, imzalı bildirim gelince etkinleşir; birkaç saniye sürebilir)
+(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("odeme");
+    if (!result) return;
+    history.replaceState(null, "", window.location.pathname + window.location.hash);
+    if (result === "basarili") {
+        toast("Ödemeniz alındı. Planınız onaylandıktan sonra birkaç saniye içinde etkinleşir.");
+        setTimeout(loadSubscription, 4000);
+        setTimeout(loadSubscription, 12000);
+    } else {
+        toast("Ödeme tamamlanamadı. Kartınızdan çekim yapılmadı; tekrar deneyebilirsiniz.", "err");
+    }
+})();
 setInterval(() => { if (!document.hidden) loadAlerts(); }, 60000);
 setInterval(tick, 1000);
 // Genel bakış açıkken istatistikler ve olay akışı her 15 sn'de yenilenir

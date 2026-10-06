@@ -508,7 +508,13 @@ pre.code { margin: 0; padding: 11px; overflow-x: auto; font-size: .7rem; backgro
 .palette-list .item.sel { background: var(--panel-2); border-left-color: var(--cyan); }
 .palette-list .none { padding: 22px; text-align: center; color: var(--muted); }
 .palette-foot { display: flex; gap: 14px; padding: 7px 14px; font-size: .6rem; color: var(--muted); border-top: 1px solid var(--line); }
-.shortcuts { width: min(500px, 100%); padding: 18px 20px; }
+.shortcuts { width: min(500px, 100%); padding: 18px 20px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.shortcuts.wide { width: min(760px, 100%); }
+.paytr-box { margin-top: 12px; background: #fff; }
+.paytr-box iframe { display: block; width: 100%; min-height: 560px; border: 0; }
+.consent { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0; font-size: .72rem; line-height: 1.5; color: var(--muted); }
+.consent input { margin-top: 3px; flex: none; }
+.consent a { color: var(--cyan); }
 .shortcuts h3 { margin: 0 0 12px; font-size: 1rem; letter-spacing: .14em; }
 .shortcuts dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; font-size: .76rem; }
 
@@ -862,3 +868,38 @@ tr.warn-row td:nth-child(2) { color: var(--red); }
 .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .cf-turnstile { margin: 4px 0 12px; min-height: 65px; }
 .badge.owner-badge { color: #1d1b17; background: var(--yellow); letter-spacing: .16em; }
+
+/* ---------------------------------------------------------------- herkese açık sayfalar (yasal, fiyat, iletişim) */
+body.public { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.pub-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.pub-head .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.pub-nav { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; font-size: .78rem; }
+.pub-nav a:not(.btn) { color: var(--muted); text-decoration: none; }
+.pub-nav a:not(.btn):hover { color: var(--cyan); }
+.pub-main { flex: 1; padding: 32px 16px 48px; }
+.doc { max-width: 820px; margin: 0 auto; line-height: 1.7; font-size: .86rem; }
+.doc.wide { max-width: 1180px; }
+.doc.narrow { max-width: 440px; }
+.doc h1 { font-size: 1.6rem; margin: 4px 0 18px; }
+.doc h2 { font-size: 1rem; margin: 26px 0 8px; color: var(--cyan); }
+.doc a { color: var(--cyan); }
+.doc ul { padding-left: 20px; }
+.doc-kicker { margin: 0; font-size: .64rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.legal-facts { margin: 10px 0 14px; }
+.missing { color: var(--yellow); font-style: italic; }
+.doc-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.doc-table th, .doc-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.price-table { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 22px 0; }
+.price-card { border: 1px solid var(--line-2); background: var(--panel-2); padding: 16px; }
+.price-card.featured { border-top: 2px solid var(--cyan); }
+.price-card h2 { margin: 0; color: var(--text); }
+.price-card .price { font-size: 1.5rem; font-weight: 700; margin: 10px 0 0; }
+.price-card .price span { font-size: .75rem; font-weight: 400; color: var(--muted); }
+.price-card ul { padding-left: 16px; font-size: .76rem; }
+.pub-foot { border-top: 1px solid var(--line); padding: 18px 16px; text-align: center; font-size: .66rem; color: var(--muted); }
+.pub-foot nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-bottom: 8px; }
+.pub-foot a { color: var(--muted); }
+.pub-foot a:hover { color: var(--cyan); }
+body.access .pub-foot { position: relative; z-index: 2; border-top: 0; padding-bottom: 46px; }
+.form-ok { padding: 10px 12px; border-left: 2px solid var(--green); background: var(--panel-2); }
+.pay-result { align-items: center; justify-content: center; padding: 24px; text-align: center; }

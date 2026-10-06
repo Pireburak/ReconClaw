@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    {% if description %}<meta name="description" content="{{ description }}">{% endif %}
+    {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+    <link rel="icon" href="{{ url_for('static', path='favicon.png') }}?v={{ asset_v }}" type="image/png">
+    <script src="{{ url_for('static', path='js/theme.js') }}?v={{ asset_v }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}?v={{ asset_v }}">
+</head>
+<body class="public">
+<header class="pub-head">
+    <a class="brand" href="/">
+        <img class="brand-logo" src="{{ url_for('static', path='img/logo.png') }}?v={{ asset_v }}" alt="" width="30" height="30">
+        <span class="brand-name">RECONCLAW</span>
+    </a>
+    <nav class="pub-nav" aria-label="Site">
+        <a href="/fiyatlandirma">Fiyatlandırma</a>
+        <a href="/iletisim">İletişim</a>
+        <a class="btn sm primary" href="/login">{{ 'PANELE GİT' if signed_in else 'GİRİŞ / KAYIT' }}</a>
+    </nav>
+</header>
+<main class="pub-main">
+{% block content %}{% endblock %}
+</main>
+{% include "_footer.html" %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

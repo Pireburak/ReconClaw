@@ -14,6 +14,7 @@ function setMode(next) {
     const register = mode === "register";
     $("nameField").hidden = !register;
     $("strengthBox").hidden = !register;
+    $("termsRow").hidden = !register;
     $("password").autocomplete = register ? "new-password" : "current-password";
     $("submitText").textContent = register ? "KAYDI OLUŞTUR" : "ERİŞİM İSTE";
     $("authTitle").textContent = register ? "Yeni operatör kaydı" : "Erişim terminali";
@@ -70,7 +71,11 @@ $("authForm").addEventListener("submit", async (event) => {
         if (!ts.value) return showError("Lütfen robot olmadığınızı doğrulayın.");
         body.captcha = ts.value;
     }
-    if (mode === "register") body.name = $("name").value.trim();
+    if (mode === "register") {
+        if (!$("acceptTerms").checked) return showError("Kayıt için Kullanım Şartları'nı kabul etmeniz gerekiyor.");
+        body.name = $("name").value.trim();
+        body.accept_terms = true;
+    }
 
     const btn = $("submitBtn");
     btn.disabled = true;

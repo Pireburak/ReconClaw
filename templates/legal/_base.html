@@ -1,0 +1,21 @@
+{% extends "public.html" %}
+{% macro v(value) %}{% if value %}{{ value }}{% else %}<span class="missing">(belirtilecek)</span>{% endif %}{% endmacro %}
+{% macro seller() %}
+<dl class="facts legal-facts">
+    <dt>Unvan</dt><dd>{{ v(company.title) }}</dd>
+    <dt>Adres</dt><dd>{{ v(company.address) }}</dd>
+    <dt>Telefon</dt><dd>{{ v(company.phone) }}</dd>
+    <dt>E-posta</dt><dd>{{ v(company.email) }}</dd>
+    <dt>Vergi dairesi / no</dt><dd>{{ v(company.tax_office) }} / {{ v(company.tax_no) }}</dd>
+    {% if company.mersis %}<dt>MERSİS no</dt><dd>{{ company.mersis }}</dd>{% endif %}
+    {% if company.kep %}<dt>KEP adresi</dt><dd>{{ company.kep }}</dd>{% endif %}
+    <dt>Web sitesi</dt><dd>{{ company.site }}</dd>
+</dl>
+{% endmacro %}
+{% block content %}
+<article class="doc">
+    <p class="doc-kicker">Yasal · Son güncelleme: {{ company.updated }}</p>
+    <h1>{{ heading }}</h1>
+    {% block doc %}{% endblock %}
+</article>
+{% endblock %}

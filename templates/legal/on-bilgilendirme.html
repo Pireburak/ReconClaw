@@ -1,0 +1,28 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<p>6502 sayılı Kanun ve Mesafeli Sözleşmeler Yönetmeliği'nin 5. maddesi gereğince, sözleşme kurulmadan önce aşağıdaki
+bilgiler Alıcı'ya sunulur.</p>
+<h2>1. Satıcı bilgileri</h2>
+{{ seller() }}
+<h2>2. Hizmetin temel nitelikleri</h2>
+<p>ReconClaw; ağ keşfi, port tarama, risk puanlama, raporlama, sürekli izleme ve plana göre değişen ek özellikler sunan,
+web tarayıcısı üzerinden kullanılan bir siber güvenlik yazılım hizmetidir. Planların kapsamı ve sınırları
+<a href="/fiyatlandirma">Fiyatlandırma</a> sayfasında ayrıntılı olarak yer alır.</p>
+<h2>3. Fiyat ve ödeme</h2>
+<ul>
+    <li>Fiyatlar vergiler dahildir. Ödeme ekranında gösterilen toplam tutar, Alıcı'dan tahsil edilecek nihai tutardır;
+        ek kargo veya teslim ücreti yoktur.</li>
+    <li>Türkiye'den ödemeler TL, yurt dışından ödemeler EUR cinsinden alınır. Yurt dışı fiyatı, ilgili TL fiyatı esas
+        alınarak güncel kurla hesaplanır.</li>
+    <li>Ödeme yalnızca kredi / banka kartıyla, PayTR güvenli ödeme sayfasında tek çekimle alınır.</li>
+</ul>
+<h2>4. İfa</h2>
+<p>Hizmet, ödeme onayından sonra Alıcı'nın hesabında anında etkinleşir ve seçilen dönem (30 veya 365 gün) boyunca geçerlidir.
+Abonelik otomatik yenilenmez.</p>
+<h2>5. Cayma hakkı</h2>
+<p>Elektronik ortamda anında ifa edilen hizmet niteliğinde olduğundan, Yönetmeliğin 15/1-(ğ) maddesi uyarınca <b>cayma hakkı
+bulunmamaktadır</b>. Ayrıntılar: <a href="/yasal/iade">İptal ve İade Koşulları</a>.</p>
+<h2>6. Şikâyet ve itiraz</h2>
+<p>Talepler {{ v(company.email) }} adresine iletilebilir. Uyuşmazlıklarda Tüketici Hakem Heyetleri ve Tüketici Mahkemeleri
+yetkilidir.</p>
+{% endblock %}

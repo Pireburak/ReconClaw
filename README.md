@@ -1,12 +1,12 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v8.2 Cortex</h1>
+<h1 align="center">🦝 ReconClaw v9.0 Cortex</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Sürekli Saldırı Yüzeyi İzleme ve Yapay Zekâ Destekli Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v8.2%20Cortex-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-v9.0%20Cortex-E8751A?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
@@ -763,6 +763,9 @@ docker compose up -d --build
 
 Site birkaç dakika içinde `https://reconclaw.alanadiniz.com` adresinde açılır. İlk hesabınızı oluşturduktan sonra yabancıların kayıt olmasını istemiyorsanız `.env` içinde `ALLOW_SIGNUP=false` yapıp `docker compose up -d` ile yeniden başlatın.
 
+> [!IMPORTANT]
+> Canlı yayın kontrol listesi, Cloudflare ayarları ve **PayTR ile gerçek ödeme kurulumu** adım adım: [docs/YAYIN.md](docs/YAYIN.md)
+
 > [!TIP]
 > Öğrenciyseniz **GitHub Student Developer Pack** ile ücretsiz alan adı ve bulut sunucu kredisi alabilirsiniz.
 
@@ -856,7 +859,20 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 🛡️ v8.2 Cortex *(mevcut sürüm)*
+### 💳 v9.0 Cortex *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| Gerçek ödeme (PayTR) | iFrame API: kart bilgisi ReconClaw'a hiç gelmez; plan yalnızca imzası doğrulanmış bildirimle etkinleşir, tekrar eden bildirimler ve eksik tutar reddedilir |
+| Yasal sayfalar | Mesafeli Satış Sözleşmesi, Ön Bilgilendirme, İptal ve İade, KVKK Aydınlatma, Gizlilik ve Çerezler, Kullanım Şartları (`COMPANY_*` ile dolar) |
+| Herkese açık sayfalar | `/fiyatlandirma`, `/iletisim`, `robots.txt`, `/.well-known/security.txt` |
+| Onaylar | Kayıtta Kullanım Şartları / KVKK, ödemede Ön Bilgilendirme ve Mesafeli Satış onayı |
+| Şifremi unuttum | SMTP ile 30 dakika geçerli, tek kullanımlık sıfırlama bağlantısı |
+| Gerçek IP | Cloudflare arkasında `CF-Connecting-IP` (`TRUST_PROXY_IP`), `X-Forwarded-For` yalnızca güvenilen vekilden |
+
+Yayın ve PayTR kurulumu: [docs/YAYIN.md](docs/YAYIN.md)
+
+### 🛡️ v8.2 Cortex
 
 | Özellik | Açıklama |
 |---------|----------|
@@ -961,7 +977,9 @@ ReconClaw/
 ├── main.py                 # FastAPI uygulaması: sayfalar, API, güvenlik başlıkları, hız sınırı, zamanlayıcı
 ├── core/
 │   ├── config.py           # .env / ortam değişkeni ayarları
-│   ├── plans.py            # Abonelik planları, kotalar, demo ödeme
+│   ├── plans.py            # Abonelik planları, kotalar, sipariş / ödeme kayıtları
+│   ├── paytr.py            # v9: PayTR iFrame API (jeton, imzalı bildirim doğrulama)
+│   ├── mailer.py           # v9: SMTP e-posta (şifre sıfırlama)
 │   ├── pricing.py          # v8.1: IP'ye göre Türkiye (TL) / yurt dışı (Euro) fiyatı
 │   ├── captcha.py          # v8.2: Cloudflare Turnstile + bal küpü bot koruması
 │   ├── verify.py           # Hedef sahipliği doğrulama (DNS TXT / .well-known)

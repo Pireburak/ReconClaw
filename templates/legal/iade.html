@@ -1,0 +1,23 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<h2>Cayma hakkı</h2>
+<p>ReconClaw abonelikleri elektronik ortamda anında ifa edilen hizmetlerdir. Mesafeli Sözleşmeler Yönetmeliği'nin 15/1-(ğ)
+maddesi gereğince, ödeme ekranında hizmetin hemen ifasına başlanmasını onaylamanızla birlikte cayma hakkı sona erer.</p>
+<h2>İade yapılan durumlar</h2>
+<p>Aşağıdaki durumlarda ödemenin tamamı, talebin bize ulaşmasından itibaren en geç <b>14 gün</b> içinde, ödemenin yapıldığı
+karta iade edilir:</p>
+<ul>
+    <li>Ödeme alındığı halde planın hesabınızda hiç etkinleşmemesi ve sorunun 48 saat içinde giderilememesi,</li>
+    <li>Aynı sipariş için mükerrer (çift) çekim yapılması,</li>
+    <li>Hizmetin Satıcı kaynaklı nedenlerle abonelik süresinin yarısından fazlası boyunca kullanılamaz olması
+        (bu durumda kullanılamayan süreye düşen tutar iade edilir).</li>
+</ul>
+<p>Kartınıza yansıma süresi bankanıza göre değişebilir.</p>
+<h2>Aboneliğin sonlandırılması</h2>
+<p>Abonelik otomatik yenilenmediği için ayrıca iptal etmeniz gerekmez; süre bitiminde hesabınız ücretsiz plana döner.
+Hesabınızı dilediğiniz an Ayarlar sayfasından silebilirsiniz. Süre dolmadan Free plana geçmek veya hesabı silmek, yukarıdaki
+durumlar dışında kalan süre için iade doğurmaz.</p>
+<h2>Başvuru</h2>
+<p>İade talebinizi, sipariş numaranız (Abonelik sayfasındaki ödeme geçmişinde yer alır) ve hesabınızın e-posta adresiyle
+birlikte {{ v(company.email) }} adresine iletin.</p>
+{% endblock %}

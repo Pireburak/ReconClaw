@@ -1,0 +1,25 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<h2>Özet</h2>
+<ul>
+    <li>Kart bilgilerinizi görmeyiz ve saklamayız; ödeme PayTR'nin güvenli sayfasında alınır.</li>
+    <li>Parolanız geri döndürülemez biçimde (scrypt) özetlenerek saklanır; düz metin parola tutulmaz.</li>
+    <li>Verilerinizi reklam amacıyla kullanmayız, satmayız ve üçüncü kişilerle pazarlama amacıyla paylaşmayız.</li>
+    <li>Tarama sonuçlarınız yalnızca size aittir; siz paylaşım bağlantısı oluşturmadıkça kimse göremez.</li>
+</ul>
+<h2>Çerezler</h2>
+<p>Sitede yalnızca hizmetin çalışması için zorunlu çerezler kullanılır; analitik veya reklam çerezi yoktur.</p>
+<table class="doc-table">
+    <thead><tr><th>Çerez</th><th>Amaç</th><th>Süre</th></tr></thead>
+    <tbody>
+        <tr><td>rc_session</td><td>Oturumunuzu açık tutar (HttpOnly, Secure)</td><td>Beni hatırla seçiliyse 7 gün, değilse tarayıcı kapanana kadar</td></tr>
+        <tr><td>Cloudflare çerezleri</td><td>Bot koruması ve saldırı önleme (Turnstile / güvenlik duvarı)</td><td>Cloudflare politikasına göre</td></tr>
+        <tr><td>PayTR çerezleri</td><td>Yalnızca ödeme sayfasında, ödeme güvenliği için</td><td>PayTR politikasına göre</td></tr>
+    </tbody>
+</table>
+<p>Tema tercihiniz gibi arayüz ayarları çerez değil, tarayıcınızın yerel depolamasında tutulur ve sunucuya gönderilmez.</p>
+<h2>Güvenlik</h2>
+<p>Tüm trafik HTTPS ile şifrelenir. Güvenlik açığı bildirimleri için <a href="/.well-known/security.txt">security.txt</a>
+dosyasındaki iletişim adresini kullanabilirsiniz.</p>
+<p>Kişisel verilerinizin işlenmesine ilişkin ayrıntılar: <a href="/yasal/kvkk">KVKK Aydınlatma Metni</a>.</p>
+{% endblock %}

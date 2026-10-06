@@ -96,7 +96,14 @@
                 </div>
                 <div class="row-between">
                     <label class="check" style="padding:0"><input type="checkbox" id="remember" checked> Beni hatırla</label>
+                    {% if reset_enabled %}<a class="small" id="forgotLink" href="/sifremi-unuttum">Şifremi unuttum</a>{% endif %}
                 </div>
+                <label class="consent" id="termsRow" hidden>
+                    <input type="checkbox" id="acceptTerms">
+                    <span><a href="/yasal/kullanim" target="_blank" rel="noopener">Kullanım Şartları</a>'nı kabul ediyorum;
+                    <a href="/yasal/kvkk" target="_blank" rel="noopener">KVKK Aydınlatma Metni</a>'ni ve
+                    <a href="/yasal/gizlilik" target="_blank" rel="noopener">Gizlilik Politikası</a>'nı okudum.</span>
+                </label>
                 <!-- Bal küpü: ekranda görünmez, yalnızca botlar doldurur -->
                 <div class="hp" aria-hidden="true"><label>Web siteniz <input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></label></div>
                 {% if turnstile_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_key }}" data-theme="auto" data-language="tr"></div>{% endif %}
@@ -125,6 +132,7 @@
     </div>
 </main>
 
+{% include "_footer.html" %}
 <div class="classbar bottom" role="note">GİZLİ <span>// RECONCLAW // DAĞITIM: SINIRLI //</span> GİZLİ</div>
 <script src="{{ url_for('static', path='js/smoke.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/login.js') }}?v={{ asset_v }}"></script>
