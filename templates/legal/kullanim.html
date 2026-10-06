@@ -1,0 +1,29 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<h2>1. Kabul</h2>
+<p>{{ company.site }} adresindeki ReconClaw hizmetine kayıt olarak bu şartları kabul etmiş olursunuz.</p>
+<h2>2. Yetkili kullanım (önemli)</h2>
+<ul>
+    <li>ReconClaw <b>yalnızca sahibi olduğunuz veya yazılı izin aldığınız</b> sistemlerin güvenlik değerlendirmesi için kullanılabilir.</li>
+    <li>İzinsiz tarama, sisteme izinsiz erişim veya hizmeti engelleme girişimleri 5237 sayılı TCK'nın 243–245. maddeleri
+        kapsamında suç oluşturabilir. Bu tür kullanımdan doğan her türlü hukuki ve cezai sorumluluk kullanıcıya aittir.</li>
+    <li>Hizmet, taramaları alan adı / IP sahipliği doğrulamasına (DNS TXT kaydı veya doğrulama dosyası) bağlayabilir.</li>
+    <li>Kötüye kullanım tespitinde hesap, ücret iadesi yapılmaksızın askıya alınabilir ve kayıtlar talep halinde yetkili
+        mercilerle paylaşılabilir.</li>
+</ul>
+<h2>3. Hesap güvenliği</h2>
+<p>Hesabınızın ve API anahtarınızın gizliliğinden siz sorumlusunuz. Yetkisiz kullanım şüphesinde parolanızı değiştirip
+Ayarlar'dan diğer oturumları kapatın ve bize bildirin.</p>
+<h2>4. Plan sınırları ve adil kullanım</h2>
+<p>Her planın günlük tarama, dakikalık istek, hedef ve izleme sınırları <a href="/fiyatlandirma">Fiyatlandırma</a> sayfasında
+belirtilmiştir. Sınırları aşmaya yönelik otomasyon veya hesap paylaşımı yasaktır.</p>
+<h2>5. Hizmet seviyesi ve sorumluluk</h2>
+<p>Hizmet "olduğu gibi" sunulur. Tarama sonuçları bilgilendirme amaçlıdır; bir sistemin tamamen güvenli olduğunun garantisi
+değildir. Satıcının sorumluluğu, kanunen sınırlandırılamayan haller saklı kalmak kaydıyla, ilgili dönemde ödenen abonelik
+bedeliyle sınırlıdır.</p>
+<h2>6. Değişiklikler</h2>
+<p>Şartlarda yapılacak esaslı değişiklikler kayıtlı e-posta adresinize veya site üzerinden duyurulur. Ücretli dönemi devam eden
+aboneliklerin fiyatı, dönem sonuna kadar değiştirilmez.</p>
+<h2>7. İletişim</h2>
+<p>{{ v(company.email) }}</p>
+{% endblock %}

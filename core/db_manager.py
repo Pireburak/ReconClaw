@@ -156,6 +156,13 @@ def init_db():
                 result     TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS password_resets (
+                token_hash TEXT PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                used_at    TEXT
+            );
             CREATE TABLE IF NOT EXISTS ai_notes (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 scan_id    INTEGER NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
@@ -193,6 +200,12 @@ def init_db():
             conn.execute("ALTER TABLE payments ADD COLUMN amount_try INTEGER")
         if "country" not in payment_columns:
             conn.execute("ALTER TABLE payments ADD COLUMN country TEXT")
+        # v9.0: gerçek ödeme (PayTR) — sipariş no, sağlayıcı yanıtı, ödeme zamanı
+        for col, ddl in (("merchant_oid", "TEXT"), ("provider", "TEXT"), ("paid_at", "TEXT"), ("note", "TEXT")):
+            if col not in payment_columns:
+                conn.execute(f"ALTER TABLE payments ADD COLUMN {col} {ddl}")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_oid ON payments(merchant_oid) "
+                     "WHERE merchant_oid IS NOT NULL")
         if "share_token" not in columns:
             conn.execute("ALTER TABLE scans ADD COLUMN share_token TEXT")
 

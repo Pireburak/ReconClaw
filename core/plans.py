@@ -8,6 +8,7 @@ Abonelik planları: Free, Pro, Pro Max, Ultra, Ultra Max (+ yalnızca yöneticil
     altyapısı (iyzico, Lemon Squeezy vb.) `checkout()` fonksiyonunun yerine bağlanabilir.
 """
 
+import secrets
 from contextlib import closing
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
@@ -178,7 +179,64 @@ def checkout(user_id, plan_id: str, period: str = "monthly", region: dict | None
             "country": region["country"], "amount_try": amount_try, "period": period, "mode": "demo"}
 
 
-def grant(user_id, plan_id: str, days: int | None) -> dict:
+def activate(user_id, plan_id: str, period: str) -> str:
+    """Ödemesi onaylanan planı etkinleştirir. Aynı plan hâlâ geçerliyse süre kalan günün üstüne eklenir."""
+    plan = PLANS[plan_id]
+    now = _now()
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT plan, plan_expires FROM users WHERE id = ?", (user_id,)).fetchone()
+        start = now
+        if row and row["plan"] == plan.id and row["plan_expires"]:
+            current = datetime.fromisoformat(row["plan_expires"])
+            start = max(now, current)
+        expires = (start + timedelta(days=PERIODS[period])).isoformat(" ")
+        conn.execute("UPDATE users SET plan = ?, plan_expires = ? WHERE id = ?", (plan.id, expires, user_id))
+    return expires
+
+
+def create_pending(user_id, plan_id: str, period: str, region: dict) -> dict:
+    """Gerçek ödeme başlamadan önce 'pending' durumlu bir sipariş kaydı oluşturur."""
+    from core import pricing
+
+    plan = PLANS.get(plan_id)
+    if plan is None or plan.id == "free" or period not in PERIODS:
+        raise ValueError("Geçersiz plan veya dönem.")
+    amount = pricing.local_price(plan.price_monthly, region, yearly=period == "yearly")
+    # PayTR sipariş numarası yalnızca harf ve rakam içerebilir (en fazla 64 karakter)
+    oid = f"RC{user_id}T{int(_now().timestamp())}{secrets.token_hex(4).upper()}"
+    with closing(get_db_connection()) as conn, conn:
+        cur = conn.execute(
+            "INSERT INTO payments (user_id, plan, period, amount, currency, status, created_at, amount_try, country, "
+            "merchant_oid, provider) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, 'paytr')",
+            (user_id, plan.id, period, amount, region["currency"], _now().isoformat(" "),
+             pricing.to_try(amount, region["currency"]), region["country"], oid))
+    return {"id": cur.lastrowid, "user_id": user_id, "plan": plan, "period": period, "amount": amount,
+            "currency": region["currency"], "merchant_oid": oid}
+
+
+def complete_payment(merchant_oid: str, success: bool, paid_minor: int | None, note: str = "") -> dict | None:
+    """Ödeme sağlayıcısının bildirimini işler. Aynı bildirim tekrar gelirse plan ikinci kez uzatılmaz.
+    Döner: işlenen ödeme kaydı (yoksa None)."""
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT * FROM payments WHERE merchant_oid = ?", (merchant_oid,)).fetchone()
+        if row is None:
+            return None
+        if row["status"] != "pending":
+            return dict(row)  # zaten işlendi (PayTR bildirimi tekrarlayabilir)
+        expected = int(round(row["amount"] * 100))
+        if success and (paid_minor is None or paid_minor < expected):
+            success, note = False, f"Tutar uyuşmuyor: beklenen {expected}, gelen {paid_minor}"
+        status = "paid" if success else "failed"
+        cur = conn.execute("UPDATE payments SET status = ?, paid_at = ?, note = ? WHERE id = ? AND status = 'pending'",
+                           (status, _now().isoformat(" ") if success else None, note[:300], row["id"]))
+        if cur.rowcount == 0:
+            return {**dict(row), "status": "duplicate"}  # eşzamanlı tekrar bildirim
+    if success:
+        activate(row["user_id"], row["plan"], row["period"])
+    return {**dict(row), "status": status}
+
+
+def grant(user_id, plan_id: str, days: int | None = None) -> dict:
     """Yönetici ataması: ödeme kaydı oluşturmadan plan verir (days=None ise süresiz)."""
     plan = PLANS.get(plan_id)
     if plan is None:
@@ -192,7 +250,7 @@ def grant(user_id, plan_id: str, days: int | None) -> dict:
 def payments(user_id, limit=20):
     with closing(get_db_connection()) as conn:
         rows = conn.execute(
-            "SELECT id, plan, period, amount, currency, country, status, created_at FROM payments "
+            "SELECT id, plan, period, amount, currency, country, status, created_at, merchant_oid FROM payments "
             "WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit)).fetchall()
     return [dict(r) for r in rows]
 

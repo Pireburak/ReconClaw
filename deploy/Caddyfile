@@ -1,5 +1,10 @@
-# DOMAIN ortam değişkeni .env dosyasından gelir (ör. reconclaw.alanadiniz.com)
+# DOMAIN ortam değişkeni .env dosyasından gelir (ör. reconclaw.com.tr)
 {$DOMAIN} {
 	encode zstd gzip
 	reverse_proxy reconclaw:8000
+}
+
+# www.alanadi → alanadi (tek kanonik adres; OAuth ve PayTR dönüş adresleri bununla eşleşmeli)
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
 }

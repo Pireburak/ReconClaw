@@ -1,0 +1,34 @@
+{% extends "public.html" %}
+{% block content %}
+<section class="doc wide">
+    <p class="doc-kicker">Fiyatlandırma · {{ region.name }} ({{ region.currency }})</p>
+    <h1>Planlar ve fiyatlar</h1>
+    <p class="muted">Fiyatlar vergiler dahildir. Abonelik otomatik yenilenmez; süre bitince hesap ücretsiz plana döner.
+    Yıllık ödemede 2 ay ücretsiz.{% if region.currency != 'TRY' %} Türkiye dışından yapılan ödemeler avro (EUR) üzerinden alınır.{% endif %}</p>
+    <div class="price-table">
+    {% for p in plans %}
+        <div class="price-card{% if p.id == 'pro_max' %} featured{% endif %}">
+            <h2>{{ p.name }}</h2>
+            <p class="muted small">{{ p.tagline }}</p>
+            <p class="price">{{ prices[p.id].monthly }}<span> / ay</span></p>
+            {% if p.price_monthly %}<p class="muted small">Yıllık: {{ prices[p.id].yearly }}</p>{% else %}<p class="muted small">&nbsp;</p>{% endif %}
+            <ul>
+                <li>Günde {{ p.daily_scans }} tarama · dakikada {{ p.per_minute }}</li>
+                <li>Port aralığı 1–{{ p.max_port }}</li>
+                <li>{{ p.targets }} doğrulanmış hedef</li>
+                {% if p.plugins %}<li>HTTP başlık ve TLS denetimi</li>{% endif %}
+                {% if p.exports %}<li>PDF / CSV rapor, paylaşım bağlantısı</li>{% endif %}
+                {% if p.recon %}<li>Pasif keşif (alt alan adı, DNS, SPF/DMARC)</li>{% endif %}
+                {% if p.monitoring %}<li>{{ p.monitors }} sürekli izleme{% if p.hourly %} (saatlik){% endif %}</li>{% endif %}
+                {% if p.api %}<li>API erişimi</li>{% endif %}
+                {% if p.ai %}<li>AI Analist · günde {{ p.ai_daily }} soru</li>{% endif %}
+            </ul>
+        </div>
+    {% endfor %}
+    </div>
+    <p class="muted small">Satın alma, hesabınıza giriş yaptıktan sonra Abonelik sayfasından yapılır. Ödeme koşulları:
+    <a href="/yasal/on-bilgilendirme">Ön Bilgilendirme Formu</a>, <a href="/yasal/mesafeli-satis">Mesafeli Satış Sözleşmesi</a>,
+    <a href="/yasal/iade">İptal ve İade</a>.</p>
+    <p><a class="btn primary" href="/login">ÜCRETSİZ BAŞLA</a></p>
+</section>
+{% endblock %}

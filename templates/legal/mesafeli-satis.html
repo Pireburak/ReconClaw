@@ -1,0 +1,60 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<h2>1. Taraflar</h2>
+<p><b>SATICI (Hizmet Sağlayıcı)</b></p>
+{{ seller() }}
+<p><b>ALICI</b>: {{ company.site }} üzerinde hesap açarak ödeme yapan gerçek veya tüzel kişi. Alıcının ad-soyad, e-posta ve
+IP bilgileri sipariş anında hesap kayıtlarından alınır ve sipariş kaydında saklanır.</p>
+
+<h2>2. Konu</h2>
+<p>Bu sözleşmenin konusu, Alıcı'nın {{ company.site }} üzerinden elektronik ortamda satın aldığı ReconClaw abonelik planına
+(Pro, Pro Max, Ultra veya Ultra Max) ilişkin hizmetin sunulmasına dair tarafların hak ve yükümlülüklerinin 6502 sayılı
+Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümlerine göre belirlenmesidir.</p>
+
+<h2>3. Hizmetin niteliği, fiyatı ve ödeme</h2>
+<ul>
+    <li>Hizmet; ağ keşfi, port tarama, risk analizi, raporlama ve plana göre değişen ek özelliklerden oluşan, elektronik
+        ortamda anında ifa edilen bir yazılım hizmetidir (SaaS). Fiziksel teslimat yoktur.</li>
+    <li>Planların kapsamı, sınırları ve vergiler dahil güncel fiyatları <a href="/fiyatlandirma">Fiyatlandırma</a>
+        sayfasında yer alır. Siparişte geçerli olan, ödeme ekranında gösterilen tutardır.</li>
+    <li>Türkiye'den yapılan ödemeler Türk lirası (TL), yurt dışından yapılan ödemeler avro (EUR) üzerinden alınır.</li>
+    <li>Ödeme, kredi / banka kartıyla PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş. altyapısı üzerinden tek seferde
+        (taksitsiz) alınır. Kart bilgileri Satıcı'ya iletilmez ve Satıcı tarafından saklanmaz.</li>
+    <li>Abonelik seçilen döneme göre 30 (aylık) veya 365 (yıllık) gün geçerlidir ve <b>otomatik olarak yenilenmez</b>.
+        Süre bitiminde hesap ücretsiz plana döner; Alıcı dilerse yeni bir ödemeyle süreyi uzatır. Süre dolmadan aynı
+        plan yeniden satın alınırsa yeni süre kalan sürenin üzerine eklenir.</li>
+</ul>
+
+<h2>4. İfa (teslim)</h2>
+<p>Hizmet, ödemenin ödeme kuruluşu tarafından onaylanmasının ardından genellikle birkaç saniye içinde Alıcı'nın hesabında
+otomatik olarak etkinleşir. Etkinleşmeyen ödemeler için Alıcı {{ v(company.email) }} adresinden Satıcı'ya ulaşabilir.</p>
+
+<h2>5. Cayma hakkı</h2>
+<p>Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) bendi uyarınca <b>elektronik ortamda anında
+ifa edilen hizmetlerde cayma hakkı bulunmamaktadır</b>. Alıcı, ödeme ekranında hizmetin onayıyla birlikte hemen ifasına
+başlanmasını kabul ettiğini ve bu nedenle cayma hakkının sona ereceğini bildiğini onaylar. Hizmetin hiç etkinleşmemesi,
+mükerrer çekim veya Satıcı kaynaklı kesintiler halinde <a href="/yasal/iade">İptal ve İade Koşulları</a> uygulanır.</p>
+
+<h2>6. Tarafların yükümlülükleri</h2>
+<ul>
+    <li>Alıcı, hizmeti yalnızca sahibi olduğu veya yazılı izin aldığı sistemlerde kullanmayı; 5237 sayılı Türk Ceza
+        Kanunu'nun bilişim suçlarına ilişkin hükümleri başta olmak üzere mevzuata aykırı kullanmamayı kabul eder.
+        Aykırı kullanımın tespiti halinde Satıcı hesabı ücret iadesi yapmaksızın askıya alabilir.</li>
+    <li>Satıcı, hizmeti makul özen ve süreklilikle sunmayı; planlı bakım ve zorunlu kesintileri mümkün olduğunca önceden
+        duyurmayı taahhüt eder.</li>
+    <li>Ayrıntılı kurallar <a href="/yasal/kullanim">Kullanım Şartları</a>'nda yer alır ve bu sözleşmenin ekidir.</li>
+</ul>
+
+<h2>7. Fatura</h2>
+<p>Ödemeye ait fatura (e-arşiv / e-fatura) Alıcı'nın hesabındaki e-posta adresine elektronik olarak gönderilir.</p>
+
+<h2>8. Uyuşmazlıkların çözümü</h2>
+<p>Şikâyet ve itirazlar için Alıcı, Ticaret Bakanlığı'nca her yıl ilan edilen parasal sınırlar dahilinde yerleşim yerindeki
+veya işlemi yaptığı yerdeki Tüketici Hakem Heyeti'ne, sınırların üzerindeki uyuşmazlıklarda Tüketici Mahkemesi'ne
+başvurabilir. Şikâyetler ayrıca <a href="https://tuketici.ticaret.gov.tr" rel="noopener">E-Tüketici</a> üzerinden iletilebilir.</p>
+
+<h2>9. Yürürlük</h2>
+<p>Alıcı, ödeme ekranında bu sözleşmeyi ve <a href="/yasal/on-bilgilendirme">Ön Bilgilendirme Formu</a>'nu okuyup elektronik
+ortamda onayladığında sözleşme kurulmuş olur. Sözleşmenin bir örneği bu sayfada her zaman erişilebilir durumdadır;
+onay kaydı (tarih, saat, IP, sipariş numarası) Satıcı'nın sistemlerinde saklanır.</p>
+{% endblock %}

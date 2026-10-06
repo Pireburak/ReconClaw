@@ -1,0 +1,40 @@
+{% extends "legal/_base.html" %}
+{% block doc %}
+<p>6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca veri sorumlusu sıfatıyla {{ company.title }} olarak,
+kişisel verilerinizi aşağıda açıklanan kapsamda işlemekteyiz.</p>
+<h2>1. Veri sorumlusu</h2>
+{{ seller() }}
+<h2>2. İşlenen kişisel veriler</h2>
+<ul>
+    <li><b>Kimlik ve iletişim</b>: ad-soyad, e-posta adresi, sosyal giriş kullanılırsa sağlayıcının paylaştığı profil bilgisi.</li>
+    <li><b>Müşteri işlem</b>: abonelik planı, sipariş numarası, ödeme tutarı ve durumu (kart bilgisi işlenmez; ödemeyi PayTR alır).</li>
+    <li><b>İşlem güvenliği</b>: IP adresi, tarayıcı bilgisi, oturum kayıtları, giriş denemeleri ve güvenlik denetim kayıtları.</li>
+    <li><b>Hizmet verisi</b>: taradığınız hedefler, tarama sonuçları ve raporlar.</li>
+</ul>
+<h2>3. İşleme amaçları ve hukuki sebepler</h2>
+<ul>
+    <li>Hesabın açılması, hizmetin sunulması ve abonelik sözleşmesinin ifası — KVKK m.5/2-(c) <i>sözleşmenin ifası</i>,</li>
+    <li>Fatura düzenlenmesi ve yasal saklama yükümlülükleri — m.5/2-(ç) <i>hukuki yükümlülük</i>,</li>
+    <li>Hesap güvenliği, kötüye kullanım ve bot saldırılarının önlenmesi, 5651 sayılı Kanun kapsamındaki kayıtlar —
+        m.5/2-(ç) ve (f) <i>meşru menfaat</i>,</li>
+    <li>Talep ve şikâyetlerin yanıtlanması — m.5/2-(f) <i>meşru menfaat</i>.</li>
+</ul>
+<h2>4. Aktarım</h2>
+<p>Kişisel verileriniz yalnızca yukarıdaki amaçlarla sınırlı olarak; ödeme için PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.'ye,
+barındırma ve bot koruması için altyapı sağlayıcılarımıza (ör. Cloudflare), e-posta gönderimi için e-posta servis
+sağlayıcımıza ve talep halinde yetkili kamu kurumlarına aktarılabilir. Yurt dışında bulunan hizmet sağlayıcılara aktarım
+KVKK m.9'daki şartlara uygun olarak yapılır.</p>
+<h2>5. Toplama yöntemi</h2>
+<p>Veriler, kayıt ve ödeme formları, sosyal giriş sağlayıcıları ve hizmetin kullanımı sırasında otomatik yollarla elektronik
+ortamda toplanır.</p>
+<h2>6. Saklama süresi</h2>
+<p>Hesap verileri hesabınız silinene kadar; ödeme ve fatura kayıtları ilgili vergi ve ticaret mevzuatının öngördüğü süre
+boyunca; güvenlik kayıtları mevzuatın öngördüğü süre boyunca saklanır, ardından silinir veya anonim hale getirilir.
+Hesabınızı Ayarlar sayfasından dilediğiniz an silebilirsiniz.</p>
+<h2>7. Haklarınız (KVKK m.11)</h2>
+<p>Verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, amacına uygun kullanılıp kullanılmadığını öğrenme, aktarıldığı
+üçüncü kişileri bilme, eksik veya yanlış işlenmişse düzeltilmesini, silinmesini veya yok edilmesini isteme, otomatik sistemlerle
+analiz sonucu aleyhinize bir sonuca itiraz etme ve kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme haklarına
+sahipsiniz. Başvurularınızı {{ v(company.email) }}{% if company.kep %} veya {{ company.kep }} KEP{% endif %} adresine
+iletebilirsiniz; en geç 30 gün içinde yanıtlanır.</p>
+{% endblock %}

@@ -559,6 +559,13 @@
                             <tbody id="paymentList"><tr><td colspan="6" class="empty">Kayıt yok.</td></tr></tbody>
                         </table>
                     </div>
+                    <p class="muted small" style="margin:10px 0 0">
+                        <a href="/yasal/mesafeli-satis" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a> ·
+                        <a href="/yasal/on-bilgilendirme" target="_blank" rel="noopener">Ön Bilgilendirme</a> ·
+                        <a href="/yasal/iade" target="_blank" rel="noopener">İptal ve İade</a> ·
+                        <a href="/yasal/kvkk" target="_blank" rel="noopener">KVKK</a> ·
+                        <a href="/iletisim" target="_blank" rel="noopener">İletişim</a>
+                    </p>
                 </section>
             </div>
         </section>
@@ -658,8 +665,16 @@
     <div class="shortcuts" role="dialog" aria-label="Plan değişikliği">
         <h3 id="checkoutTitle">Plan değişikliği</h3>
         <div id="checkoutBody"></div>
-        <p class="lock-note">Demo ödeme modu: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir. Gerçek ödeme altyapısı bağlandığında bu adım ödeme sayfasına yönlenir.</p>
-        <div class="actions" style="justify-content:flex-end;margin-top:14px">
+        <label class="consent" id="checkoutConsentRow" hidden>
+            <input type="checkbox" id="checkoutConsent">
+            <span><a href="/yasal/on-bilgilendirme" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu okudum ve
+            <a href="/yasal/mesafeli-satis" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a>'ni kabul ediyorum.
+            Hizmetin onayımla hemen ifasına başlanacağını ve bu nedenle cayma hakkımın sona ereceğini biliyorum
+            (<a href="/yasal/iade" target="_blank" rel="noopener">İptal ve İade</a>).</span>
+        </label>
+        <p class="lock-note" id="checkoutNote">Demo ödeme modu: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir.</p>
+        <div id="paytrBox" class="paytr-box" hidden></div>
+        <div class="actions" id="checkoutActions" style="justify-content:flex-end;margin-top:14px">
             <button type="button" class="btn" data-close>VAZGEÇ</button>
             <button type="button" class="btn primary" id="checkoutConfirm">ONAYLA</button>
         </div>

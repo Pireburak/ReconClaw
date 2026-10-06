@@ -192,6 +192,39 @@ def reset_password(email: str, password: str) -> bool:
     return True
 
 
+RESET_MINUTES = 30
+
+
+def create_reset_token(email: str) -> tuple | None:
+    """E-postayla şifre sıfırlama: tek kullanımlık, 30 dakika geçerli jeton üretir.
+    Döner: (kullanıcı, jeton) ya da hesap yoksa / askıdaysa None. Veritabanında yalnızca jetonun özeti tutulur."""
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT * FROM users WHERE email = ? AND disabled = 0", (email.strip().lower(),)).fetchone()
+        if row is None:
+            return None
+        token = secrets.token_urlsafe(32)
+        now = _now()
+        conn.execute("DELETE FROM password_resets WHERE user_id = ? OR expires_at < ?", (row["id"], now.isoformat(" ")))
+        conn.execute("INSERT INTO password_resets (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                     (_sha256(token), row["id"], now.isoformat(" "),
+                      (now + timedelta(minutes=RESET_MINUTES)).isoformat(" ")))
+    return row, token
+
+
+def reset_with_token(token: str, password: str) -> int:
+    """Jeton geçerliyse parolayı değiştirir, jetonu ve tüm oturumları geçersiz kılar. Döner: kullanıcı id."""
+    validate_password(password)
+    with closing(get_db_connection()) as conn, conn:
+        row = conn.execute("SELECT user_id FROM password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?",
+                           (_sha256(token or ""), _now().isoformat(" "))).fetchone()
+        if row is None:
+            raise AuthError("Bağlantı geçersiz veya süresi dolmuş. Yeniden şifre sıfırlama isteyin.")
+        conn.execute("UPDATE password_resets SET used_at = ? WHERE token_hash = ?", (_now().isoformat(" "), _sha256(token)))
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(password), row["user_id"]))
+        conn.execute("DELETE FROM sessions WHERE user_id = ?", (row["user_id"],))
+    return row["user_id"]
+
+
 def set_role(email: str, role: str) -> bool:
     with closing(get_db_connection()) as conn, conn:
         return conn.execute("UPDATE users SET role = ? WHERE email = ?", (role, email.strip().lower())).rowcount > 0

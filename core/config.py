@@ -94,3 +94,38 @@ FX_RATES = env("FX_RATES")
 # v8.2: Cloudflare Turnstile bot koruması (ikisi de doluysa giriş ve kayıtta doğrulama istenir)
 TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY")
 TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY")
+
+# Cloudflare arkasındaysanız ziyaretçinin gerçek IP'sini CF-Connecting-IP başlığından al
+# (ödeme sağlayıcısına ve hız sınırlarına giden IP). Doğrudan erişimde açmayın, sahtelenebilir.
+TRUST_PROXY_IP = _bool("TRUST_PROXY_IP", TRUST_COUNTRY_HEADER)
+
+# v9.0: PayTR iFrame API ile gerçek ödeme. Üçü de doluysa demo ödeme kapanır, PayTR açılır.
+# Bilgiler: PayTR Mağaza Paneli → Destek & Kurulum → Entegrasyon Bilgileri
+PAYTR_MERCHANT_ID = env("PAYTR_MERCHANT_ID")
+PAYTR_MERCHANT_KEY = env("PAYTR_MERCHANT_KEY")
+PAYTR_MERCHANT_SALT = env("PAYTR_MERCHANT_SALT")
+# Mağaza canlıya alınana kadar 1 bırakın (test kartlarıyla denenir, para çekilmez)
+PAYTR_TEST_MODE = _bool("PAYTR_TEST_MODE", True)
+# PayTR adres ve telefon alanlarını zorunlu tutar; kullanıcıdan istenmediği için şirket bilgisi gönderilir
+PAYTR_DEFAULT_ADDRESS = env("PAYTR_DEFAULT_ADDRESS") or env("COMPANY_ADDRESS") or "Türkiye"
+PAYTR_DEFAULT_PHONE = env("PAYTR_DEFAULT_PHONE") or env("COMPANY_PHONE") or "05000000000"
+
+# v9.0: yasal sayfalar (Mesafeli Satış Sözleşmesi, KVKK, İade…) ve iletişim sayfası bu bilgilerle dolar.
+# Sanal POS başvurusunda bu sayfaların sitede yayında olması istenir.
+COMPANY_NAME = env("COMPANY_NAME", "ReconClaw") or "ReconClaw"
+COMPANY_TITLE = env("COMPANY_TITLE") or COMPANY_NAME          # ticari unvan / şahıs şirketi adı
+COMPANY_ADDRESS = env("COMPANY_ADDRESS")
+COMPANY_PHONE = env("COMPANY_PHONE")
+COMPANY_EMAIL = env("COMPANY_EMAIL")
+COMPANY_TAX_OFFICE = env("COMPANY_TAX_OFFICE")
+COMPANY_TAX_NO = env("COMPANY_TAX_NO")
+COMPANY_MERSIS = env("COMPANY_MERSIS")
+COMPANY_KEP = env("COMPANY_KEP")
+
+# v9.0: e-posta (şifre sıfırlama). SMTP_HOST boşsa "Şifremi unuttum" bağlantısı gizlenir.
+SMTP_HOST = env("SMTP_HOST")
+SMTP_PORT = int(env("SMTP_PORT", "587") or 587)
+SMTP_USER = env("SMTP_USER")
+SMTP_PASSWORD = env("SMTP_PASSWORD")
+SMTP_FROM = env("SMTP_FROM") or SMTP_USER
+SMTP_TLS = _bool("SMTP_TLS", True)   # 587: STARTTLS · 465 için SMTP_PORT=465 (SSL) kullanın
