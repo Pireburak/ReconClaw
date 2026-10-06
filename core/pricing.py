@@ -5,9 +5,11 @@ Bölgeye göre fiyatlandırma: Türkiye'den gelen ziyaretçiler TL, yurt dışı
   * Yurt dışında (Türkiye dışındaki tüm ülkeler) her ücretli planın aylık fiyatına
     REGIONAL_SURCHARGE_TRY (varsayılan 950 TL) eklenir ve güncel Euro kuruyla çevrilir; sonuç
     x,99 biçimine yuvarlanır. Yıllık fiyat = aylık × 10. Tek bir Euro hesabıyla tahsilat yapılabilir.
-  * Ülke tespiti: (isteğe bağlı) Cloudflare'in CF-IPCountry başlığı → istemci IP'si için
-    çevrimiçi GeoIP sorgusu (önbellekli) → bulunamazsa DEFAULT_COUNTRY (TR). Yerel ağ adresleri
-    (127.0.0.1, 192.168.x) her zaman varsayılan ülkeye düşer.
+  * Bölge YALNIZCA IP adresinden belirlenir; kullanıcı seçemez (aksi halde herkes TL seçerdi).
+    Sıra: (isteğe bağlı) Cloudflare'in CF-IPCountry başlığı → istemci IP'si için çevrimiçi GeoIP
+    servisleri (ipapi.co, country.is, ipwho.is; biri cevap vermezse sıradaki) → hepsi başarısızsa
+    ülke "bilinmiyor" sayılır ve ödeme başlatılmaz (varsayılan TL'ye düşülmez). Yerel ağ adresleri
+    (127.0.0.1, 192.168.x) ve GEO_LOOKUP kapalıyken DEFAULT_COUNTRY kullanılır.
   * Euro kuru open.er-api.com'dan 12 saatte bir alınır; internet yoksa .env'deki FX_RATES veya
     yerleşik yaklaşık kur kullanılır.
 """
@@ -28,7 +30,12 @@ DEFAULT_FOREIGN = ("EUR", "Yurt dışı")
 FALLBACK_TRY_PER_UNIT = {"EUR": 52.0}
 
 RATES_URL = "https://open.er-api.com/v6/latest/TRY"
-GEO_URL = "https://ipapi.co/{ip}/country/"
+# Sırayla denenir; ilk geçerli iki harfli ülke kodu kullanılır
+GEO_PROVIDERS = (
+    ("https://ipapi.co/{ip}/country/", None),          # düz metin: "DE"
+    ("https://api.country.is/{ip}", "country"),        # {"country": "DE"}
+    ("https://ipwho.is/{ip}?fields=country_code", "country_code"),
+)
 RATES_TTL = 12 * 3600
 
 _rates = {"at": 0.0, "try_per_unit": {}, "source": "yedek", "updated": None}
@@ -75,32 +82,52 @@ def try_per_unit(currency: str) -> tuple[float, str]:
 
 # ---------------------------------------------------------------- ülke tespiti
 def region_of(country: str | None) -> dict:
+    """Ülkenin para birimi. country None ise (tespit edilemedi) gösterim için varsayılan ülke kullanılır,
+    ama bölge "unknown" olarak işaretlenir ve ödeme başlatılmaz."""
+    unknown = country is None
     country = (country or config.DEFAULT_COUNTRY).upper()
     currency, name = COUNTRIES.get(country, DEFAULT_FOREIGN)
-    return {"country": country, "currency": currency, "name": name}
+    return {"country": country, "currency": currency, "name": name, "unknown": unknown}
 
 
-async def detect_country(ip: str, headers) -> str:
+def _valid(code) -> str | None:
+    code = str(code or "").strip().upper()
+    return code if len(code) == 2 and code.isalpha() and code not in ("XX", "T1") else None
+
+
+async def _lookup(ip: str) -> str | None:
+    async with httpx.AsyncClient(timeout=3) as client:
+        for url, key in GEO_PROVIDERS:
+            try:
+                res = await client.get(url.format(ip=ip))
+                if res.status_code != 200:
+                    continue
+                code = _valid(res.text if key is None else res.json().get(key))
+                if code:
+                    return code
+            except (httpx.HTTPError, ValueError, AttributeError):
+                continue
+    return None
+
+
+async def detect_country(ip: str, headers) -> str | None:
+    """Ziyaretçinin ülkesi. Hiçbir kaynak cevap vermezse None (bilinmiyor) döner; sonuç önbelleğe alınmaz."""
     if config.TRUST_COUNTRY_HEADER:
-        header = (headers.get("cf-ipcountry") or "").strip().upper()
-        if len(header) == 2 and header.isalpha() and header != "XX":
+        header = _valid(headers.get("cf-ipcountry"))  # T1 = Tor, XX = bilinmiyor
+        if header:
             return header
     try:
         if not ipaddress.ip_address(ip).is_global:
             return config.DEFAULT_COUNTRY
     except ValueError:
         return config.DEFAULT_COUNTRY
+    if not config.GEO_LOOKUP:
+        return config.DEFAULT_COUNTRY
     if ip in _geo_cache:
         return _geo_cache[ip]
-    country = config.DEFAULT_COUNTRY
-    if config.GEO_LOOKUP:
-        try:
-            async with httpx.AsyncClient(timeout=3) as client:
-                text = (await client.get(GEO_URL.format(ip=ip))).text.strip().upper()
-            if len(text) == 2 and text.isalpha():
-                country = text
-        except httpx.HTTPError:
-            pass
+    country = await _lookup(ip)
+    if country is None:
+        return None  # önbelleğe alma: bir sonraki istekte tekrar denenir
     if len(_geo_cache) > 5000:
         _geo_cache.clear()
     _geo_cache[ip] = country
@@ -139,8 +166,3 @@ def price_list(plans, region: dict) -> dict:
         "prices": {p.id: {"monthly": local_price(p.price_monthly, region),
                           "yearly": local_price(p.price_monthly, region, yearly=True)} for p in plans},
     }
-
-
-def supported_regions() -> list:
-    """Önizleme menüsü: Türkiye (TL) ve yurt dışı (Euro)."""
-    return [{"country": "TR", "currency": "TRY", "name": "Türkiye"}, {"country": "EU", "currency": "EUR", "name": "Yurt dışı"}]

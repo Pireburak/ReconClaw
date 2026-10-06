@@ -32,7 +32,7 @@
                 <li><a class="dock-item" href="#monitors" data-view="monitors" aria-label="SÜREKLİ İZLEME"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span><span class="dock-tip"><b>SÜREKLİ İZLEME</b><kbd>7</kbd></span></a></li>
                 <li><a class="dock-item" href="#settings" data-view="settings" aria-label="AYARLAR"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span class="dock-tip"><b>AYARLAR</b><kbd>8</kbd></span></a></li>
                 <li><a class="dock-item" href="#plans" data-view="plans" aria-label="ABONELİK"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.29l4.27-3.66a.5.5 0 0 1 .82.52l-2.83 10.25a1 1 0 0 1-.96.73H5.8a1 1 0 0 1-.97-.73L2.02 6.02a.5.5 0 0 1 .81-.52L7.1 9.16a1 1 0 0 0 1.52-.29z"/><path d="M5 21h14"/></svg></span><span class="dock-tip"><b>ABONELİK</b><kbd>9</kbd></span></a></li>
-                {% if user.is_admin %}
+                {% if user.is_staff %}
                 <li><a class="dock-item admin-item" href="#admin" data-view="admin" aria-label="YÖNETİM"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="dock-tip"><b>YÖNETİM</b><kbd>A</kbd></span></a></li>
                 {% endif %}
             </ul>
@@ -463,11 +463,18 @@
             </div>
         </section>
 
-        {# [10] YÖNETİM (yalnızca yöneticilere render edilir) #}
-        {% if user.is_admin %}
+        {# [10] YÖNETİM (yalnızca sahip, yönetici ve moderatörlere render edilir) #}
+        {% if user.is_staff %}
         <section data-page="admin" hidden>
             <div class="stats" id="adminStats"></div>
             <div class="grid two">
+                <section class="panel wide" style="--c: var(--cyan)">
+                    <div class="panel-head">
+                        <h3>Yetkili ekip <span class="muted small" id="teamCount"></span></h3>
+                        <span class="muted small">Bu liste yalnızca ekibe görünür</span>
+                    </div>
+                    <div class="team-grid" id="adminTeam"><div class="empty">Yükleniyor...</div></div>
+                </section>
                 <section class="panel" style="--c: var(--red)">
                     <h3>Son 14 gün</h3>
                     <div id="adminChart"><div class="empty">Yükleniyor...</div></div>
@@ -512,7 +519,7 @@
                 <section class="panel">
                     <div class="panel-head">
                         <h3>Mevcut abonelik</h3>
-                        <span class="demo-tag">DEMO ÖDEME MODU · KART BİLGİSİ ALINMAZ</span>
+                        <span class="demo-tag" id="demoTag">DEMO ÖDEME MODU · KART BİLGİSİ ALINMAZ</span>
                     </div>
                     <div class="sub-summary" id="subSummary"><div class="empty">Yükleniyor...</div></div>
                 </section>
@@ -520,10 +527,7 @@
                 <section class="panel">
                     <div class="panel-head">
                         <h3>Erişim seviyeleri</h3>
-                        <label class="region-pick" title="Fiyatlar IP adresinizin ülkesine göre yerel para biriminde gösterilir">
-                            <span class="muted small">BÖLGE</span>
-                            <select id="regionSelect"></select>
-                        </label>
+                        <span class="region-pick" id="regionInfo" title="Fiyat bölgesi IP adresinize göre otomatik belirlenir ve değiştirilemez"></span>
                         <div class="seg" id="periodSeg">
                             <button type="button" class="on" data-period="monthly">Aylık</button>
                             <button type="button" data-period="yearly">Yıllık · 2 ay bedava</button>
@@ -740,6 +744,6 @@
 <script src="{{ url_for('static', path='js/app.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/ops.js') }}?v={{ asset_v }}"></script>
 <script src="{{ url_for('static', path='js/intel.js') }}?v={{ asset_v }}"></script>
-{% if user.is_admin %}<script src="{{ url_for('static', path='js/admin.js') }}?v={{ asset_v }}"></script>{% endif %}
+{% if user.is_staff %}<script src="{{ url_for('static', path='js/admin.js') }}?v={{ asset_v }}"></script>{% endif %}
 </body>
 </html>

@@ -903,3 +903,10 @@ body.public { min-height: 100vh; display: flex; flex-direction: column; backgrou
 body.access .pub-foot { position: relative; z-index: 2; border-top: 0; padding-bottom: 46px; }
 .form-ok { padding: 10px 12px; border-left: 2px solid var(--green); background: var(--panel-2); }
 .pay-result { align-items: center; justify-content: center; padding: 24px; text-align: center; }
+
+/* Yetkili ekip (yönetim) */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.team-card { display: flex; flex-direction: column; gap: 3px; padding: 12px; border: 1px solid var(--line-2); background: var(--panel-2); }
+.team-card.dead { opacity: .5; }
+.team-head { margin-bottom: 4px; }
+.badge.mod-badge { color: #fff; background: var(--cyan); letter-spacing: .16em; }

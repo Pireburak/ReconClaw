@@ -1,11 +1,13 @@
 """
 Yönetim paneli işlemleri: sistem özeti, kullanıcı listesi, rol / plan / askıya alma.
 
-Yalnızca role = 'admin' veya 'owner' olan kullanıcılar erişebilir (kontrol main.py'deki admin_user
-bağımlılığında). Yetki kuralları:
+Yalnızca role = 'moderator', 'admin' veya 'owner' olan kullanıcılar erişebilir (kontrol main.py'deki
+staff_user bağımlılığında). Yetki kuralları:
   * Sahip (owner) tektir; panelden değiştirilemez, askıya alınamaz, silinemez.
-  * Yöneticiler kullanıcıları yönetici yapabilir, plan atayabilir, normal üyeleri askıya alabilir / silebilir.
+  * Yöneticiler üyeleri moderatör / yönetici yapabilir, plan atayabilir, üyeleri ve moderatörleri
+    askıya alabilir / silebilir.
   * Bir yöneticinin yetkisini almak, onu askıya almak veya silmek yalnızca sahibin işidir.
+  * Moderatörler paneli görür; yalnızca normal üyeleri askıya alıp yeniden açabilir. Rol, plan ve silme yetkisi yoktur.
   * Kimse kendi hesabını panelden askıya alamaz, yetkisini düşüremez veya silemez.
 """
 
@@ -40,6 +42,7 @@ def overview() -> dict:
         data = {
             "users_total": len(users),
             "admins": sum(1 for u in users if u["role"] in plans.ADMIN_ROLES),
+            "moderators": sum(1 for u in users if u["role"] == "moderator"),
             "disabled": sum(1 for u in users if u["disabled"]),
             "scans_total": q("SELECT COUNT(*) FROM scans"),
             "scans_today": q("SELECT COALESCE(SUM(scans), 0) FROM usage WHERE day = ?", today),
@@ -98,21 +101,35 @@ def _guard(actor, target, touches_admin: bool):
         raise AdminError("Bir yöneticinin yetkisini almak, askıya almak veya silmek yalnızca sahibe açıktır.")
 
 
+def _moderator_guard(actor, target, role, plan, days, disabled):
+    """Moderatör yalnızca normal üyeleri askıya alıp yeniden açabilir."""
+    if plans.is_admin(actor):
+        return
+    if role is not None or plan is not None or days is not None:
+        raise AdminError("Moderatörler rol veya plan değiştiremez.")
+    if disabled is not None and target["role"] != "user":
+        raise AdminError("Moderatörler yalnızca normal üyeleri askıya alabilir.")
+
+
+ROLE_NAMES = {"user": "üye", "moderator": "moderatör", "admin": "yönetici", "owner": "sahip"}
+
+
 def update_user(actor, user_id: int, role=None, plan=None, days=None, disabled=None, ip="") -> dict:
     target = auth.get_user(user_id)
     if target is None:
         raise AdminError("Kullanıcı bulunamadı.")
     is_self = target["id"] == actor["id"]
+    _moderator_guard(actor, target, role, plan, days, disabled)
     _guard(actor, target, touches_admin=(role is not None and role != target["role"]) or disabled is not None)
     events = []  # denetim kayıtları işlem bittikten sonra yazılır (SQLite tek yazar kilidi)
     with closing(get_db_connection()) as conn, conn:
         if role is not None and role != target["role"]:
-            if role not in ("user", "admin"):
+            if role not in ("user", "moderator", "admin"):
                 raise AdminError("Geçersiz rol. Sahiplik yalnızca terminalden (manage.py make-owner) devredilir.")
             if is_self:
-                raise AdminError("Kendi yönetici rolünüzü kaldıramazsınız.")
+                raise AdminError("Kendi rolünüzü değiştiremezsiniz.")
             conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
-            events.append(("admin_role", f"{target['role']} → {role}"))
+            events.append(("admin_role", f"{ROLE_NAMES[target['role']]} → {ROLE_NAMES[role]}"))
         if disabled is not None and bool(disabled) != bool(target["disabled"]):
             if is_self:
                 raise AdminError("Kendi hesabınızı askıya alamazsınız.")
@@ -140,6 +157,29 @@ def delete_user(actor, user_id: int, ip=""):
         raise AdminError("Kullanıcı bulunamadı.")
     if target["id"] == actor["id"]:
         raise AdminError("Kendi hesabınızı yönetim panelinden silemezsiniz.")
+    if not plans.is_admin(actor):
+        raise AdminError("Moderatörler hesap silemez.")
     _guard(actor, target, touches_admin=True)
     audit.log("admin_delete", None, actor["id"], target["email"], ip)
     auth.delete_user(user_id)
+
+
+def team() -> list:
+    """Yetkili ekip: sahip, yöneticiler ve moderatörler; her biri için yetkiyi kimin ne zaman verdiği."""
+    with closing(get_db_connection()) as conn:
+        rows = conn.execute(
+            "SELECT id, email, name, role, last_login, created_at, disabled FROM users "
+            "WHERE role IN ('owner', 'admin', 'moderator') "
+            "ORDER BY CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, id").fetchall()
+        result = []
+        for r in rows:
+            granted = conn.execute(
+                "SELECT a.created_at, u.email AS actor_email FROM audit_log a LEFT JOIN users u ON u.id = a.actor_id "
+                "WHERE a.action = 'admin_role' AND a.user_id = ? ORDER BY a.id DESC LIMIT 1", (r["id"],)).fetchone()
+            result.append({
+                "id": r["id"], "email": r["email"], "name": r["name"], "role": r["role"],
+                "disabled": bool(r["disabled"]), "last_login": r["last_login"], "created_at": r["created_at"],
+                "granted_at": granted["created_at"] if granted else None,
+                "granted_by": granted["actor_email"] if granted else None,
+            })
+    return result

@@ -34,7 +34,6 @@ def test_turkey_pays_try_everyone_else_euro():
     assert pricing.local_price(299, de) == 24.99           # (299 + 950) / 52 = 24.02 → 24,99 €
     assert pricing.local_price(299, de, yearly=True) == 249.9
     assert pricing.local_price(1999, pricing.region_of("US")) == 56.99  # (1999 + 950) / 52 = 56.7
-    assert [r["currency"] for r in pricing.supported_regions()] == ["TRY", "EUR"]
 
 
 def test_country_detection(monkeypatch):
@@ -61,14 +60,72 @@ def client(tmp_path, monkeypatch):
         yield c
 
 
-def test_plans_endpoint_detects_region_and_previews(client):
+def test_region_comes_only_from_ip(client, monkeypatch):
     data = client.get("/api/plans").json()
     assert data["detected"]["country"] == "TR" and data["pricing"]["currency"] == "TRY"
     assert data["pricing"]["prices"]["ultra_max"]["monthly"] == 1999
-    preview = client.get("/api/plans?country=EU").json()
-    assert preview["pricing"]["currency"] == "EUR" and preview["detected"]["country"] == "TR"
-    assert preview["pricing"]["prices"]["pro"]["monthly"] == 24.99
-    assert [r["currency"] for r in preview["regions"]] == ["TRY", "EUR"]
+    assert "regions" not in data and "checkout_pricing" not in data
+
+    async def from_germany(ip, headers):
+        return "DE"
+
+    monkeypatch.setattr(pricing, "detect_country", from_germany)
+    # Almanya'dan gelen biri bölgeyi elle TR yapamaz: parametre yok sayılır, fiyat Euro kalır
+    tricked = client.get("/api/plans?country=TR").json()
+    assert tricked["pricing"]["currency"] == "EUR" and tricked["pricing"]["prices"]["pro"]["monthly"] == 24.99
+    res = client.post("/api/billing/checkout", json={"plan": "pro", "country": "TR", "currency": "TRY"}).json()
+    assert res["currency"] == "EUR" and res["amount"] == 24.99
+    assert 'id="regionSelect"' not in client.get("/").text
+
+
+def test_unknown_country_blocks_payment_instead_of_tl(client, monkeypatch):
+    async def unknown(ip, headers):
+        return None
+
+    monkeypatch.setattr(pricing, "detect_country", unknown)
+    res = client.post("/api/billing/checkout", json={"plan": "pro"})
+    assert res.status_code == 503 and "belirlenemedi" in res.json()["detail"]
+    assert client.get("/api/me").json()["subscription"]["plan"]["id"] == "free"
+
+
+def test_geo_lookup_falls_back_and_never_caches_failure(monkeypatch):
+    monkeypatch.setattr(config, "GEO_LOOKUP", True)
+    monkeypatch.setattr(config, "TRUST_COUNTRY_HEADER", False)
+    pricing._geo_cache.clear()
+    calls = []
+
+    class FakeResponse:
+        def __init__(self, status, text="", data=None):
+            self.status_code, self.text, self._data = status, text, data
+
+        def json(self):
+            return self._data
+
+    responses = {"ipapi.co": FakeResponse(429, "RateLimited"), "country.is": FakeResponse(200, data={"country": "de"})}
+
+    class FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def get(self, url):
+            calls.append(url)
+            for host, response in responses.items():
+                if host in url:
+                    return response
+            return FakeResponse(500)
+
+    monkeypatch.setattr(pricing.httpx, "AsyncClient", FakeClient)
+    assert asyncio.run(pricing.detect_country("8.8.4.4", {})) == "DE"  # ilk servis sınırda, ikincisi cevapladı
+    responses.clear()
+    assert asyncio.run(pricing.detect_country("1.1.1.1", {})) is None    # hepsi düştü: TR varsayılmaz
+    assert "1.1.1.1" not in pricing._geo_cache
+    assert pricing.region_of(None)["unknown"] is True
 
 
 def test_checkout_charges_detected_region_not_preview(client, monkeypatch):

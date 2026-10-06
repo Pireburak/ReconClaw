@@ -783,9 +783,6 @@ const FEATURE_ROWS = [
     ["AI Analist", (p) => p.ai ? (p.ai_daily ? `${p.ai_daily} / gün` : "Sınırsız") : false],
 ];
 
-const REGION_KEY = "rc-price-region";
-let pricingRegion = "";
-try { pricingRegion = localStorage.getItem(REGION_KEY) || ""; } catch { /* yoksay */ }
 
 function money(value, currency = "TRY") {
     const whole = currency === "TRY" || currency === "JPY" || Number(value) % 1 === 0;
@@ -796,9 +793,9 @@ function money(value, currency = "TRY") {
     }
 }
 
-// Bölgesel fiyat: önizlenen bölge (liste) veya ödemenin alınacağı bölge (checkout)
-function priceOf(planId, yearly, checkout = false) {
-    const pr = checkout ? planCatalog.checkout_pricing : planCatalog.pricing;
+// Bölgesel fiyat: bölge yalnızca IP adresinden belirlenir (Türkiye TL, yurt dışı EUR); kullanıcı seçemez
+function priceOf(planId, yearly) {
+    const pr = planCatalog.pricing;
     return { value: pr.prices[planId][yearly ? "yearly" : "monthly"], currency: pr.currency };
 }
 
@@ -852,11 +849,9 @@ async function loadSubscription() {
 
 async function loadPlans() {
     try {
-        const wanted = pricingRegion ? `?country=${encodeURIComponent(pricingRegion)}` : "";
-        if (!planCatalog || planCatalog._region !== wanted) {
-            planCatalog = await api(`/api/plans${wanted}`);
-            planCatalog._region = wanted;
-            renderRegionSelect();
+        if (!planCatalog) {
+            planCatalog = await api("/api/plans");
+            renderRegionInfo();
         }
         const [billing, targets] = await Promise.all([api("/api/billing"), api("/api/targets")]);
         applySubscription(billing);
@@ -881,8 +876,8 @@ function renderSubSummary(b) {
             <span class="muted small">${esc(plan.tagline)}</span>
         </div>
         <dl class="facts">
-            <dt>Ücret</dt><dd>${plan.price_monthly && planCatalog?.checkout_pricing.prices[plan.id]
-                ? `${money(priceOf(plan.id, false, true).value, planCatalog.checkout_pricing.currency)} / ay` : b.admin ? "—" : "Ücretsiz"}</dd>
+            <dt>Ücret</dt><dd>${plan.price_monthly && planCatalog?.pricing.prices[plan.id]
+                ? `${money(priceOf(plan.id, false).value, planCatalog.pricing.currency)} / ay` : b.admin ? "—" : "Ücretsiz"}</dd>
             <dt>Yenileme</dt><dd>${b.expires ? esc(b.expires.slice(0, 10)) : "—"}${b.expired ? ' <span class="badge sev-high">SÜRESİ DOLDU</span>' : ""}</dd>
             <dt>Bugünkü tarama</dt><dd><span class="meter" style="--c:${color}"><span class="bar"><i style="width:${pct}%"></i></span><b>${used} / ${plan.daily_scans || "∞"}</b></span></dd>
             <dt>Port aralığı</dt><dd>1–${plan.max_port.toLocaleString("tr-TR")}</dd>
@@ -928,14 +923,14 @@ function renderPlanCards() {
         }).join("")}</tr>`).join("");
 }
 
-function renderRegionSelect() {
-    const det = planCatalog.detected;
-    const sel = $("regionSelect");
-    sel.innerHTML = `<option value="">Otomatik · ${esc(det.name)} (${esc(det.currency)})</option>`
-        + planCatalog.regions.map((r) => `<option value="${r.country}">${esc(r.name)} (${esc(r.currency)})</option>`).join("");
-    sel.value = pricingRegion;
+function renderRegionInfo() {
     const pr = planCatalog.pricing;
-    sel.title = pr.currency === "TRY" ? "Türkiye fiyatları" : `1 ${pr.currency} = ${pr.rate.toFixed(2)} TL · kaynak: ${pr.rate_source}`;
+    $("regionInfo").innerHTML = `<span class="muted small">BÖLGE</span> <b>${esc(pr.name)} · ${esc(pr.currency)}</b>`
+        + ` <span class="muted small">(IP adresinize göre)</span>`;
+    $("regionInfo").title = pr.currency === "TRY"
+        ? "Fiyat bölgesi IP adresinize göre otomatik belirlenir."
+        : `Fiyat bölgesi IP adresinize göre otomatik belirlenir. 1 ${pr.currency} = ${pr.rate.toFixed(2)} TL · kaynak: ${pr.rate_source}`;
+    $("demoTag").hidden = planCatalog.payment_mode !== "demo";
 }
 
 const PAY_STATUS = { paid: ["ÖDENDİ", "risk-low"], pending: ["BEKLİYOR", "sev-medium"], failed: ["BAŞARISIZ", "sev-high"], demo: ["DEMO", "sev-info"] };
@@ -977,9 +972,8 @@ function renderTargets(t) {
 function openCheckout(planId) {
     const p = planCatalog.plans.find((x) => x.id === planId);
     const cur = currentPlan();
-    const { value: price, currency } = priceOf(p.id, billingPeriod === "yearly", true);
+    const { value: price, currency } = priceOf(p.id, billingPeriod === "yearly");
     const det = planCatalog.detected;
-    const previewing = planCatalog.pricing.country !== det.country;
     pendingCheckout = { plan: p.id, period: billingPeriod };
     $("checkoutTitle").textContent = p.level > cur.level ? `${p.name} planına yükselt` : `${p.name} planına geç`;
     $("checkoutBody").innerHTML = `
@@ -989,8 +983,7 @@ function openCheckout(planId) {
             <dt>Dönem</dt><dd>${p.price_monthly ? (billingPeriod === "yearly" ? "Yıllık (365 gün)" : "Aylık (30 gün)") : "—"}</dd>
             <dt>Tutar</dt><dd><b>${money(price, currency)}</b></dd>
             <dt>Bölge</dt><dd>${esc(det.name)} (IP adresinize göre)</dd>
-        </dl>
-        ${previewing ? `<p class="lock-note">Şu an ${esc(planCatalog.pricing.name)} fiyatlarını önizliyorsunuz; ödeme bulunduğunuz bölgenin (${esc(det.name)}) fiyatıyla alınır.</p>` : ""}`;
+        </dl>`;
     const real = planCatalog.payment_mode === "paytr" && p.price_monthly > 0;
     $("checkoutConsentRow").hidden = !real;
     $("checkoutConsent").checked = false;
@@ -1300,11 +1293,6 @@ $("bellList").addEventListener("click", (e) => { const li = e.target.closest("li
 $("bellAlerts").addEventListener("click", (e) => { const li = e.target.closest("li[data-id]"); if (li) openScan(li.dataset.id); });
 document.addEventListener("click", (e) => { if (!e.target.closest("#bellPop")) $("bellPop").hidden = true; });
 
-$("regionSelect").addEventListener("change", (e) => {
-    pricingRegion = e.target.value;
-    try { localStorage.setItem(REGION_KEY, pricingRegion); } catch { /* yoksay */ }
-    loadPlans();
-});
 $("periodSeg").addEventListener("click", (e) => {
     const b = e.target.closest("[data-period]");
     if (!b) return;

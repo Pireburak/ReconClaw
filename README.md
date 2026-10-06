@@ -447,7 +447,8 @@ Ziyaretçinin ülkesi **IP adresinden** bulunur. **Türkiye'den** gelenler fiyat
 
 - **En ucuz fiyat her zaman Türkiye'dedir.** Yurt dışında her ücretli planın aylık fiyatına **≈950 TL** (`REGIONAL_SURCHARGE_TRY`) eklenir, güncel Euro kuruyla çevrilir ve x,99 biçimine yuvarlanır. Örnek: Pro = (299 + 950) TL ÷ Euro kuru ≈ **€24,99**.
 - Euro kuru open.er-api.com'dan 12 saatte bir alınır; internet yoksa `.env`'deki `FX_RATES=EUR=...` veya yerleşik yaklaşık kur kullanılır.
-- Abonelik sayfasındaki **BÖLGE** menüsünden Türkiye / Yurt dışı fiyatları önizlenebilir; **ödeme ise her zaman IP'den tespit edilen bölgenin fiyatıyla** alınır. Ödeme kaydı para birimi, ülke ve TL karşılığıyla saklanır.
+- Bölge **yalnızca IP adresinden** belirlenir; kullanıcı seçemez veya değiştiremez. Fiyat ve ödeme tutarı sunucuda hesaplanır, tarayıcıdan gelen para birimine güvenilmez.
+- Ülke birden fazla GeoIP servisiyle (ipapi.co → country.is → ipwho.is) ya da Cloudflare arkasında `CF-IPCountry` ile bulunur. Hiçbiri cevap vermezse **TL'ye düşülmez**, ödeme başlatılmaz ve kullanıcıdan birkaç dakika sonra tekrar denemesi istenir. Ödeme kaydı para birimi, ülke ve TL karşılığıyla saklanır.
 - Yerel ağdan (127.0.0.1, 192.168.x) bağlananlar Türkiye (`DEFAULT_COUNTRY`) sayılır. Cloudflare arkasında `TRUST_COUNTRY_HEADER=true` ile `CF-IPCountry` başlığı kullanılır.
 
 - **Günlük kota** ayrı bir sayaçta tutulur: tarama silmek hakkı geri vermez. İzleme taramaları da kotaya sayılır.

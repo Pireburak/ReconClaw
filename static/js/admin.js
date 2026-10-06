@@ -1,13 +1,21 @@
 "use strict";
-/* ReconClaw v7.0 — Yönetim paneli (yalnızca yöneticilere yüklenir; sunucu da her istekte rolü denetler). */
+/* ReconClaw — Yönetim paneli (yalnızca sahip, yönetici ve moderatörlere yüklenir; sunucu da her istekte rolü denetler). */
 
 (() => {
     const MY_ID = Number(document.body.dataset.uid);
-    const I_AM_OWNER = document.body.dataset.role === "owner";
+    const MY_ROLE = document.body.dataset.role;
+    const I_AM_OWNER = MY_ROLE === "owner";
+    const I_MANAGE = MY_ROLE === "owner" || MY_ROLE === "admin";  // moderatör yalnızca izler ve üyeleri askıya alır
     const ROLE_BADGE = {
         owner: '<span class="badge owner-badge">SAHİP</span>',
         admin: '<span class="badge admin-badge">YÖNETİCİ</span>',
+        moderator: '<span class="badge mod-badge">MODERATÖR</span>',
         user: '<span class="badge sev-info">ÜYE</span>',
+    };
+    const ROLE_INFO = {
+        owner: "Her şey. Devredilemez (yalnızca terminalden).",
+        admin: "Sınırsız plan, kullanıcı / plan / rol yönetimi.",
+        moderator: "Paneli görür, normal üyeleri askıya alır. Plan ve gelir görmez.",
     };
     let catalog = null;
     let auditFilled = false;
@@ -18,12 +26,14 @@
     async function loadAdmin() {
         try {
             catalog = catalog || await api("/api/plans");
-            const [overview, users, audit] = await Promise.all([
+            const [overview, users, audit, team] = await Promise.all([
                 api("/api/admin/overview"),
                 api(`/api/admin/users?q=${encodeURIComponent($("adminSearch").value.trim())}`),
                 api(`/api/admin/audit?limit=60&action=${encodeURIComponent($("auditFilter").value)}`),
+                api("/api/admin/team"),
             ]);
             renderOverview(overview);
+            renderTeam(team);
             renderUsers(users);
             renderAudit(audit);
         } catch (err) { toast(err.message, "err"); }
@@ -36,10 +46,10 @@
     function renderOverview(o) {
         const paying = o.by_plan.filter((p) => p.id !== "free").reduce((a, p) => a + p.count, 0);
         $("adminStats").innerHTML = [
-            stat("KULLANICI", o.users_total, `${o.admins} yönetici · ${o.disabled} askıda`),
+            stat("KULLANICI", o.users_total, `${o.admins} yönetici · ${o.moderators} moderatör · ${o.disabled} askıda`),
             stat("ÜCRETLİ ABONE", paying, `${o.users_total ? Math.round((paying / o.users_total) * 100) : 0}% dönüşüm`, "c-green"),
-            stat("AYLIK GELİR (MRR)", tlFmt(o.mrr), "aktif planlar · demo", "c-yellow"),
-            stat("TOPLAM TAHSİLAT", tlFmt(o.revenue_total), `${o.payments_total} demo ödeme`),
+            o.mrr === null ? "" : stat("AYLIK GELİR (MRR)", tlFmt(o.mrr), "aktif planların aylık değeri", "c-yellow"),
+            o.revenue_total === null ? "" : stat("TOPLAM TAHSİLAT", tlFmt(o.revenue_total), `${o.payments_total} ödeme`),
             stat("BUGÜN TARAMA", o.scans_today, `${o.scans_total} toplam · ${o.ai_today} AI`, "c-pink"),
             stat("AKTİF İZLEME", o.monitors_active, `${o.alerts_7d} alarm / 7 gün`),
             stat("HATALI GİRİŞ", o.failed_logins_24h, "son 24 saat", o.failed_logins_24h ? "c-red" : ""),
@@ -91,35 +101,60 @@
         return catalog.plans.map((p) => `<option value="${p.id}"${p.id === selected ? " selected" : ""}>${esc(p.name)}</option>`).join("");
     }
 
+    function renderTeam(list) {
+        $("teamCount").textContent = `${list.length} kişi`;
+        $("adminTeam").innerHTML = list.map((m) => `
+            <div class="team-card ${m.disabled ? "dead" : ""}">
+                <div class="team-head">${ROLE_BADGE[m.role]}${m.id === MY_ID ? ' <span class="muted small">(siz)</span>' : ""}</div>
+                <b>${esc(m.name || m.email)}</b>
+                <span class="muted small">${esc(m.email)}</span>
+                <span class="small">${esc(ROLE_INFO[m.role] || "")}</span>
+                <span class="muted small">Son giriş: ${esc(m.last_login || "—")}</span>
+                ${m.granted_by ? `<span class="muted small">Yetkiyi veren: ${esc(m.granted_by)} · ${esc((m.granted_at || "").slice(0, 10))}</span>` : ""}
+            </div>`).join("") || '<div class="empty">Ekip boş.</div>';
+    }
+
+    // Rol seçimi: sahip herkesi, yönetici üye ↔ moderatör ↔ yönetici (yöneticiyi düşürmek sahibe ait)
+    function roleCell(u, self) {
+        if (u.role === "owner" || self || !I_MANAGE || (u.role === "admin" && !I_AM_OWNER)) {
+            const why = u.role === "owner" ? "Sahip hesabı değiştirilemez" : self ? "Kendi rolünüzü değiştiremezsiniz"
+                : !I_MANAGE ? "Moderatörler rol değiştiremez" : "Yalnızca sahip yapabilir";
+            return `<span title="${why}">${ROLE_BADGE[u.role] || ROLE_BADGE.user}</span>`;
+        }
+        const opts = [["user", "Üye"], ["moderator", "Moderatör"], ["admin", "Yönetici"]];
+        return `<select data-role-for="${u.id}" data-current="${u.role}" aria-label="Rol">
+            ${opts.map(([v, l]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+    }
+
     function renderUsers(list) {
         $("adminUserCount").textContent = `${list.length} kayıt`;
         $("adminUsers").innerHTML = list.length ? list.map((u) => {
             const self = u.id === MY_ID;
-            const staff = u.role === "admin" || u.role === "owner";
-            // Sahibe kimse dokunamaz; bir yöneticiye karşı işlem yalnızca sahibe açık
-            const locked = self || u.role === "owner" || (u.role === "admin" && !I_AM_OWNER);
-            const why = u.role === "owner" ? "Sahip hesabı değiştirilemez" : u.role === "admin" && !I_AM_OWNER ? "Yalnızca sahip yapabilir" : "";
+            const staff = u.role === "admin" || u.role === "owner";  // sınırsız plan; plan atanmaz
+            // Sahibe kimse dokunamaz; bir yöneticiye karşı işlem yalnızca sahibe, üye dışındakiler moderatöre kapalı
+            const locked = self || u.role === "owner" || (u.role === "admin" && !I_AM_OWNER) || (!I_MANAGE && u.role !== "user");
+            const why = u.role === "owner" ? "Sahip hesabı değiştirilemez" : u.role === "admin" && !I_AM_OWNER ? "Yalnızca sahip yapabilir"
+                : !I_MANAGE && u.role !== "user" ? "Moderatörler yalnızca üyeleri yönetebilir" : "";
             return `<tr class="${u.disabled ? "dead" : ""}" data-uid="${u.id}">
                 <td>${u.id}</td>
                 <td><b>${esc(u.name)}</b>${self ? ' <span class="muted small">(siz)</span>' : ""}<br><span class="muted small">${esc(u.email)}</span>
                     ${u.disabled ? '<br><span class="badge sev-high">ASKIDA</span>' : ""}</td>
-                <td>${ROLE_BADGE[u.role] || ROLE_BADGE.user}</td>
+                <td>${roleCell(u, self)}</td>
                 <td><span class="plan-tag" data-level="${u.level}">${esc(u.plan_name)}</span>
                     ${u.plan_expires && !staff ? `<br><span class="muted small">→ ${esc(u.plan_expires.slice(0, 10))}</span>` : ""}
                     ${u.paid ? `<br><span class="muted small">${tlFmt(u.paid)} ödendi</span>` : ""}</td>
                 <td>${u.scans_today} <span class="muted small">bugün</span><br><span class="muted small">${u.scan_count} toplam</span></td>
                 <td class="small">${esc(u.last_login || "—")}</td>
                 <td class="assign">
-                    <select data-plan-for="${u.id}" ${staff ? "disabled" : ""}>${planOptions(u.stored_plan)}</select>
+                    ${I_MANAGE ? `<select data-plan-for="${u.id}" ${staff ? "disabled" : ""}>${planOptions(u.stored_plan)}</select>
                     <select data-days-for="${u.id}" ${staff ? "disabled" : ""}>
                         <option value="30">30 gün</option><option value="365">1 yıl</option><option value="">Süresiz</option>
                     </select>
-                    <button type="button" class="btn sm" data-assign="${u.id}" ${staff ? "disabled" : ""}>ATA</button>
+                    <button type="button" class="btn sm" data-assign="${u.id}" ${staff ? "disabled" : ""}>ATA</button>` : '<span class="muted small">—</span>'}
                 </td>
                 <td class="row-actions">
-                    <button type="button" class="btn sm" data-role="${u.id}" data-next="${staff ? "user" : "admin"}" ${locked ? `disabled title="${why}"` : ""}>${staff ? "YETKİYİ AL" : "YÖNETİCİ YAP"}</button>
                     <button type="button" class="btn sm ${u.disabled ? "" : "danger"}" data-disable="${u.id}" data-next="${u.disabled ? "0" : "1"}" ${locked ? `disabled title="${why}"` : ""}>${u.disabled ? "AKTİF ET" : "ASKIYA AL"}</button>
-                    <button type="button" class="btn sm danger" data-remove="${u.id}" data-email="${esc(u.email)}" ${locked ? `disabled title="${why}"` : ""}>SİL</button>
+                    ${I_MANAGE ? `<button type="button" class="btn sm danger" data-remove="${u.id}" data-email="${esc(u.email)}" ${locked ? `disabled title="${why}"` : ""}>SİL</button>` : ""}
                 </td>
             </tr>`;
         }).join("") : '<tr><td colspan="8" class="empty">Kullanıcı bulunamadı.</td></tr>';
@@ -150,11 +185,22 @@
         } catch (err) { toast(err.message, "err"); }
     }
 
+    const ROLE_CONFIRM = {
+        admin: "Bu kişi YÖNETİCİ yapılsın mı? Tüm sınırlar kalkar; kullanıcıları, planları ve rolleri yönetebilir.",
+        moderator: "Bu kişi MODERATÖR yapılsın mı? Yönetim panelini görür ve normal üyeleri askıya alabilir.",
+        user: "Bu kişinin yetkisi alınıp normal üye yapılsın mı? Yönetim paneli kendisinden gizlenir.",
+    };
+    const ROLE_DONE = { admin: "Kişi yönetici yapıldı.", moderator: "Kişi moderatör yapıldı.", user: "Yetki alındı, kişi artık normal üye." };
+    $("adminUsers").addEventListener("change", (e) => {
+        const sel = e.target.closest("[data-role-for]");
+        if (!sel) return;
+        if (!confirm(ROLE_CONFIRM[sel.value])) { sel.value = sel.dataset.current; return; }
+        patchUser(sel.dataset.roleFor, { role: sel.value }, ROLE_DONE[sel.value]);
+    });
     $("adminSearch").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadAdmin, 250); });
     $("auditFilter").addEventListener("change", loadAdmin);
     $("adminUsers").addEventListener("click", async (e) => {
         const assign = e.target.closest("[data-assign]");
-        const role = e.target.closest("[data-role]");
         const dis = e.target.closest("[data-disable]");
         const rm = e.target.closest("[data-remove]");
         if (assign) {
@@ -162,11 +208,6 @@
             const plan = document.querySelector(`[data-plan-for="${id}"]`).value;
             const days = document.querySelector(`[data-days-for="${id}"]`).value;
             return patchUser(id, { plan, days: days ? Number(days) : null }, "Plan atandı (ödeme kaydı oluşturulmadı).");
-        }
-        if (role) {
-            const next = role.dataset.next;
-            if (!confirm(next === "admin" ? "Bu kullanıcı yönetici yapılsın mı? Tüm sınırlar kalkar ve Yönetim paneline erişir." : "Yönetici yetkisi alınsın mı?")) return;
-            return patchUser(role.dataset.role, { role: next }, next === "admin" ? "Kullanıcı yönetici yapıldı." : "Yönetici yetkisi alındı.");
         }
         if (dis) {
             const off = dis.dataset.next === "1";
@@ -184,7 +225,7 @@
     });
 
     // Görünüm yalnızca bu dosya yüklendiğinde (yani yalnızca yöneticilere) tanımlanır
-    VIEWS.admin = ["YÖNETİM", "Kullanıcılar, planlar, sistem durumu ve denetim kaydı", "A"];
+    VIEWS.admin = ["YÖNETİM", I_MANAGE ? "Ekip, kullanıcılar, planlar, sistem durumu ve denetim kaydı" : "Ekip, kullanıcılar ve denetim kaydı (moderatör)", "A"];
     document.addEventListener("keydown", (e) => {
         if ((e.key === "a" || e.key === "A") && !isTyping(e) && !e.ctrlKey && !e.metaKey && !e.altKey) go("admin");
     });

@@ -201,11 +201,11 @@ def current_user(request: Request):
     return user
 
 
-def admin_user(request: Request):
-    """Yönetim uç noktaları yönetici olmayanlara (ve oturumsuz ziyaretçilere) hiç yokmuş gibi 404 döner;
-    böylece panelin varlığı dışarıdan anlaşılmaz."""
-    user = optional_user(request)
-    if user is None or not plans.is_admin(user):
+def staff_user(request: Request):
+    """Yönetim uç noktaları yetkili ekip (sahip / yönetici / moderatör) dışındakilere hiç yokmuş gibi 404 döner;
+    böylece panelin varlığı dışarıdan anlaşılmaz. API anahtarıyla (Bearer) yönetim yapılamaz."""
+    user = None if _bearer(request) else optional_user(request)
+    if user is None or not plans.is_staff(user):
         raise HTTPException(status_code=404, detail="Not Found")
     return user
 
@@ -833,21 +833,14 @@ async def visitor_region(request: Request) -> dict:
 
 
 @app.get("/api/plans", tags=["billing"])
-async def list_plans(request: Request, country: str = ""):
-    """Plan kataloğu. Fiyatlar ziyaretçinin ülkesine göre yerel para biriminde döner;
-    `?country=DE` ile başka bir ülkenin fiyatları önizlenebilir (ödeme her zaman tespit edilen bölgeden alınır)."""
-    detected = await visitor_region(request)
-    region = detected
-    if country and country.upper() != detected["country"]:
-        region = pricing.region_of(country[:2])
-        if region["currency"] != "TRY":
-            await pricing.refresh_rates()
+async def list_plans(request: Request):
+    """Plan kataloğu. Fiyat bölgesi YALNIZCA ziyaretçinin IP adresinden belirlenir (Türkiye: TL, diğer ülkeler: EUR);
+    kullanıcı bölge seçemez. Ödeme de aynı tespitle, sunucu tarafında hesaplanır."""
+    region = await visitor_region(request)
     catalog = list(plans.PLANS.values())
     return {"plans": [p.to_dict() for p in catalog], "currency": region["currency"],
             "payment_mode": "paytr" if paytr.enabled() else "demo",
-            "pricing": pricing.price_list(catalog, region), "detected": detected,
-            "checkout_pricing": pricing.price_list(catalog, detected),
-            "regions": pricing.supported_regions(),
+            "pricing": pricing.price_list(catalog, region), "detected": region,
             "require_target_verification": config.REQUIRE_TARGET_VERIFICATION}
 
 
@@ -863,6 +856,9 @@ async def billing_checkout(body: CheckoutRequest, request: Request, user=Depends
     if plans.is_admin(user):
         raise HTTPException(status_code=400, detail="Yönetici hesapları zaten sınırsız; ödeme akışını denemek için normal bir hesap kullanın.")
     region = await visitor_region(request)  # ödeme her zaman IP'den tespit edilen bölgenin fiyatıyla
+    if region["unknown"] and body.plan != "free":
+        raise HTTPException(status_code=503, detail="Bulunduğunuz ülke şu an belirlenemedi; fiyat bölgesi IP adresinize "
+                                                    "göre hesaplanır. Lütfen birkaç dakika sonra tekrar deneyin.")
     if paytr.enabled() and body.plan != "free":
         return await paytr_checkout(body, request, user, region)
     result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period, region)
@@ -1069,14 +1065,14 @@ async def recon_detail(run_id: int, user=Depends(current_user)):
 
 # ---------------------------------------------------------------- v7.0 yönetim
 class AdminUserUpdate(BaseModel):
-    role: Literal["user", "admin"] | None = None
+    role: Literal["user", "moderator", "admin"] | None = None
     plan: str | None = None
     days: int | None = Field(None, ge=1, le=3650)
     disabled: bool | None = None
 
 
 @app.get("/api/admin/overview", include_in_schema=False)
-async def admin_overview(user=Depends(admin_user)):
+async def admin_overview(user=Depends(staff_user)):
     data = await run_in_threadpool(admin.overview)
     data.update({"version": VERSION, "codename": CODENAME, "uptime": int(time.time() - STARTED_AT),
                  "active_scans": active_scans, "scheduler": config.SCHEDULER_ENABLED,
@@ -1084,28 +1080,40 @@ async def admin_overview(user=Depends(admin_user)):
                  "settings": {"allow_signup": config.ALLOW_SIGNUP, "private_targets": config.ALLOW_PRIVATE_TARGETS,
                               "target_verification": config.REQUIRE_TARGET_VERIFICATION,
                               "admin_emails": len(config.ADMIN_EMAILS)}})
+    data["can_manage"] = plans.is_admin(user)
+    if not plans.is_admin(user):  # gelir bilgisi moderatörlere gösterilmez
+        data.update(revenue_total=None, payments_total=None, mrr=None)
     return data
 
 
 @app.get("/api/admin/users", include_in_schema=False)
-async def admin_users(q: str = "", limit: int = 100, user=Depends(admin_user)):
-    return await run_in_threadpool(admin.list_users, q[:100], limit)
+async def admin_users(q: str = "", limit: int = 100, user=Depends(staff_user)):
+    users = await run_in_threadpool(admin.list_users, q[:100], limit)
+    if not plans.is_admin(user):
+        for u in users:
+            u["paid"] = None
+    return users
 
 
 @app.patch("/api/admin/users/{user_id}", include_in_schema=False)
-async def admin_update_user(user_id: int, body: AdminUserUpdate, request: Request, user=Depends(admin_user)):
+async def admin_update_user(user_id: int, body: AdminUserUpdate, request: Request, user=Depends(staff_user)):
     return await run_in_threadpool(admin.update_user, user, user_id, body.role, body.plan, body.days,
                                    body.disabled, client_ip(request))
 
 
 @app.delete("/api/admin/users/{user_id}", include_in_schema=False)
-async def admin_delete_user(user_id: int, request: Request, user=Depends(admin_user)):
+async def admin_delete_user(user_id: int, request: Request, user=Depends(staff_user)):
     await run_in_threadpool(admin.delete_user, user, user_id, client_ip(request))
     return {"deleted": 1}
 
 
+@app.get("/api/admin/team", include_in_schema=False)
+async def admin_team(user=Depends(staff_user)):
+    return await run_in_threadpool(admin.team)
+
+
 @app.get("/api/admin/audit", include_in_schema=False)
-async def admin_audit(limit: int = 100, action: str = "", user=Depends(admin_user)):
+async def admin_audit(limit: int = 100, action: str = "", user=Depends(staff_user)):
     return {"entries": await run_in_threadpool(audit.entries, None, limit, action[:40]), "actions": audit.ACTIONS}
 
 

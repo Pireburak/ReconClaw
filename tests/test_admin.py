@@ -199,3 +199,56 @@ def test_cli_password_reset(app_client, monkeypatch):
     app_client.cookies.clear()
     assert app_client.get("/api/me").status_code == 401  # eski oturumlar kapandı
     assert app_client.post("/auth/login", json={"email": "unuttum@example.com", "password": "YeniParola42"}).status_code == 200
+
+
+def test_moderator_sees_panel_but_only_suspends_members(app_client):
+    import manage
+
+    member = register(app_client, "uye3@example.com")
+    other_mod = register(app_client, "mod2@example.com")
+    register(app_client, "mod@example.com")
+    assert manage.main(["make-moderator", "mod@example.com"]) == 0
+    assert manage.main(["make-moderator", "mod2@example.com"]) == 0
+    app_client.cookies.clear()
+    app_client.post("/auth/login", json={"email": "mod@example.com", "password": "parola123"})
+    me = app_client.get("/api/me").json()
+    assert me["role"] == "moderator" and me["is_staff"] and not me["is_admin"]
+    assert me["subscription"]["plan"]["id"] == "free"  # moderatör sınırsız plan almaz
+    page = app_client.get("/").text
+    assert "admin.js" in page and 'data-view="admin"' in page
+    overview = app_client.get("/api/admin/overview").json()
+    assert overview["mrr"] is None and overview["revenue_total"] is None and overview["can_manage"] is False
+    assert all(u["paid"] is None for u in app_client.get("/api/admin/users").json())
+    team = {m["email"]: m["role"] for m in app_client.get("/api/admin/team").json()}
+    assert team == {"mod@example.com": "moderator", "mod2@example.com": "moderator"}
+    # Üyeyi askıya alabilir; rol / plan / silme ve diğer moderatöre dokunma yok
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"disabled": True}).status_code == 200
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"disabled": False}).status_code == 200
+    for body in ({"role": "admin"}, {"role": "moderator"}, {"plan": "ultra_max"}):
+        assert app_client.patch(f"/api/admin/users/{member['id']}", json=body).status_code == 400
+    assert app_client.patch(f"/api/admin/users/{other_mod['id']}", json={"disabled": True}).status_code == 400
+    assert app_client.delete(f"/api/admin/users/{member['id']}").status_code == 400
+
+
+def test_admin_appoints_moderator_and_team_shows_who_granted(app_client):
+    member = register(app_client, "aday@example.com")
+    register(app_client, ADMIN)
+    res = app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "moderator"})
+    assert res.status_code == 200 and res.json()["role"] == "moderator"
+    team = app_client.get("/api/admin/team").json()
+    mod = next(m for m in team if m["email"] == "aday@example.com")
+    assert mod["role"] == "moderator" and mod["granted_by"] == ADMIN
+    assert [m["role"] for m in team] == ["admin", "moderator"]  # sıralama: sahip, yönetici, moderatör
+    # Moderatörün yetkisi geri alınınca panel kendisinden gizlenir
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "user"}).json()["role"] == "user"
+    app_client.cookies.clear()
+    app_client.post("/auth/login", json={"email": "aday@example.com", "password": "parola123"})
+    assert app_client.get("/api/admin/team").status_code == 404
+    assert "admin.js" not in app_client.get("/").text
+
+
+def test_api_token_cannot_reach_admin(app_client):
+    register(app_client, ADMIN)
+    token = app_client.post("/api/me/token").json()["token"]
+    app_client.cookies.clear()
+    assert app_client.get("/api/admin/overview", headers={"Authorization": f"Bearer {token}"}).status_code == 404
