@@ -1,9 +1,12 @@
 """
 Yönetim paneli işlemleri: sistem özeti, kullanıcı listesi, rol / plan / askıya alma.
 
-Yalnızca role = 'admin' olan kullanıcılar erişebilir (kontrol main.py'deki admin_user bağımlılığında).
-Yöneticinin kendini askıya alması, rolünü düşürmesi veya silmesi engellenir; böylece sistem
-yöneticisiz kalmaz.
+Yalnızca role = 'admin' veya 'owner' olan kullanıcılar erişebilir (kontrol main.py'deki admin_user
+bağımlılığında). Yetki kuralları:
+  * Sahip (owner) tektir; panelden değiştirilemez, askıya alınamaz, silinemez.
+  * Yöneticiler kullanıcıları yönetici yapabilir, plan atayabilir, normal üyeleri askıya alabilir / silebilir.
+  * Bir yöneticinin yetkisini almak, onu askıya almak veya silmek yalnızca sahibin işidir.
+  * Kimse kendi hesabını panelden askıya alamaz, yetkisini düşüremez veya silemez.
 """
 
 from contextlib import closing
@@ -36,7 +39,7 @@ def overview() -> dict:
             (_days(14)[0],)).fetchall())
         data = {
             "users_total": len(users),
-            "admins": sum(1 for u in users if u["role"] == "admin"),
+            "admins": sum(1 for u in users if u["role"] in plans.ADMIN_ROLES),
             "disabled": sum(1 for u in users if u["disabled"]),
             "scans_total": q("SELECT COUNT(*) FROM scans"),
             "scans_today": q("SELECT COALESCE(SUM(scans), 0) FROM usage WHERE day = ?", today),
@@ -53,7 +56,7 @@ def overview() -> dict:
     by_plan = {pid: 0 for pid in plans.PLANS}
     mrr = 0
     for u in users:
-        if u["role"] == "admin":
+        if u["role"] in plans.ADMIN_ROLES:
             continue
         plan = plans.PLANS.get(u["plan"] or "free", plans.PLANS["free"])
         if plan.id != "free" and u["plan_expires"] and u["plan_expires"] < now:
@@ -87,16 +90,25 @@ def list_users(query: str = "", limit: int = 100) -> list:
     return result
 
 
+def _guard(actor, target, touches_admin: bool):
+    """Sahip korunur; yöneticilere karşı işlem yalnızca sahibe açıktır."""
+    if target["role"] == "owner" and target["id"] != actor["id"]:
+        raise AdminError("Sahip hesabı değiştirilemez.")
+    if touches_admin and target["role"] == "admin" and not plans.is_owner(actor):
+        raise AdminError("Bir yöneticinin yetkisini almak, askıya almak veya silmek yalnızca sahibe açıktır.")
+
+
 def update_user(actor, user_id: int, role=None, plan=None, days=None, disabled=None, ip="") -> dict:
     target = auth.get_user(user_id)
     if target is None:
         raise AdminError("Kullanıcı bulunamadı.")
     is_self = target["id"] == actor["id"]
+    _guard(actor, target, touches_admin=(role is not None and role != target["role"]) or disabled is not None)
     events = []  # denetim kayıtları işlem bittikten sonra yazılır (SQLite tek yazar kilidi)
     with closing(get_db_connection()) as conn, conn:
         if role is not None and role != target["role"]:
             if role not in ("user", "admin"):
-                raise AdminError("Geçersiz rol.")
+                raise AdminError("Geçersiz rol. Sahiplik yalnızca terminalden (manage.py make-owner) devredilir.")
             if is_self:
                 raise AdminError("Kendi yönetici rolünüzü kaldıramazsınız.")
             conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
@@ -128,5 +140,6 @@ def delete_user(actor, user_id: int, ip=""):
         raise AdminError("Kullanıcı bulunamadı.")
     if target["id"] == actor["id"]:
         raise AdminError("Kendi hesabınızı yönetim panelinden silemezsiniz.")
+    _guard(actor, target, touches_admin=True)
     audit.log("admin_delete", None, actor["id"], target["email"], ip)
     auth.delete_user(user_id)

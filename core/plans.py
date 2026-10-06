@@ -84,8 +84,16 @@ def _now():
     return datetime.now().replace(microsecond=0)
 
 
+ADMIN_ROLES = ("admin", "owner")
+
+
 def is_admin(user) -> bool:
-    return user is not None and "role" in user.keys() and user["role"] == "admin"
+    """Yönetici veya sahip (owner) mi? İkisi de sınırsız Admin seviyesindedir."""
+    return user is not None and "role" in user.keys() and user["role"] in ADMIN_ROLES
+
+
+def is_owner(user) -> bool:
+    return user is not None and "role" in user.keys() and user["role"] == "owner"
 
 
 def effective_plan(user) -> Plan:

@@ -113,6 +113,9 @@ def test_admin_manages_users_and_audit(app_client):
     # Kullanıcıyı yönetici yap, sonra sil
     promoted = app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "admin", "disabled": False}).json()
     assert promoted["role"] == "admin" and promoted["level"] == 6
+    # Bir yöneticiyi silmek yalnızca sahibe açık
+    assert app_client.delete(f"/api/admin/users/{member['id']}").status_code == 400
+    assert auth.set_owner(ADMIN)
     assert app_client.delete(f"/api/admin/users/{member['id']}").status_code == 200
     assert app_client.get("/api/admin/overview").json()["users_total"] == 1
 
@@ -145,3 +148,54 @@ def test_manage_cli_promotes_user(app_client, tmp_path):
     conn = sqlite3.connect(db_manager.DB_PATH)
     assert conn.execute("SELECT role FROM users WHERE email = 'cli@example.com'").fetchone()[0] == "admin"
     conn.close()
+
+
+def test_owner_rules(app_client, tmp_path):
+    owner = register(app_client, "sahip@example.com")
+    other = register(app_client, "ikinci@example.com")
+    member = register(app_client, "uye2@example.com")
+    import manage
+
+    assert manage.main(["make-owner", "sahip@example.com"]) == 0
+    assert manage.main(["make-admin", "ikinci@example.com"]) == 0
+    # ikinci yönetici olarak giriş
+    app_client.cookies.clear()
+    app_client.post("/auth/login", json={"email": "ikinci@example.com", "password": "parola123"})
+    assert app_client.get("/api/me").json()["is_admin"] is True
+    # Yönetici üyeyi yönetici yapabilir, ama sahibe ve diğer yöneticiye dokunamaz
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "admin"}).status_code == 200
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "user"}).status_code == 400
+    for body in ({"role": "user"}, {"disabled": True}, {"plan": "pro"}):
+        assert app_client.patch(f"/api/admin/users/{owner['id']}", json=body).status_code == 400
+    assert app_client.delete(f"/api/admin/users/{owner['id']}").status_code == 400
+    assert app_client.patch(f"/api/admin/users/{member['id']}", json={"role": "owner"}).status_code == 422
+    # Sahip yöneticinin yetkisini alabilir
+    app_client.cookies.clear()
+    app_client.post("/auth/login", json={"email": "sahip@example.com", "password": "parola123"})
+    me = app_client.get("/api/me").json()
+    assert me["is_owner"] and me["subscription"]["admin"]
+    assert app_client.patch(f"/api/admin/users/{other['id']}", json={"role": "user"}).json()["role"] == "user"
+    roles = {u["email"]: u["role"] for u in app_client.get("/api/admin/users").json()}
+    assert roles["sahip@example.com"] == "owner" and roles["uye2@example.com"] == "admin"
+    # Sahiplik devri: önceki sahip yöneticiye iner; tek sahip kalır
+    assert manage.main(["make-owner", "uye2@example.com"]) == 0
+    roles = {u["email"]: u["role"] for u in app_client.get("/api/admin/users").json()}
+    assert roles["sahip@example.com"] == "admin" and roles["uye2@example.com"] == "owner"
+
+
+def test_sync_admins_never_demotes_owner(app_client, monkeypatch):
+    register(app_client, ADMIN)
+    assert auth.set_owner(ADMIN)
+    auth.sync_admins()
+    assert app_client.get("/api/me").json()["role"] == "owner"
+
+
+def test_cli_password_reset(app_client, monkeypatch):
+    register(app_client, "unuttum@example.com")
+    import manage
+
+    monkeypatch.setattr("getpass.getpass", lambda prompt="": "YeniParola42")
+    assert manage.main(["passwd", "unuttum@example.com"]) == 0
+    app_client.cookies.clear()
+    assert app_client.get("/api/me").status_code == 401  # eski oturumlar kapandı
+    assert app_client.post("/auth/login", json={"email": "unuttum@example.com", "password": "YeniParola42"}).status_code == 200
