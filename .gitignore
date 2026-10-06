@@ -5,6 +5,7 @@ __pycache__/
 *.db
 *.sqlite3
 .env
+deploy/certs/
 data/
 .venv/
 .pytest_cache/

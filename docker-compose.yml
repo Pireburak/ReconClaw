@@ -2,7 +2,7 @@
 #   1) Alan adınızın DNS A kaydını sunucunuzun IP adresine yönlendirin
 #   2) cp .env.example .env  ->  DOMAIN ve PUBLIC_URL'i doldurun
 #   3) docker compose up -d --build
-# Caddy, Let's Encrypt'ten otomatik ücretsiz SSL sertifikası alır ve yeniler.
+# HTTPS sertifikasını Cloudflare verir. Sunucuda yalnızca origin sertifikası durur (deploy/certs).
 services:
   reconclaw:
     build: .
@@ -26,6 +26,7 @@ services:
       - "443:443"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/certs:/certs:ro
       - caddy-data:/data
       - caddy-config:/config
 

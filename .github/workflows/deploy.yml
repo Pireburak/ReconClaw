@@ -1,0 +1,28 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd "$HOME/ReconClaw"
+            cp -a deploy/Caddyfile /tmp/reconclaw-Caddyfile
+            cp -a .env /tmp/reconclaw.env
+            git fetch origin main
+            git reset --hard origin/main
+            cp -a /tmp/reconclaw-Caddyfile deploy/Caddyfile
+            cp -a /tmp/reconclaw.env .env
+            docker compose up -d --build
