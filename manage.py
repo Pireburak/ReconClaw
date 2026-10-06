@@ -3,8 +3,9 @@ ReconClaw yönetim komutları (sunucunun terminalinden çalıştırılır).
 
     python manage.py make-owner ornek@mail.com     # hesabı sistemin tek sahibi yap (silinemez)
     python manage.py make-admin ornek@mail.com     # hesabı yönetici yap
-    python manage.py remove-admin ornek@mail.com   # yönetici rolünü kaldır
-    python manage.py list-admins                   # sahip ve yöneticileri listele
+    python manage.py make-moderator ornek@mail.com # moderatör yap (paneli görür, üyeleri askıya alır)
+    python manage.py remove-admin ornek@mail.com   # yönetici / moderatör yetkisini kaldır
+    python manage.py list-admins                   # yetkili ekibi (sahip, yönetici, moderatör) listele
     python manage.py passwd ornek@mail.com         # parolayı sıfırla (oturumlar kapanır)
 
 Hesabın önceden açılmış olması gerekir (siteye bir kez kayıt olun veya sosyal girişle girin).
@@ -17,7 +18,8 @@ from contextlib import closing
 from core import auth
 from core.db_manager import get_db_connection, init_db
 
-COMMANDS = ("make-owner", "make-admin", "remove-admin", "list-admins", "passwd")
+COMMANDS = ("make-owner", "make-admin", "make-moderator", "remove-admin", "list-admins", "passwd")
+ROLE_LABEL = {"owner": "SAHİP", "admin": "yönetici", "moderator": "moderatör"}
 
 
 def _role_of(email: str):
@@ -34,10 +36,10 @@ def main(argv=None) -> int:
     cmd = argv[0]
     if cmd == "list-admins":
         with closing(get_db_connection()) as conn:
-            rows = conn.execute("SELECT email, name, role FROM users WHERE role IN ('owner', 'admin') "
-                                "ORDER BY role = 'owner' DESC, id").fetchall()
+            rows = conn.execute("SELECT email, name, role FROM users WHERE role IN ('owner', 'admin', 'moderator') "
+                                "ORDER BY CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END, id").fetchall()
         for row in rows:
-            print(f"  {row['email']:<32} {'SAHİP' if row['role'] == 'owner' else 'yönetici':<9} ({row['name']})")
+            print(f"  {row['email']:<32} {ROLE_LABEL[row['role']]:<10} ({row['name']})")
         print(f"{len(rows)} hesap")
         return 0
     if len(argv) < 2:
@@ -58,6 +60,12 @@ def main(argv=None) -> int:
             return 0
         auth.set_role(email, "admin")
         print(f"{email} → YÖNETİCİ")
+    elif cmd == "make-moderator":
+        if role in ("owner", "admin"):
+            print(f"{email} zaten {ROLE_LABEL[role]}; değişiklik yapılmadı (önce remove-admin).")
+            return 0
+        auth.set_role(email, "moderator")
+        print(f"{email} → MODERATÖR")
     elif cmd == "remove-admin":
         if role == "owner":
             print("Sahibin yetkisi alınamaz. Önce sahipliği başka hesaba devredin: make-owner <e-posta>")

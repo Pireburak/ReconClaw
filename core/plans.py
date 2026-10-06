@@ -86,11 +86,18 @@ def _now():
 
 
 ADMIN_ROLES = ("admin", "owner")
+# Yönetim menüsünü görenler. Moderatör sınırsız plan almaz; yalnızca izler ve normal üyeleri askıya alabilir.
+STAFF_ROLES = ("moderator", "admin", "owner")
 
 
 def is_admin(user) -> bool:
     """Yönetici veya sahip (owner) mi? İkisi de sınırsız Admin seviyesindedir."""
     return user is not None and "role" in user.keys() and user["role"] in ADMIN_ROLES
+
+
+def is_staff(user) -> bool:
+    """Sahip, yönetici veya moderatör mü? (Yönetim menüsü yalnızca bunlara görünür.)"""
+    return user is not None and "role" in user.keys() and user["role"] in STAFF_ROLES
 
 
 def is_owner(user) -> bool:

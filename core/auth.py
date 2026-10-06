@@ -84,6 +84,7 @@ def public_user(row) -> dict:
         "providers": providers,
         "role": row["role"],
         "is_admin": row["role"] in ("admin", "owner"),
+        "is_staff": row["role"] in ("moderator", "admin", "owner"),
         "is_owner": row["role"] == "owner",
         "created_at": row["created_at"],
         "last_login": row["last_login"],
