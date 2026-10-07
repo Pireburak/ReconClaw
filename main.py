@@ -169,15 +169,15 @@ recon_limiter = RateLimiter(6, 60)
 active_scans = 0
 
 
-def client_ip(request: Request) -> str:
-    """Ziyaretçinin IP adresi. Cloudflare arkasında (TRUST_PROXY_IP) gerçek IP CF-Connecting-IP başlığındadır."""
-    if config.TRUST_PROXY_IP:
-        forwarded = request.headers.get("cf-connecting-ip", "").strip()
-        try:
-            return str(ipaddress.ip_address(forwarded))
-        except ValueError:
-            pass
+def peer_ip(request: Request) -> str:
+    """Sunucuya doğrudan bağlanan adres (Caddy'nin X-Forwarded-For'u işlendikten sonra; Cloudflare olabilir)."""
     return request.client.host if request.client else "?"
+
+
+def client_ip(request: Request) -> str:
+    """Ziyaretçinin gerçek IP adresi. Cloudflare arkasında gerçek IP CF-Connecting-IP başlığındadır; bu başlığa
+    yalnızca istek gerçekten bir Cloudflare adresinden geldiğinde (veya TRUST_PROXY_IP açıkken) güvenilir."""
+    return pricing.real_ip(peer_ip(request), request.headers)
 
 
 def _bearer(request: Request):
@@ -825,7 +825,7 @@ class TargetRequest(BaseModel):
 
 async def visitor_region(request: Request) -> dict:
     """Ziyaretçinin IP adresine göre ülke / para birimi; kurları gerekirse tazeler."""
-    country = await pricing.detect_country(client_ip(request), request.headers)
+    country = await pricing.detect_country(client_ip(request), request.headers, peer_ip(request))
     region = pricing.region_of(country)
     if region["currency"] != "TRY":
         await pricing.refresh_rates()
@@ -1105,6 +1105,18 @@ async def admin_update_user(user_id: int, body: AdminUserUpdate, request: Reques
 async def admin_delete_user(user_id: int, request: Request, user=Depends(staff_user)):
     await run_in_threadpool(admin.delete_user, user, user_id, client_ip(request))
     return {"deleted": 1}
+
+
+@app.get("/api/admin/region", include_in_schema=False)
+async def admin_region(request: Request, user=Depends(staff_user)):
+    """Bölge tespitini teşhis için: sunucunun gördüğü adresler ve Cloudflare başlıkları."""
+    region = await visitor_region(request)
+    return {"peer_ip": peer_ip(request), "via_cloudflare": pricing.is_cloudflare(peer_ip(request)),
+            "client_ip": client_ip(request), "cf_ipcountry": request.headers.get("cf-ipcountry"),
+            "cf_connecting_ip": request.headers.get("cf-connecting-ip"),
+            "x_forwarded_for": request.headers.get("x-forwarded-for"), "region": region,
+            "settings": {"trust_country_header": config.TRUST_COUNTRY_HEADER, "trust_proxy_ip": config.TRUST_PROXY_IP,
+                         "geo_lookup": config.GEO_LOOKUP, "default_country": config.DEFAULT_COUNTRY}}
 
 
 @app.get("/api/admin/team", include_in_schema=False)

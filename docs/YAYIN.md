@@ -17,7 +17,7 @@ Sunucudaki `.env` dosyasında şunların ayarlı olduğundan emin olun (`cp .env
 | `ALLOW_PRIVATE_TARGETS` | `false` | **Mutlaka.** Aksi halde ziyaretçiler sunucunuzun iç ağını tarayabilir |
 | `REQUIRE_TARGET_VERIFICATION` | `true` | **Mutlaka.** Kullanıcılar yalnızca sahipliğini kanıtladığı alan adlarını tarar (izinsiz tarama TCK 243'e girer) |
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Cloudflare'den | Kayıt / giriş / şifre sıfırlamada bot koruması |
-| `TRUST_COUNTRY_HEADER`, `TRUST_PROXY_IP` | `true` (yalnızca Cloudflare arkasında) | Ülke (TL/EUR) ve gerçek IP Cloudflare başlıklarından alınır |
+| `TRUST_COUNTRY_HEADER`, `TRUST_PROXY_IP` | gerekmez | Cloudflare'den gelen isteklerde ülke (TL/EUR) ve gerçek IP Cloudflare başlıklarından otomatik alınır |
 | `COMPANY_*` | Vergi levhanızdaki bilgiler | Yasal sayfalar ve iletişim sayfası bunlarla dolar |
 | `SMTP_*` | E-posta servisiniz | "Şifremi unuttum" için |
 | `PAYTR_*` | PayTR panelinden | Gerçek ödeme (aşağıda) |
@@ -45,7 +45,9 @@ Alan adı değiştiği için her sağlayıcının panelinde yönlendirme adresin
 3. **SSL/TLS → Full (strict)**. (Flexible kullanmayın; yönlendirme döngüsüne ve güvensiz bağlantıya yol açar.)
 4. **Security → Bots → Bot Fight Mode** açık; **WAF → Rate limiting**: `/auth/*` için dakikada 20 istek.
 5. Turnstile: **Turnstile → Add widget**, alan adı `reconclaw.com.tr`, anahtarları `.env`'e yazın.
-6. `.env`: `TRUST_COUNTRY_HEADER=true`, `TRUST_PROXY_IP=true`.
+6. Ülke ve gerçek IP, istek Cloudflare IP'sinden geldiğinde otomatik olarak Cloudflare başlıklarından alınır
+   (ayar gerekmez). Kontrol: Yönetim paneline giriş yapıp `/api/admin/region` adresini açın;
+   `via_cloudflare: true` ve `region.country: "TR"` görmelisiniz.
 7. **Önemli:** sunucunun 80/443 portlarını yalnızca [Cloudflare IP aralıklarına](https://www.cloudflare.com/ips/) açın
    (ör. `ufw`). Aksi halde biri sunucuya doğrudan bağlanıp `CF-Connecting-IP` başlığını sahteleyebilir.
 8. **PayTR bildirim adresi Cloudflare'e takılmamalı:** WAF → Custom rules → `URI Path equals /odeme/paytr/bildirim`

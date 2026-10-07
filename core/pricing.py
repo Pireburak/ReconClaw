@@ -5,6 +5,9 @@ Bölgeye göre fiyatlandırma: Türkiye'den gelen ziyaretçiler TL, yurt dışı
   * Yurt dışında (Türkiye dışındaki tüm ülkeler) her ücretli planın aylık fiyatına
     REGIONAL_SURCHARGE_TRY (varsayılan 950 TL) eklenir ve güncel Euro kuruyla çevrilir; sonuç
     x,99 biçimine yuvarlanır. Yıllık fiyat = aylık × 10. Tek bir Euro hesabıyla tahsilat yapılabilir.
+  * Site Cloudflare arkasındaysa sunucuya gelen IP Cloudflare'in (çoğu yurt dışında) sunucusudur.
+    İstek gerçekten bir Cloudflare IP'sinden geliyorsa Cloudflare'in CF-IPCountry / CF-Connecting-IP
+    başlıkları otomatik kullanılır (ayar gerekmez; başka yerden gelen istekte bu başlıklar yok sayılır).
   * Bölge YALNIZCA IP adresinden belirlenir; kullanıcı seçemez (aksi halde herkes TL seçerdi).
     Sıra: (isteğe bağlı) Cloudflare'in CF-IPCountry başlığı → istemci IP'si için çevrimiçi GeoIP
     servisleri (ipapi.co, country.is, ipwho.is; biri cevap vermezse sıradaki) → hepsi başarısızsa
@@ -37,6 +40,17 @@ GEO_PROVIDERS = (
     ("https://ipwho.is/{ip}?fields=country_code", "country_code"),
 )
 RATES_TTL = 12 * 3600
+
+# Cloudflare'in vekil sunucu adresleri (https://www.cloudflare.com/ips/). Yalnızca bu adreslerden gelen
+# isteklerde CF-IPCountry / CF-Connecting-IP başlıklarına güvenilir; ek aralık için CLOUDFLARE_EXTRA_IPS.
+CLOUDFLARE_RANGES = (
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18",
+    "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17",
+    "162.158.0.0/15", "104.16.0.0/13", "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+    "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32", "2405:8100::/32",
+    "2a06:98c0::/29", "2c0f:f248::/32",
+)
+_CF_NETS = None
 
 _rates = {"at": 0.0, "try_per_unit": {}, "source": "yedek", "updated": None}
 _geo_cache: dict[str, str] = {}
@@ -90,6 +104,30 @@ def region_of(country: str | None) -> dict:
     return {"country": country, "currency": currency, "name": name, "unknown": unknown}
 
 
+def is_cloudflare(ip: str) -> bool:
+    """Bağlantı bir Cloudflare vekil sunucusundan mı geliyor?"""
+    global _CF_NETS
+    if _CF_NETS is None:
+        extra = [x.strip() for x in config.env("CLOUDFLARE_EXTRA_IPS").split(",") if x.strip()]
+        _CF_NETS = [ipaddress.ip_network(n, strict=False) for n in (*CLOUDFLARE_RANGES, *extra)]
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return any(addr in net for net in _CF_NETS)
+
+
+def real_ip(peer_ip: str, headers) -> str:
+    """Ziyaretçinin gerçek IP'si: Cloudflare'den geliyorsa (veya TRUST_PROXY_IP açıksa) CF-Connecting-IP."""
+    if config.TRUST_PROXY_IP or is_cloudflare(peer_ip):
+        forwarded = (headers.get("cf-connecting-ip") or "").strip()
+        try:
+            return str(ipaddress.ip_address(forwarded))
+        except ValueError:
+            pass
+    return peer_ip
+
+
 def _valid(code) -> str | None:
     code = str(code or "").strip().upper()
     return code if len(code) == 2 and code.isalpha() and code not in ("XX", "T1") else None
@@ -110,9 +148,10 @@ async def _lookup(ip: str) -> str | None:
     return None
 
 
-async def detect_country(ip: str, headers) -> str | None:
-    """Ziyaretçinin ülkesi. Hiçbir kaynak cevap vermezse None (bilinmiyor) döner; sonuç önbelleğe alınmaz."""
-    if config.TRUST_COUNTRY_HEADER:
+async def detect_country(ip: str, headers, peer_ip: str | None = None) -> str | None:
+    """Ziyaretçinin ülkesi. ip: gerçek ziyaretçi IP'si, peer_ip: sunucuya bağlanan adres (Cloudflare olabilir).
+    Hiçbir kaynak cevap vermezse None (bilinmiyor) döner; sonuç önbelleğe alınmaz."""
+    if config.TRUST_COUNTRY_HEADER or is_cloudflare(peer_ip or ip):
         header = _valid(headers.get("cf-ipcountry"))  # T1 = Tor, XX = bilinmiyor
         if header:
             return header
@@ -121,6 +160,8 @@ async def detect_country(ip: str, headers) -> str | None:
             return config.DEFAULT_COUNTRY
     except ValueError:
         return config.DEFAULT_COUNTRY
+    if is_cloudflare(ip):
+        return None  # gerçek IP bilinmiyor: Cloudflare sunucusunun ülkesi ziyaretçinin ülkesi değildir
     if not config.GEO_LOOKUP:
         return config.DEFAULT_COUNTRY
     if ip in _geo_cache:

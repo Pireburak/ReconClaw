@@ -66,7 +66,7 @@ def test_region_comes_only_from_ip(client, monkeypatch):
     assert data["pricing"]["prices"]["ultra_max"]["monthly"] == 1999
     assert "regions" not in data and "checkout_pricing" not in data
 
-    async def from_germany(ip, headers):
+    async def from_germany(ip, headers, peer=None):
         return "DE"
 
     monkeypatch.setattr(pricing, "detect_country", from_germany)
@@ -79,7 +79,7 @@ def test_region_comes_only_from_ip(client, monkeypatch):
 
 
 def test_unknown_country_blocks_payment_instead_of_tl(client, monkeypatch):
-    async def unknown(ip, headers):
+    async def unknown(ip, headers, peer=None):
         return None
 
     monkeypatch.setattr(pricing, "detect_country", unknown)
@@ -129,7 +129,7 @@ def test_geo_lookup_falls_back_and_never_caches_failure(monkeypatch):
 
 
 def test_checkout_charges_detected_region_not_preview(client, monkeypatch):
-    async def from_saudi(ip, headers):
+    async def from_saudi(ip, headers, peer=None):
         return "SA"
 
     monkeypatch.setattr(pricing, "detect_country", from_saudi)
@@ -139,3 +139,23 @@ def test_checkout_charges_detected_region_not_preview(client, monkeypatch):
     assert res["amount_try"] == pricing.to_try(24.99, "EUR")
     pay = client.get("/api/billing").json()["payments"][0]
     assert pay["currency"] == "EUR" and pay["country"] == "SA"
+
+
+def test_cloudflare_headers_trusted_only_from_cloudflare(monkeypatch):
+    monkeypatch.setattr(config, "TRUST_COUNTRY_HEADER", False)
+    monkeypatch.setattr(config, "TRUST_PROXY_IP", False)
+    monkeypatch.setattr(config, "GEO_LOOKUP", False)
+    cf_edge = "162.158.90.12"  # Cloudflare Frankfurt gibi yurt dışı bir uç sunucu
+    headers = {"cf-ipcountry": "TR", "cf-connecting-ip": "88.230.10.20"}
+    # Türkiye'den gelen ziyaretçi Cloudflare üzerinden: ayar gerekmeden TR (TL) olmalı
+    assert pricing.real_ip(cf_edge, headers) == "88.230.10.20"
+    assert asyncio.run(pricing.detect_country("88.230.10.20", headers, cf_edge)) == "TR"
+    # Cloudflare dışından gelen sahte başlıklar yok sayılır
+    assert pricing.real_ip("5.9.10.11", headers) == "5.9.10.11"
+    monkeypatch.setattr(config, "DEFAULT_COUNTRY", "TR")
+    monkeypatch.setattr(config, "GEO_LOOKUP", True)
+    pricing._geo_cache["5.9.10.11"] = "DE"
+    assert asyncio.run(pricing.detect_country("5.9.10.11", headers, "5.9.10.11")) == "DE"
+    # Cloudflare'in kendi adresi asla ziyaretçinin ülkesi sayılmaz
+    assert asyncio.run(pricing.detect_country(cf_edge, {}, cf_edge)) is None
+    assert pricing.is_cloudflare("2606:4700:10::6816:1") and not pricing.is_cloudflare("88.230.10.20")
