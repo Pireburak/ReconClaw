@@ -37,6 +37,7 @@ ACTIONS = {
     "admin_disable": "Hesap askıya alındı",
     "admin_enable": "Hesap yeniden açıldı",
     "admin_delete": "Hesap yönetici tarafından silindi",
+    "admin_payments_clear": "Demo ödeme kayıtları silindi",
 }
 
 

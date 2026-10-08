@@ -34,6 +34,7 @@
             ]);
             renderOverview(overview);
             renderTeam(team);
+            if (I_MANAGE) loadPayments();
             renderUsers(users);
             renderAudit(audit);
         } catch (err) { toast(err.message, "err"); }
@@ -99,6 +100,23 @@
 
     function planOptions(selected) {
         return catalog.plans.map((p) => `<option value="${p.id}"${p.id === selected ? " selected" : ""}>${esc(p.name)}</option>`).join("");
+    }
+
+    async function loadPayments() {
+        try {
+            const list = await api(`/api/admin/payments?status=${encodeURIComponent($("adminPayFilter").value)}`);
+            $("adminPayCount").textContent = `${list.length} kayıt`;
+            $("adminPayments").innerHTML = list.length ? list.map((p) => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td class="small">${esc(p.created_at)}</td>
+                    <td><b>${esc(p.name || "—")}</b><br><span class="muted small">${esc(p.email || "silinmiş hesap")}</span></td>
+                    <td>${esc(catalog.plans.find((x) => x.id === p.plan)?.name || p.plan)} <span class="muted small">${p.period === "yearly" ? "yıllık" : "aylık"}</span></td>
+                    <td>${money(p.amount, p.currency || "TRY")}${p.country && p.country !== "TR" ? ` <span class="muted small">${esc(p.country)}</span>` : ""}</td>
+                    <td>${payBadge(p.status)}${p.note ? `<br><span class="muted small">${esc(p.note)}</span>` : ""}</td>
+                    <td class="small">${esc(p.merchant_oid || "—")}</td>
+                </tr>`).join("") : '<tr><td colspan="7" class="empty">Kayıt yok.</td></tr>';
+        } catch (err) { toast(err.message, "err"); }
     }
 
     function renderTeam(list) {
@@ -196,6 +214,15 @@
         if (!sel) return;
         if (!confirm(ROLE_CONFIRM[sel.value])) { sel.value = sel.dataset.current; return; }
         patchUser(sel.dataset.roleFor, { role: sel.value }, ROLE_DONE[sel.value]);
+    });
+    if (I_MANAGE) $("adminPayFilter").addEventListener("change", loadPayments);
+    if (I_AM_OWNER) $("adminPayClear").addEventListener("click", async () => {
+        if (!confirm("Tüm DEMO ödeme kayıtları kalıcı olarak silinsin mi? Gerçek (PayTR) ödemelere dokunulmaz.")) return;
+        try {
+            const r = await api("/api/admin/payments/demo", { method: "DELETE" });
+            toast(`${r.deleted} demo kayıt silindi.`);
+            loadAdmin();
+        } catch (err) { toast(err.message, "err"); }
     });
     $("adminSearch").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadAdmin, 250); });
     $("auditFilter").addEventListener("change", loadAdmin);

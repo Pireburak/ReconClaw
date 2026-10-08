@@ -834,6 +834,13 @@ class TargetRequest(BaseModel):
     host: str = Field(..., min_length=1, max_length=255)
 
 
+def payment_mode() -> str:
+    """paytr: gerçek ödeme · demo: kartsız deneme · off: ödeme altyapısı henüz yok (ücretli planlar satılmaz)."""
+    if paytr.enabled():
+        return "paytr"
+    return "demo" if config.DEMO_PAYMENTS else "off"
+
+
 async def visitor_region(request: Request) -> dict:
     """Ziyaretçinin IP adresine göre ülke / para birimi; kurları gerekirse tazeler."""
     country = await pricing.detect_country(client_ip(request), request.headers, peer_ip(request))
@@ -850,7 +857,7 @@ async def list_plans(request: Request):
     region = await visitor_region(request)
     catalog = list(plans.PLANS.values())
     return {"plans": [p.to_dict() for p in catalog], "currency": region["currency"],
-            "payment_mode": "paytr" if paytr.enabled() else "demo",
+            "payment_mode": payment_mode(),
             "pricing": pricing.price_list(catalog, region), "detected": region,
             "require_target_verification": config.REQUIRE_TARGET_VERIFICATION}
 
@@ -872,6 +879,8 @@ async def billing_checkout(body: CheckoutRequest, request: Request, user=Depends
                                                     "göre hesaplanır. Lütfen birkaç dakika sonra tekrar deneyin.")
     if paytr.enabled() and body.plan != "free":
         return await paytr_checkout(body, request, user, region)
+    if payment_mode() == "off" and body.plan != "free":
+        raise HTTPException(status_code=503, detail="Ücretli planlar çok yakında satışta. Şimdilik Free plan ile devam edebilirsiniz.")
     result = await run_in_threadpool(plans.checkout, user["id"], body.plan, body.period, region)
     audit.log("plan_checkout", user["id"],
               detail=f"{body.plan} · {body.period} · {result['amount']} {result['currency']} ({region['country']})",
@@ -1128,6 +1137,28 @@ async def admin_region(request: Request, user=Depends(staff_user)):
             "x_forwarded_for": request.headers.get("x-forwarded-for"), "region": region,
             "settings": {"trust_country_header": config.TRUST_COUNTRY_HEADER, "trust_proxy_ip": config.TRUST_PROXY_IP,
                          "geo_lookup": config.GEO_LOOKUP, "default_country": config.DEFAULT_COUNTRY}}
+
+
+def manager_user(request: Request):
+    """Sahip veya yönetici (moderatörler gelir / ödeme bilgisi görmez)."""
+    user = staff_user(request)
+    if not plans.is_admin(user):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return user
+
+
+@app.get("/api/admin/payments", include_in_schema=False)
+async def admin_payments(limit: int = 200, status: str = "", user=Depends(manager_user)):
+    return await run_in_threadpool(admin.list_payments, limit, status[:20])
+
+
+@app.delete("/api/admin/payments/demo", include_in_schema=False)
+async def admin_clear_demo_payments(request: Request, user=Depends(manager_user)):
+    if not plans.is_owner(user):
+        raise HTTPException(status_code=400, detail="Ödeme kayıtlarını yalnızca sahip silebilir.")
+    deleted = await run_in_threadpool(admin.clear_demo_payments)
+    audit.log("admin_payments_clear", user["id"], user["id"], f"{deleted} demo kayıt", client_ip(request))
+    return {"deleted": deleted}
 
 
 @app.get("/api/admin/team", include_in_schema=False)

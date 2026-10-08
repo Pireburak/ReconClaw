@@ -99,6 +99,11 @@ TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY")
 # (ödeme sağlayıcısına ve hız sınırlarına giden IP). Doğrudan erişimde açmayın, sahtelenebilir.
 TRUST_PROXY_IP = _bool("TRUST_PROXY_IP", TRUST_COUNTRY_HEADER)
 
+# Demo ödeme: kart istenmeden plan anında açılır (yalnızca geliştirme / sunum için).
+# HTTPS ile yayındaki sitede varsayılan olarak KAPALI; aksi halde herkes ücretli planları bedava alır.
+# PayTR bağlıysa bu ayardan bağımsız olarak gerçek ödeme kullanılır.
+DEMO_PAYMENTS = _bool("DEMO_PAYMENTS", not PUBLIC_URL.startswith("https://"))
+
 # v9.0: PayTR iFrame API ile gerçek ödeme. Üçü de doluysa demo ödeme kapanır, PayTR açılır.
 # Bilgiler: PayTR Mağaza Paneli → Destek & Kurulum → Entegrasyon Bilgileri
 PAYTR_MERCHANT_ID = env("PAYTR_MERCHANT_ID")

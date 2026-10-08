@@ -497,6 +497,25 @@
                         </table>
                     </div>
                 </section>
+                {% if user.is_admin %}
+                <section class="panel wide" style="--c: var(--green)">
+                    <div class="panel-head">
+                        <h3>Ödemeler <span class="muted small" id="adminPayCount"></span></h3>
+                        <select id="adminPayFilter" style="width:180px">
+                            <option value="">Tüm durumlar</option><option value="paid">Ödendi</option>
+                            <option value="pending">Bekliyor</option><option value="failed">Başarısız</option><option value="demo">Demo</option>
+                        </select>
+                        {% if user.is_owner %}<button type="button" class="btn sm danger" id="adminPayClear">DEMO KAYITLARINI SİL</button>{% endif %}
+                    </div>
+                    <p class="muted small" style="margin-top:0">Tüm kullanıcıların ödemeleri yalnızca burada, sahip ve yöneticilere görünür. Her kullanıcı abonelik sayfasında sadece kendi kayıtlarını görür.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>#</th><th>Tarih</th><th>Kullanıcı</th><th>Plan</th><th>Tutar</th><th>Durum</th><th>Sipariş no</th></tr></thead>
+                            <tbody id="adminPayments"></tbody>
+                        </table>
+                    </div>
+                </section>
+                {% endif %}
                 <section class="panel wide" style="--c: var(--yellow)">
                     <div class="panel-head">
                         <h3>Denetim kaydı</h3>
