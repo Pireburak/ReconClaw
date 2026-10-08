@@ -252,3 +252,14 @@ def test_api_token_cannot_reach_admin(app_client):
     token = app_client.post("/api/me/token").json()["token"]
     app_client.cookies.clear()
     assert app_client.get("/api/admin/overview", headers={"Authorization": f"Bearer {token}"}).status_code == 404
+
+
+def test_admin_shortcut_url(app_client):
+    app_client.cookies.clear()
+    for path in ("/admin", "/yonetim"):
+        assert app_client.get(path, follow_redirects=False).status_code == 404  # oturumsuz: gizli
+    register(app_client, "sade@example.com")
+    assert app_client.get("/admin", follow_redirects=False).status_code == 404  # normal üye: gizli
+    register(app_client, ADMIN)
+    res = app_client.get("/admin", follow_redirects=False)
+    assert res.status_code == 303 and res.headers["location"] == "/#admin"
