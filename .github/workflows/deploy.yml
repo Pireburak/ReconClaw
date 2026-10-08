@@ -11,7 +11,11 @@ jobs:
     steps:
       - name: Update server
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          # GitHub → Settings → Secrets and variables → Actions → OWNER_EMAIL (sahip hesabın e-postası)
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
         with:
+          envs: OWNER_EMAIL
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
@@ -25,4 +29,14 @@ jobs:
             git reset --hard origin/main
             cp -a /tmp/reconclaw-Caddyfile deploy/Caddyfile
             cp -a /tmp/reconclaw.env .env
+            # Sahip hesabı: OWNER_EMAIL secret'ı varsa .env'ye yazılır (uygulama her açılışta bu hesabı sahip yapar)
+            if [ -n "${OWNER_EMAIL:-}" ]; then
+              sed -i '/^OWNER_EMAIL=/d' .env
+              echo "OWNER_EMAIL=${OWNER_EMAIL}" >> .env
+            fi
             docker compose up -d --build
+            if [ -n "${OWNER_EMAIL:-}" ]; then
+              sleep 5
+              docker compose exec -T reconclaw python manage.py make-owner "${OWNER_EMAIL}" \
+                || echo "Sahip atanamadı: önce bu e-postayla siteye kayıt olun"
+            fi
