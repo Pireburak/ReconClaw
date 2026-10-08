@@ -247,6 +247,17 @@ async def login_page(request: Request, error: str = ""):
     })
 
 
+@app.get("/admin", include_in_schema=False)
+@app.get("/yonetim", include_in_schema=False)
+async def admin_page(request: Request):
+    """Yönetim paneline kısa yol. Yetkili ekip (sahip / yönetici / moderatör) panele gider;
+    diğer herkes (oturumsuz ziyaretçiler dahil) için bu adres hiç yokmuş gibi 404 döner."""
+    user = optional_user(request)
+    if user is None or not plans.is_staff(user):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return RedirectResponse("/#admin", status_code=303)
+
+
 # ---------------------------------------------------------------- herkese açık sayfalar
 LEGAL_PAGES = {
     "mesafeli-satis": "Mesafeli Satış Sözleşmesi",
