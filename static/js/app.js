@@ -896,6 +896,7 @@ function renderPlanCards() {
         const isCur = p.id === cur.id;
         const action = isCur ? '<button type="button" class="btn block" disabled>MEVCUT PLAN</button>'
             : cur.id === "admin" ? '<button type="button" class="btn block" disabled>SINIRSIZ HESAP</button>'
+            : planCatalog.payment_mode === "off" && p.price_monthly > 0 ? '<button type="button" class="btn block" disabled title="Ödeme altyapısı hazırlanıyor">ÇOK YAKINDA</button>'
             : `<button type="button" class="btn block ${p.level > cur.level ? "primary" : ""}" data-plan="${p.id}">${p.level > cur.level ? "YÜKSELT" : "BU PLANA GEÇ"}</button>`;
         return `
         <article class="plan-card${isCur ? " current" : ""}${p.id === "pro_max" ? " featured" : ""}">
@@ -930,7 +931,9 @@ function renderRegionInfo() {
     $("regionInfo").title = pr.currency === "TRY"
         ? "Fiyat bölgesi IP adresinize göre otomatik belirlenir."
         : `Fiyat bölgesi IP adresinize göre otomatik belirlenir. 1 ${pr.currency} = ${pr.rate.toFixed(2)} TL · kaynak: ${pr.rate_source}`;
-    $("demoTag").hidden = planCatalog.payment_mode !== "demo";
+    const tag = $("demoTag");
+    tag.hidden = planCatalog.payment_mode === "paytr";
+    tag.textContent = planCatalog.payment_mode === "off" ? "ÜCRETLİ PLANLAR ÇOK YAKINDA" : "DEMO ÖDEME MODU · KART BİLGİSİ ALINMAZ";
 }
 
 const PAY_STATUS = { paid: ["ÖDENDİ", "risk-low"], pending: ["BEKLİYOR", "sev-medium"], failed: ["BAŞARISIZ", "sev-high"], demo: ["DEMO", "sev-info"] };

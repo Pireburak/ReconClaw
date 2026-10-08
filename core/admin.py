@@ -183,3 +183,24 @@ def team() -> list:
                 "granted_by": granted["actor_email"] if granted else None,
             })
     return result
+
+
+def list_payments(limit: int = 200, status: str = "") -> list:
+    """Tüm kullanıcıların ödeme kayıtları (yalnızca sahip ve yöneticiler görür)."""
+    sql = ("SELECT p.id, p.user_id, u.email, u.name, p.plan, p.period, p.amount, p.currency, p.amount_try, p.country, "
+           "p.status, p.created_at, p.paid_at, p.merchant_oid, p.note FROM payments p "
+           "LEFT JOIN users u ON u.id = p.user_id")
+    args = []
+    if status:
+        sql += " WHERE p.status = ?"
+        args.append(status)
+    sql += " ORDER BY p.id DESC LIMIT ?"
+    args.append(max(1, min(limit, 1000)))
+    with closing(get_db_connection()) as conn:
+        return [dict(r) for r in conn.execute(sql, args).fetchall()]
+
+
+def clear_demo_payments() -> int:
+    """Demo (kartsız deneme) ödeme kayıtlarını siler. Gerçek PayTR kayıtlarına dokunmaz."""
+    with closing(get_db_connection()) as conn, conn:
+        return conn.execute("DELETE FROM payments WHERE status = 'demo'").rowcount

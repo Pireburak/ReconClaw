@@ -263,3 +263,34 @@ def test_admin_shortcut_url(app_client):
     register(app_client, ADMIN)
     res = app_client.get("/admin", follow_redirects=False)
     assert res.status_code == 303 and res.headers["location"] == "/#admin"
+
+
+def test_payments_visible_only_to_owner_and_admins(app_client, monkeypatch):
+    buyer = register(app_client, "alan@example.com")
+    assert app_client.post("/api/billing/checkout", json={"plan": "pro"}).status_code == 200
+    other = register(app_client, "baska@example.com")
+    assert app_client.get("/api/billing").json()["payments"] == []  # başkasının ödemesini görmez
+    assert app_client.get("/api/admin/payments").status_code == 404
+    import manage
+
+    manage.main(["make-moderator", "baska@example.com"])
+    assert app_client.get("/api/admin/payments").status_code == 404  # moderatör de göremez
+    register(app_client, ADMIN)
+    rows = app_client.get("/api/admin/payments").json()
+    assert [(r["email"], r["status"]) for r in rows] == [("alan@example.com", "demo")]
+    # Demo kayıtlarını yalnızca sahip siler
+    assert app_client.delete("/api/admin/payments/demo").status_code == 400
+    auth.set_owner(ADMIN)
+    assert app_client.delete("/api/admin/payments/demo").json()["deleted"] == 1
+    assert app_client.get("/api/admin/payments").json() == []
+    assert buyer["id"] and other["id"]
+
+
+def test_live_site_without_paytr_sells_nothing(app_client, monkeypatch):
+    monkeypatch.setattr(config, "DEMO_PAYMENTS", False)
+    register(app_client, "bedava@example.com")
+    assert app_client.get("/api/plans").json()["payment_mode"] == "off"
+    res = app_client.post("/api/billing/checkout", json={"plan": "ultra_max"})
+    assert res.status_code == 503
+    assert app_client.get("/api/me").json()["subscription"]["plan"]["id"] == "free"
+    assert app_client.post("/api/billing/checkout", json={"plan": "free"}).status_code == 200
