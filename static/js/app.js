@@ -970,6 +970,17 @@ function renderTargets(t) {
                 </div>`}
             </div>`).join("")
         : '<div class="empty">Henüz hedef eklenmedi.</div>';
+    const box = document.getElementById("allowedTargets");
+    if (box) {
+        const list = t.always_allowed || [];
+        box.innerHTML = list.length
+            ? `<div class="target-help" style="margin-top:12px">
+                 <span class="muted small">DOĞRULAMASIZ TARANABİLEN AÇIK TEST HEDEFLERİ (deneme / sunum için)</span>
+                 <div class="allowed-tags">${list.map((h) => `<button type="button" class="chip" data-testtarget="${esc(h)}" title="Tarama sayfasında bu hedefi doldur">${esc(h)}</button>`).join("")}</div>
+                 <span class="muted small">Bunlar sahipleri tarafından herkese açık biçimde taranmaya izin verilmiş test sunucularıdır.</span>
+               </div>`
+            : "";
+    }
 }
 
 function openCheckout(planId) {
@@ -1344,6 +1355,12 @@ $("targetForm").addEventListener("submit", async (e) => {
         toast("Hedef eklendi. Doğrulama anahtarını DNS kaydına veya dosyaya ekleyin.");
         loadPlans();
     } catch (err) { toast(err.message, "err"); }
+});
+document.getElementById("allowedTargets")?.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-testtarget]");
+    if (!chip) return;
+    go("scan");
+    setTimeout(() => { const f = $("target"); if (f) { f.value = chip.dataset.testtarget; f.focus(); } }, 60);
 });
 $("targetList").addEventListener("click", async (e) => {
     const v = e.target.closest("[data-verify]");

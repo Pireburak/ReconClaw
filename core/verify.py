@@ -27,8 +27,21 @@ from core.plans import UNLIMITED, PlanError, effective_plan
 TOKEN_PREFIX = "reconclaw-verify="
 WELL_KNOWN = "/.well-known/reconclaw-verify.txt"
 DOH_URL = "https://cloudflare-dns.com/dns-query"
-# Herkese açık, taranmasına izin verilmiş test sunucuları
-ALWAYS_ALLOWED = {"scanme.nmap.org"}
+# Sahipleri tarafından herkese açık biçimde "beni tarayın / test edin" denilen, taranması serbest
+# test sunucuları. Doğrulama gerektirmeden taranabilir (sunum ve deneme için). Kaynaklar:
+#   scanme.nmap.org           -> Nmap projesinin resmî test sunucusu (nmap.org)
+#   *.vulnweb.com             -> Acunetix'in bilerek zafiyetli bıraktığı herkese açık test siteleri
+#   demo.testfire.net         -> IBM AltoroMutual örnek (test) bankası
+#   badssl.com                -> TLS/sertifika test siteleri
+# Ek olarak sunucu sahibi, yazılı izin aldığı hedefleri TEST_TARGETS ortam değişkeniyle ekleyebilir.
+_BUILTIN_TEST_TARGETS = {
+    "scanme.nmap.org",
+    "testphp.vulnweb.com", "testasp.vulnweb.com", "testaspnet.vulnweb.com", "testhtml5.vulnweb.com",
+    "rest.vulnweb.com", "demo.testfire.net", "badssl.com",
+}
+ALWAYS_ALLOWED = _BUILTIN_TEST_TARGETS | {
+    normalize_target(h) for h in config.env("TEST_TARGETS").replace(";", ",").split(",") if h.strip()
+}
 
 
 class VerifyError(Exception):
