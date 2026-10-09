@@ -910,3 +910,5 @@ body.access .pub-foot { position: relative; z-index: 2; border-top: 0; padding-b
 .team-card.dead { opacity: .5; }
 .team-head { margin-bottom: 4px; }
 .badge.mod-badge { color: #fff; background: var(--cyan); letter-spacing: .16em; }
+
+.allowed-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }

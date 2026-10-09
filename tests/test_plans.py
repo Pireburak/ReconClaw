@@ -175,3 +175,16 @@ def test_required_verification_blocks_unverified_targets(client, monkeypatch):
     client.post(f"/api/targets/{target['id']}/verify")
     assert scan(client).status_code == 200
     verify.ensure_allowed(1, "scanme.nmap.org")  # her zaman izinli test sunucusu
+    # Sahipleri taranmaya açık diğer resmî test hedefleri de doğrulamasız izinlidir
+    for host in ("testphp.vulnweb.com", "demo.testfire.net", "badssl.com", "https://testphp.vulnweb.com/"):
+        verify.ensure_allowed(1, host)
+    # Listede olmayan üçüncü taraf hedef yine engellenir (admin bile olsa)
+    with pytest.raises(verify.VerifyError):
+        verify.ensure_allowed(1, "ois.istinye.com")
+    # Sunucu sahibi TEST_TARGETS ile yazılı izin aldığı hedefi ekleyebilir
+    monkeypatch.setenv("TEST_TARGETS", "izinli.ornek.com")
+    import importlib
+    importlib.reload(verify)
+    verify.ensure_allowed(1, "izinli.ornek.com")
+    monkeypatch.delenv("TEST_TARGETS", raising=False)
+    importlib.reload(verify)

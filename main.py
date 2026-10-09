@@ -967,7 +967,8 @@ async def billing_cancel(request: Request, user=Depends(current_user)):
 async def targets(user=Depends(current_user)):
     plan = plans.effective_plan(user)
     return {"targets": verify.list_targets(user["id"]), "limit": plan.targets,
-            "required": config.REQUIRE_TARGET_VERIFICATION, "well_known": verify.WELL_KNOWN}
+            "required": config.REQUIRE_TARGET_VERIFICATION, "well_known": verify.WELL_KNOWN,
+            "always_allowed": sorted(verify.ALWAYS_ALLOWED)}
 
 
 @app.post("/api/targets", tags=["billing"])
