@@ -134,3 +134,6 @@ SMTP_USER = env("SMTP_USER")
 SMTP_PASSWORD = env("SMTP_PASSWORD")
 SMTP_FROM = env("SMTP_FROM") or SMTP_USER
 SMTP_TLS = _bool("SMTP_TLS", True)   # 587: STARTTLS · 465 için SMTP_PORT=465 (SSL) kullanın
+
+# SMTP yapılandırıldığında varsayılan olarak açılır; açıkken eksik SMTP erişim vermez.
+REQUIRE_EMAIL_VERIFICATION = _bool("REQUIRE_EMAIL_VERIFICATION", bool(SMTP_HOST and SMTP_FROM))

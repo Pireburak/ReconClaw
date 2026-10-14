@@ -29,7 +29,7 @@ def register(client, email, password="parola123"):
     res = client.post("/auth/register", json={"email": email, "password": password})
     assert res.status_code == 200, res.text
     if email == ADMIN:
-        auth.sync_admins()  # açılışta yapılan senkronizasyon (parolalı kayıt anında yönetici olmaz)
+        auth.set_role(ADMIN, 'admin')  # terminal üzerinden açık yetkilendirme
         return client.get("/api/me").json()
     return res.json()["user"]
 
@@ -121,10 +121,10 @@ def test_admin_manages_users_and_audit(app_client):
 
 
 def test_sync_admins_promotes_existing_account(app_client, monkeypatch):
-    register(app_client, "sonradan@example.com")
+    auth.create_user("sonradan@example.com", "Doğrulanmış", verified_email=True)
     monkeypatch.setattr(config, "ADMIN_EMAILS", {"sonradan@example.com"})
     assert auth.sync_admins() == 1
-    assert app_client.get("/api/me").json()["is_admin"] is True
+    assert auth.user_by_email("sonradan@example.com")["role"] == "admin"
 
 
 def test_user_sees_own_security_log(app_client):
@@ -361,6 +361,75 @@ def test_admin_settings_are_safe_read_only_summary(app_client):
     assert isinstance(settings['db_online'], bool)
     assert 'anthropic_api_key' not in settings and 'owner_email' not in settings
     assert 'payment_mode' in settings and 'session_days' in settings
+
+
+def test_invalid_plan_does_not_partially_change_user(app_client):
+    member = register(app_client, 'atomic@example.com')
+    register(app_client, ADMIN)
+    response = app_client.patch(f"/api/admin/users/{member['id']}",
+                                json={'role': 'admin', 'disabled': True, 'plan': 'invalid'})
+    assert response.status_code == 400
+    user = auth.get_user(member['id'])
+    assert user['role'] == 'user' and not user['disabled']
+
+
+def test_restart_does_not_promote_unverified_reserved_emails(app_client, monkeypatch):
+    member = register(app_client, 'reserved@example.com')
+    monkeypatch.setattr(config, 'ADMIN_EMAILS', {'reserved@example.com'})
+    monkeypatch.setattr(config, 'OWNER_EMAIL', 'reserved@example.com')
+    assert auth.sync_admins() == 0
+    assert auth.sync_owner() is False
+    assert auth.get_user(member['id'])['role'] == 'user'
+
+
+def test_owner_sync_requires_verified_social_account(app_client, monkeypatch):
+    uid = auth.create_user('verified-owner@example.com', 'Sahip', verified_email=True)
+    monkeypatch.setattr(config, 'OWNER_EMAIL', 'verified-owner@example.com')
+    assert auth.sync_owner() is True
+    assert auth.get_user(uid)['role'] == 'owner'
+
+
+def test_linking_social_login_does_not_promote_squatted_password_account(app_client, monkeypatch):
+    member = register(app_client, 'squatted@example.com')
+    auth.login_with_identity('google', 'verified-subject', 'squatted@example.com', 'Sahip', True)
+    monkeypatch.setattr(config, 'ADMIN_EMAILS', {'squatted@example.com'})
+    monkeypatch.setattr(config, 'OWNER_EMAIL', 'squatted@example.com')
+    assert auth.sync_admins() == 0
+    assert auth.sync_owner() is False
+    assert auth.get_user(member['id'])['role'] == 'user'
+
+
+def test_existing_social_identity_can_refresh_migrated_verification(app_client, monkeypatch):
+    from contextlib import closing
+    from core.db_manager import get_db_connection
+
+    uid = auth.login_with_identity('google', 'old-subject', 'legacy-social@example.com', 'Üye', True)
+    with closing(get_db_connection()) as conn, conn:
+        conn.execute('UPDATE users SET email_verified = 0 WHERE id = ?', (uid,))
+    assert auth.login_with_identity('google', 'old-subject', 'changed@example.com', 'Üye', True) == uid
+    assert not auth.get_user(uid)['email_verified']
+    assert auth.login_with_identity('google', 'old-subject', 'legacy-social@example.com', 'Üye', True) == uid
+    assert auth.get_user(uid)['email_verified']
+    monkeypatch.setattr(config, 'ADMIN_EMAILS', {'legacy-social@example.com'})
+    assert auth.sync_admins() == 1
+
+
+def test_cookie_requests_cannot_bypass_csrf_with_bearer(app_client):
+    register(app_client, ADMIN)
+    response = app_client.post('/auth/logout', headers={
+        'Origin': 'https://evil.example', 'Authorization': 'Bearer invalid'})
+    assert response.status_code == 403
+    assert app_client.get('/api/admin/overview').status_code == 200
+
+
+def test_moderator_update_does_not_disclose_payments(app_client):
+    member = register(app_client, 'private-payment@example.com')
+    assert app_client.post('/api/billing/checkout', json={'plan': 'pro'}).status_code == 200
+    register(app_client, 'privacy-mod@example.com')
+    auth.set_role('privacy-mod@example.com', 'moderator')
+    response = app_client.patch(f"/api/admin/users/{member['id']}", json={'disabled': True})
+    assert response.status_code == 200
+    assert response.json()['paid'] is None
 
 
 def test_new_panels_render_only_inside_staff_admin_page(app_client):

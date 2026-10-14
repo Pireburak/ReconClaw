@@ -16,6 +16,8 @@ ACTIONS = {
     "login": "Giriş yapıldı",
     "login_failed": "Hatalı giriş denemesi",
     "register": "Hesap oluşturuldu",
+    "email_code_sent": "E-posta doğrulama kodu gönderildi",
+    "email_verified": "E-posta doğrulandı",
     "oauth_login": "Sosyal giriş",
     "password_change": "Parola değiştirildi",
     "token_create": "API anahtarı oluşturuldu",

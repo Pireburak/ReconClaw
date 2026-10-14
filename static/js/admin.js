@@ -26,21 +26,18 @@
     async function loadAdmin() {
         try {
             catalog = catalog || await api("/api/plans");
-            const [overview, users, audit, team, settings] = await Promise.all([
-                api("/api/admin/overview"),
-                api(`/api/admin/users?q=${encodeURIComponent($("adminSearch").value.trim())}`),
-                api(`/api/admin/audit?limit=60&action=${encodeURIComponent($("auditFilter").value)}`),
-                api("/api/admin/team"),
-                api("/api/admin/settings"),
+            const sections = await Promise.allSettled([
+                api("/api/admin/overview").then(renderOverview),
+                api(`/api/admin/users?q=${encodeURIComponent($("adminSearch").value.trim())}`).then(renderUsers),
+                api(`/api/admin/audit?limit=60&action=${encodeURIComponent($("auditFilter").value)}`).then(renderAudit),
+                api("/api/admin/team").then(renderTeam),
+                api("/api/admin/settings").then(renderSettings),
+                loadOperations(),
             ]);
-            renderOverview(overview);
-            renderTeam(team);
-            if (I_MANAGE) loadPayments();
-            renderUsers(users);
-            renderAudit(audit);
-            renderSettings(settings);
-            await loadOperations();
-            $("adminUpdated").textContent = "Son yenileme: " + new Date().toLocaleTimeString("tr-TR");
+            if (I_MANAGE) await loadPayments();
+            const failed = sections.filter(s => s.status === 'rejected');
+            failed.forEach(s => toast(s.reason.message, 'err'));
+            $("adminUpdated").textContent = (failed.length ? "Bazı bölümler yüklenemedi · " : "Son yenileme: ") + new Date().toLocaleTimeString("tr-TR");
         } catch (err) { toast(err.message, "err"); }
     }
 
@@ -168,11 +165,11 @@
                 <td>${u.scans_today} <span class="muted small">bugün</span><br><span class="muted small">${u.scan_count} toplam</span></td>
                 <td class="small">${esc(u.last_login || "—")}</td>
                 <td class="assign">
-                    ${I_MANAGE ? `<select data-plan-for="${u.id}" ${staff ? "disabled" : ""}>${planOptions(u.stored_plan)}</select>
-                    <select data-days-for="${u.id}" ${staff ? "disabled" : ""}>
+                    ${staff ? '<span class="muted small">Sınırsız erişim · rol gereği tüm paket özellikleri açık.</span>' : I_MANAGE ? `<select data-plan-for="${u.id}">${planOptions(u.stored_plan)}</select>
+                    <select data-days-for="${u.id}">
                         <option value="30">30 gün</option><option value="365">1 yıl</option><option value="">Süresiz</option>
                     </select>
-                    <button type="button" class="btn sm" data-assign="${u.id}" ${staff ? "disabled" : ""}>ATA</button>` : '<span class="muted small">—</span>'}
+                    <button type="button" class="btn sm" data-assign="${u.id}">ATA</button>` : '<span class="muted small">—</span>'}
                 </td>
                 <td class="row-actions">
                     <button type="button" class="btn sm ${u.disabled ? "" : "danger"}" data-disable="${u.id}" data-next="${u.disabled ? "0" : "1"}" ${locked ? `disabled title="${why}"` : ""}>${u.disabled ? "AKTİF ET" : "ASKIYA AL"}</button>

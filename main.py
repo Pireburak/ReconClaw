@@ -21,6 +21,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from core import admin, ai, audit, auth, captcha, config, intel, mailer, monitor, oauth, paytr, plans, pricing, recon, verify
+from core import email_verification
 from core.db_manager import (
     db_ok, delete_scans, get_recent_scans, get_scan_report, get_share_token, get_shared_report, get_user_reports,
     init_db, save_scan, set_share_token,
@@ -102,8 +103,9 @@ def _same_origin(request: Request) -> bool:
 
 @app.middleware("http")
 async def csrf_guard(request: Request, call_next):
-    if (request.method in UNSAFE_METHODS and auth.SESSION_COOKIE in request.cookies
-            and not _bearer(request) and not _same_origin(request)):
+    if (request.method in UNSAFE_METHODS and
+            (auth.SESSION_COOKIE in request.cookies or email_verification.COOKIE in request.cookies)
+            and not _same_origin(request)):
         return JSONResponse({"detail": "Geçersiz istek kaynağı (CSRF koruması)."}, status_code=403)
     return await call_next(request)
 
@@ -188,8 +190,10 @@ def _bearer(request: Request):
 def optional_user(request: Request):
     token = _bearer(request)
     if token:
-        return auth.user_from_api_token(token)
-    return auth.user_from_session(request.cookies.get(auth.SESSION_COOKIE))
+        user = auth.user_from_api_token(token)
+    else:
+        user = auth.user_from_session(request.cookies.get(auth.SESSION_COOKIE))
+    return None if email_verification.required(user) else user
 
 
 def current_user(request: Request):
@@ -405,6 +409,89 @@ class Registration(Credentials):
     accept_terms: bool | None = None  # arayüz Kullanım Şartları / KVKK onayını gönderir
 
 
+def require_verification_mail():
+    if not mailer.enabled():
+        raise HTTPException(status_code=503, detail='Doğrulama e-postası yapılandırılmamış. Site yöneticisine başvurun.')
+
+
+async def begin_email_verification(request: Request, user_id: int, remember: bool = True, resume: bool = False):
+    require_verification_mail()
+    if resume:
+        pending = await run_in_threadpool(email_verification.pending, request.cookies.get(email_verification.COOKIE))
+        if (pending is not None and pending['user_id'] == user_id and pending['sent_at'] and
+                pending['expires_at'] > auth._now().isoformat(' ') and pending['attempts'] < email_verification.MAX_ATTEMPTS):
+            return JSONResponse({'ok': True, 'verification_required': True, 'redirect': '/eposta-dogrula',
+                                 'message': 'Gönderilen doğrulama koduyla devam edin.'},
+                                headers={'Cache-Control': 'no-store'})
+    try:
+        token, code = await run_in_threadpool(email_verification.issue, user_id, remember)
+    except email_verification.VerificationLimit as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    user = await run_in_threadpool(auth.get_user, user_id)
+    text = (f"Merhaba {user['name']},\n\nReconClaw e-posta doğrulama kodunuz: {code}\n\n"
+            'Kod 15 dakika geçerlidir ve tek kullanımlıktır. Kodu kimseyle paylaşmayın.\n'
+            f'Bu işlemi siz başlatmadıysanız e-postayı yok sayın.\n— {config.COMPANY_NAME}')
+    sent = await run_in_threadpool(mailer.send, user['email'], 'ReconClaw e-posta doğrulama kodu', text)
+    message = ('Doğrulama kodu gönderildi. Gelen kutunuzu ve spam klasörünü kontrol edin.' if sent else
+               'E-posta gönderilemedi. Doğrulama ekranından yeniden kod isteyin.')
+    if not sent:
+        await run_in_threadpool(email_verification.delivery_failed, token)
+    response = JSONResponse({'ok': sent, 'verification_required': True, 'redirect': '/eposta-dogrula',
+                             'message': message, 'detail': message}, status_code=200 if sent else 503)
+    response.set_cookie(email_verification.COOKIE, token, max_age=email_verification.PENDING_SECONDS,
+                        httponly=True, secure=config.COOKIE_SECURE, samesite='lax', path='/')
+    auth.delete_session(request.cookies.get(auth.SESSION_COOKIE))
+    response.delete_cookie(auth.SESSION_COOKIE, path='/')
+    response.headers['Cache-Control'] = 'no-store'
+    if sent:
+        audit.log('email_code_sent', user_id, ip=client_ip(request))
+    return response
+
+
+@app.get('/eposta-dogrula', include_in_schema=False)
+async def email_verification_page(request: Request):
+    pending = await run_in_threadpool(email_verification.pending, request.cookies.get(email_verification.COOKIE))
+    if pending is None:
+        return RedirectResponse('/login', status_code=303)
+    name, domain = pending['email'].split('@', 1)
+    response = templates.TemplateResponse(request, 'email_verification.html', {
+        'title': 'ReconClaw | E-posta doğrulama', 'email_hint': name[:1] + '***@' + domain,
+        'company': company_info(request), 'delivery_failed': not pending['sent_at'],
+        'needs_password': not pending['has_password'],
+    })
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+class EmailVerificationCode(BaseModel):
+    code: str = Field(..., pattern=r'^[0-9]{6}$')
+    password: str | None = Field(None, max_length=256)
+
+
+@app.post('/auth/email/verify', tags=['auth'])
+async def confirm_email(body: EmailVerificationCode, request: Request, response: Response):
+    if not login_limiter.allow(('email_verify', client_ip(request)), 30):
+        raise HTTPException(status_code=429, detail='Çok fazla deneme. Birkaç dakika sonra tekrar deneyin.')
+    user_id, remember = await run_in_threadpool(email_verification.consume,
+                                               request.cookies.get(email_verification.COOKIE), body.code, body.password)
+    start_session(response, request, user_id, remember)
+    response.delete_cookie(email_verification.COOKIE, path='/')
+    response.headers['Cache-Control'] = 'no-store'
+    audit.log('email_verified', user_id, ip=client_ip(request))
+    return {'ok': True}
+
+
+@app.post('/auth/email/resend', tags=['auth'])
+async def resend_email_code(request: Request):
+    if not login_limiter.allow(('email_resend', client_ip(request)), 5):
+        raise HTTPException(status_code=429, detail='Çok fazla kod istendi. Birkaç dakika sonra tekrar deneyin.')
+    pending = await run_in_threadpool(email_verification.pending, request.cookies.get(email_verification.COOKIE))
+    if pending is None:
+        raise auth.AuthError('Doğrulama oturumu sona erdi. Yeniden giriş yapın.')
+    return await begin_email_verification(request, pending['user_id'], bool(pending['remember']))
+
+
 @app.post("/auth/register", tags=["auth"])
 async def register(body: Registration, request: Request, response: Response):
     if not login_limiter.allow(("register", client_ip(request))):
@@ -412,9 +499,13 @@ async def register(body: Registration, request: Request, response: Response):
     if body.accept_terms is False:
         raise HTTPException(status_code=400, detail="Kayıt için Kullanım Şartları'nı kabul etmeniz gerekiyor.")
     await captcha.check(body.captcha, body.website, client_ip(request))
+    if config.REQUIRE_EMAIL_VERIFICATION:
+        require_verification_mail()
     user_id = await run_in_threadpool(auth.create_user, body.email, body.name, body.password)
-    start_session(response, request, user_id, body.remember)
     audit.log("register", user_id, detail="şartlar onaylandı" if body.accept_terms else "", ip=client_ip(request))
+    if email_verification.required(auth.get_user(user_id)):
+        return await begin_email_verification(request, user_id, body.remember)
+    start_session(response, request, user_id, body.remember)
     return {"ok": True, "user": auth.public_user(auth.get_user(user_id))}
 
 
@@ -430,6 +521,8 @@ async def login(body: Credentials, request: Request, response: Response):
         audit.log("login_failed", known["id"] if known else None, detail=body.email.strip().lower()[:120],
                   ip=client_ip(request))
         raise
+    if email_verification.required(auth.get_user(user_id)):
+        return await begin_email_verification(request, user_id, body.remember, resume=True)
     start_session(response, request, user_id, body.remember)
     audit.log("login", user_id, ip=client_ip(request))
     return {"ok": True, "user": auth.public_user(auth.get_user(user_id))}
@@ -523,6 +616,11 @@ async def oauth_callback(provider: str, request: Request):
         )
     except (oauth.OAuthError, auth.AuthError) as exc:
         return RedirectResponse(f"/login?error={quote(str(exc))}", status_code=303)
+    if email_verification.required(auth.get_user(user_id)):
+        response = await begin_email_verification(request, user_id)
+        response.status_code = 303
+        response.headers['Location'] = '/eposta-dogrula'
+        return response
     response = RedirectResponse("/", status_code=303)
     start_session(response, request, user_id)
     audit.log("oauth_login", user_id, detail=provider, ip=client_ip(request))
@@ -1120,8 +1218,11 @@ async def admin_users(q: str = "", limit: int = 100, user=Depends(staff_user)):
 
 @app.patch("/api/admin/users/{user_id}", include_in_schema=False)
 async def admin_update_user(user_id: int, body: AdminUserUpdate, request: Request, user=Depends(staff_user)):
-    return await run_in_threadpool(admin.update_user, user, user_id, body.role, body.plan, body.days,
-                                   body.disabled, client_ip(request))
+    updated = await run_in_threadpool(admin.update_user, user, user_id, body.role, body.plan, body.days,
+                                     body.disabled, client_ip(request))
+    if not plans.is_admin(user):
+        updated['paid'] = None
+    return updated
 
 
 @app.delete("/api/admin/users/{user_id}", include_in_schema=False)

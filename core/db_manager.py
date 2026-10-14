@@ -163,6 +163,18 @@ def init_db():
                 expires_at TEXT NOT NULL,
                 used_at    TEXT
             );
+            CREATE TABLE IF NOT EXISTS email_verifications (
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                challenge_hash TEXT NOT NULL UNIQUE,
+                code_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                sent_at TEXT NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                sends INTEGER NOT NULL DEFAULT 1,
+                send_window TEXT NOT NULL,
+                remember INTEGER NOT NULL DEFAULT 1
+            );
             CREATE TABLE IF NOT EXISTS ai_notes (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 scan_id    INTEGER NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
@@ -181,6 +193,12 @@ def init_db():
             conn.execute("ALTER TABLE scans ADD COLUMN user_id INTEGER")
         # v6.1: abonelik planı
         user_columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+        if "email_verified" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0")
+        if "email_verified_by" not in user_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN email_verified_by TEXT NOT NULL DEFAULT ''")
+            # Earlier releases could only verify email through a trusted OAuth provider.
+            conn.execute("UPDATE users SET email_verified_by = 'oauth' WHERE email_verified = 1")
         if "plan" not in user_columns:
             conn.execute("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'")
         if "plan_expires" not in user_columns:

@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-function panel(apiHandler) {
+function panel(apiHandler, users = [], overrides = {}) {
     const elements = new Map();
     const get = id => {
         if (!elements.has(id)) elements.set(id, {id, value: '', innerHTML: '', textContent: '', disabled: false, dataset: {}, attrs: {}, events: {},
@@ -18,9 +18,11 @@ function panel(apiHandler) {
         document: {body: {dataset: {uid: '1', role: 'admin'}}, querySelectorAll: () => tabs, addEventListener() {}},
         $: get, esc: v => String(v).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;'),
         api: async url => {
+            if (Object.hasOwn(overrides, url)) return overrides[url]();
             if (url === '/api/plans') return {plans: []};
             if (url === '/api/admin/overview') return {by_plan: [], users_total: 1, admins: 1, moderators: 0, disabled: 0, mrr: 0, revenue_total: 0, payments_total: 0, scans_today: 0, scans_total: 0, ai_today: 0, monitors_active: 0, alerts_7d: 0, failed_logins_24h: 0, sessions_active: 1, active_scans: 0, version: '9', codename: 'Cortex', uptime: 1, settings: {}, series: []};
-            if (url.startsWith('/api/admin/users') || url.startsWith('/api/admin/payments') || url === '/api/admin/team') return [];
+            if (url.startsWith('/api/admin/users')) return users;
+            if (url.startsWith('/api/admin/payments') || url === '/api/admin/team') return [];
             if (url.startsWith('/api/admin/audit')) return {actions: {}, entries: []};
             if (url === '/api/admin/settings') return {plugins: [], session_days: 7, payment_mode: 'off'};
             return apiHandler(url);
@@ -33,6 +35,26 @@ function panel(apiHandler) {
 }
 const scan = id => ({id, name: 'Operatör', email: 'member@example.com', target: '<img src=x>', ip_address: '192.0.2.1', risk_score: 70, risk_level: 'Yüksek', open_count: 2, scan_time: '2026-10-13', has_report: 1});
 const tick = () => new Promise(resolve => setImmediate(resolve));
+
+test('unlimited staff plan explains why assignment is unavailable', async () => {
+    const p = panel(async () => ({total: 0, items: []}), [
+        {id: 1, role: 'owner', name: 'Sahip', email: 'owner@example.com', stored_plan: 'free'},
+        {id: 2, role: 'user', name: 'Üye', email: 'user@example.com', stored_plan: 'free'},
+    ]);
+    await p.load();
+    assert.match(p.get('adminUsers').innerHTML, /Sınırsız erişim/);
+    assert.doesNotMatch(p.get('adminUsers').innerHTML, /data-assign="1"/);
+    assert.match(p.get('adminUsers').innerHTML, /data-assign="2"/);
+});
+
+test('overview failure does not prevent user management and operations loading', async () => {
+    const p = panel(async () => ({total: 0, items: []}), [
+        {id: 2, role: 'user', name: 'Üye', email: 'user@example.com', stored_plan: 'free'},
+    ], {'/api/admin/overview': () => { throw new Error('Özet yüklenemedi'); }});
+    await p.load();
+    assert.match(p.get('adminUsers').innerHTML, /data-assign="2"/);
+    assert.equal(p.get('adminOperationCount').textContent, '0 kayıt');
+});
 
 test('scan pagination preserves account ownership and escapes target markup', async () => {
     const p = panel(async url => {

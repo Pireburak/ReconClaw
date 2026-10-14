@@ -1,0 +1,32 @@
+{% extends "public.html" %}
+{% block content %}
+<section class="doc narrow">
+    <p class="doc-kicker">Hesap güvenliği</p>
+    <h1>E-posta adresinizi doğrulayın</h1>
+    <p class="muted">{{ email_hint }} adresine gönderilen 6 haneli kodu girin. Kod gönderildiği andan itibaren 15 dakika geçerlidir.</p>
+    <form class="auth-form" id="verificationForm">
+        <div class="form-error" id="formError" role="alert" {% if not delivery_failed %}hidden{% endif %}>{% if delivery_failed %}E-posta gönderilemedi. Yeni kod gönder düğmesiyle tekrar deneyin.{% endif %}</div>
+        <div class="float">
+            <input type="text" id="verificationCode" inputmode="numeric" autocomplete="one-time-code"
+                   pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder=" " autofocus>
+            <label for="verificationCode">6 haneli doğrulama kodu</label>
+        </div>
+        {% if needs_password %}
+        <p class="muted small">Sonraki girişleriniz için bir parola belirleyin. En az 8 karakter, harf ve rakam/sembol içermeli.</p>
+        <div class="float">
+            <input type="password" id="verificationPassword" data-verification-password autocomplete="new-password"
+                   minlength="8" maxlength="256" required placeholder=" ">
+            <label for="verificationPassword">Yeni parola</label>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn primary block" id="verifyButton">DOĞRULA VE GİRİŞ YAP</button>
+        <button type="button" class="btn block" id="resendButton">YENİ KOD GÖNDER</button>
+    </form>
+    <p class="form-ok" id="formOk" role="status" aria-live="polite" hidden></p>
+    <p class="muted small">Kodu kimseyle paylaşmayın. E-posta gelmediyse spam klasörünü de kontrol edin.</p>
+    <p class="muted small"><a href="/login">← Başka bir hesapla giriş yap</a></p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', path='js/email-verification.js') }}?v={{ asset_v }}"></script>
+{% endblock %}

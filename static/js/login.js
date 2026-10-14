@@ -86,6 +86,10 @@ $("authForm").addEventListener("submit", async (event) => {
             body: JSON.stringify(body),
         });
         const data = await res.json().catch(() => ({}));
+        if (data.verification_required) {
+            window.location.href = '/eposta-dogrula';
+            return;
+        }
         if (!res.ok) {
             const detail = Array.isArray(data.detail) ? data.detail.map((d) => d.msg).join(", ") : data.detail;
             throw new Error(detail || `HTTP ${res.status}`);

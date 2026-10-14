@@ -1,5 +1,5 @@
 """
-E-posta gönderimi (SMTP). Şimdilik yalnızca şifre sıfırlama bağlantısı için kullanılır.
+E-posta gönderimi (SMTP). Şifre sıfırlama ve e-posta doğrulama için kullanılır.
 
 SMTP_HOST boşsa e-posta özelliği kapalıdır ve "Şifremi unuttum" bağlantısı gösterilmez.
 Gmail / Google Workspace için uygulama şifresi, Yandex / Zoho / Brevo gibi servisler için SMTP bilgileri kullanılır.

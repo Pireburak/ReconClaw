@@ -81,6 +81,7 @@ def public_user(row) -> dict:
         "avatar_url": row["avatar_url"],
         "has_password": bool(row["password_hash"]),
         "has_api_token": bool(row["api_token"]),
+        "email_verified": bool(row["email_verified"]),
         "providers": providers,
         "role": row["role"],
         "is_admin": row["role"] in ("admin", "owner"),
@@ -122,11 +123,11 @@ def create_user(email: str, name: str, password: str | None = None, avatar_url=N
             raise AuthError("Bu e-posta ile kayıtlı bir hesap zaten var.")
         # Kayıt anında yönetici yalnızca e-postası sağlayıcı tarafından doğrulanmış sosyal girişle olunur.
         # Parolalı kayıtta e-posta doğrulanmadığından, ADMIN_EMAILS'teki adresi gerçek sahibinden önce
-        # alan biri yönetici olamaz; bu hesaplar açılıştaki sync_admins() veya manage.py ile yükseltilir.
+        # alan biri yönetici olamaz; doğrulanmamış hesaplar yalnızca manage.py ile yükseltilir.
         role = "admin" if verified_email and email in config.ADMIN_EMAILS else "user"
         cur = conn.execute(
-            "INSERT INTO users (email, name, password_hash, avatar_url, created_at, role) VALUES (?, ?, ?, ?, ?, ?)",
-            (email, name[:80], hash_password(password) if password else None, avatar_url, _now().isoformat(" "), role),
+            "INSERT INTO users (email, name, password_hash, avatar_url, created_at, role, email_verified, email_verified_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (email, name[:80], hash_password(password) if password else None, avatar_url, _now().isoformat(" "), role, int(verified_email), 'oauth' if verified_email else ''),
         )
         _claim_orphan_scans(conn, cur.lastrowid)
         return cur.lastrowid
@@ -153,18 +154,25 @@ def ensure_active(row):
 
 
 def sync_admins():
-    """ADMIN_EMAILS listesindeki mevcut hesapları yönetici yapar (uygulama açılırken çağrılır)."""
+    """Yalnızca doğrulanmış, parolasız sosyal hesapları açılışta yönetici yapar.
+
+    Parolalı hesaplar terminalden atanır: adresi önceden kaydeden kişinin parolasına güvenilmez.
+    """
     if not config.ADMIN_EMAILS:
         return 0
     marks = ",".join("?" * len(config.ADMIN_EMAILS))
     with closing(get_db_connection()) as conn, conn:
-        return conn.execute(f"UPDATE users SET role = 'admin' WHERE email IN ({marks}) AND role = 'user'",
+        return conn.execute(f"UPDATE users SET role = 'admin' WHERE email IN ({marks}) AND role = 'user' AND email_verified = 1 AND email_verified_by = 'oauth' AND password_hash IS NULL",
                             tuple(config.ADMIN_EMAILS)).rowcount
 
 
 def sync_owner() -> bool:
     """OWNER_EMAIL tanımlıysa o hesabı tek sahip (owner) yapar; varsa önceki sahip yöneticiye iner."""
     if not config.OWNER_EMAIL:
+        return False
+    user = user_by_email(config.OWNER_EMAIL)
+    if user is None or (user['role'] not in ('admin', 'owner') and
+                        (not user['email_verified'] or user['email_verified_by'] != 'oauth' or user['password_hash'] is not None)):
         return False
     return set_owner(config.OWNER_EMAIL)
 
@@ -254,6 +262,23 @@ def delete_user(user_id):
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
 
+def _verify_oauth_email(conn, user_id, provider, subject):
+    """E-posta sahipliği kanıtlandığında eski, doğrulanmamış erişimleri geri açma."""
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    ensure_active(user)
+    if not user['email_verified']:
+        conn.execute('DELETE FROM sessions WHERE user_id = ?', (user_id,))
+        conn.execute('UPDATE users SET api_token = NULL WHERE id = ?', (user_id,))
+        conn.execute('DELETE FROM password_resets WHERE user_id = ?', (user_id,))
+        conn.execute('DELETE FROM email_verifications WHERE user_id = ?', (user_id,))
+        if config.REQUIRE_EMAIL_VERIFICATION and user['role'] not in ('admin', 'owner'):
+            # OAuth proves mailbox ownership, not knowledge of a previously registered password.
+            conn.execute('UPDATE users SET password_hash = NULL WHERE id = ?', (user_id,))
+            conn.execute('DELETE FROM identities WHERE user_id = ? AND NOT (provider = ? AND subject = ?)',
+                         (user_id, provider, subject))
+    conn.execute("UPDATE users SET email_verified = 1, email_verified_by = 'oauth' WHERE id = ?", (user_id,))
+
+
 def login_with_identity(provider: str, subject: str, email: str | None, name: str,
                         email_verified: bool, avatar_url=None) -> int:
     """Sosyal girişte kullanıcıyı bulur, gerekirse bağlar veya oluşturur; kullanıcı id'sini döndürür."""
@@ -262,7 +287,12 @@ def login_with_identity(provider: str, subject: str, email: str | None, name: st
             "SELECT user_id FROM identities WHERE provider = ? AND subject = ?", (provider, subject)
         ).fetchone()
         if row:
-            ensure_active(get_user(row["user_id"]))
+            user = get_user(row["user_id"])
+            ensure_active(user)
+            if email_verified and (email or '').strip().lower() == user['email'].lower():
+                with conn:
+                    conn.execute('BEGIN IMMEDIATE')
+                    _verify_oauth_email(conn, user['id'], provider, subject)
             return row["user_id"]
         existing = conn.execute("SELECT id FROM users WHERE email = ?", ((email or "").lower(),)).fetchone()
 
@@ -281,6 +311,8 @@ def login_with_identity(provider: str, subject: str, email: str | None, name: st
     with closing(get_db_connection()) as conn, conn:
         conn.execute("INSERT INTO identities (user_id, provider, subject) VALUES (?, ?, ?)",
                      (user_id, provider, subject))
+        if email_verified:
+            _verify_oauth_email(conn, user_id, provider, subject)
         if avatar_url:
             conn.execute("UPDATE users SET avatar_url = COALESCE(avatar_url, ?) WHERE id = ?", (avatar_url, user_id))
     return user_id

@@ -13,6 +13,8 @@ def reset_rate_limits(monkeypatch):
 
     # Testlerde arka plan izleme zamanlayıcısı çalışmasın (izleme testleri görevleri elle tetikler)
     monkeypatch.setattr(config, "SCHEDULER_ENABLED", False)
+    # Gerçek SMTP tanımlı bir geliştirici ortamında testler e-posta göndermesin.
+    monkeypatch.setattr(config, "REQUIRE_EMAIL_VERIFICATION", False)
     # Testlerde GeoIP ve kur servislerine çıkılmasın (yedek kurlar kullanılır)
     from core import pricing
 

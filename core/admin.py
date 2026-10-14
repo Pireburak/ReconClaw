@@ -121,6 +121,10 @@ def update_user(actor, user_id: int, role=None, plan=None, days=None, disabled=N
     is_self = target["id"] == actor["id"]
     _moderator_guard(actor, target, role, plan, days, disabled)
     _guard(actor, target, touches_admin=(role is not None and role != target["role"]) or disabled is not None)
+    if plan is not None and plan not in plans.PLANS:
+        raise AdminError("Geçersiz plan.")
+    expires = (None if plan == 'free' or days is None else
+               (datetime.now().replace(microsecond=0) + timedelta(days=days)).isoformat(' '))
     events = []  # denetim kayıtları işlem bittikten sonra yazılır (SQLite tek yazar kilidi)
     with closing(get_db_connection()) as conn, conn:
         if role is not None and role != target["role"]:
@@ -139,15 +143,11 @@ def update_user(actor, user_id: int, role=None, plan=None, days=None, disabled=N
                 conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
                 conn.execute("UPDATE users SET api_token = NULL WHERE id = ?", (user_id,))
             events.append(("admin_disable" if disabled else "admin_enable", ""))
+        if plan is not None:
+            conn.execute("UPDATE users SET plan = ?, plan_expires = ? WHERE id = ?", (plan, expires, user_id))
+            events.append(("admin_plan", f"{plan} · {expires[:10] if expires else 'süresiz'}"))
     for action, detail in events:
         audit.log(action, user_id, actor["id"], detail, ip)
-    if plan is not None:
-        try:
-            result = plans.grant(user_id, plan, days)
-        except ValueError as exc:
-            raise AdminError(str(exc)) from exc
-        audit.log("admin_plan", user_id, actor["id"],
-                  f"{plan} · {result['expires'][:10] if result['expires'] else 'süresiz'}", ip)
     return next(u for u in list_users(target["email"], 50) if u["id"] == user_id)
 
 
