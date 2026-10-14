@@ -1,6 +1,17 @@
 "use strict";
 (() => {
     const $ = id => document.getElementById(id);
+    $('themeBtn').addEventListener('click', () => window.RCTheme.toggle());
+    $('capTabs').addEventListener('click', event => {
+        const button = event.target.closest('[data-ftab]');
+        if (!button) return;
+        document.querySelectorAll('#capTabs [data-ftab]').forEach(tab => {
+            const active = tab === button;
+            tab.classList.toggle('on', active);
+            tab.setAttribute('aria-selected', String(active));
+        });
+        document.querySelectorAll('.cap-list').forEach(list => { list.hidden = list.dataset.fpanel !== button.dataset.ftab; });
+    });
     const error = message => {
         $('formError').textContent = message;
         $('formError').hidden = !message;

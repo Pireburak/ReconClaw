@@ -1,9 +1,10 @@
-{% extends "public.html" %}
-{% block content %}
-<section class="doc narrow">
-    <p class="doc-kicker">Hesap güvenliği</p>
-    <h1>E-posta adresinizi doğrulayın</h1>
-    <p class="muted">{{ email_hint }} adresine gönderilen 6 haneli kodu girin. Kod gönderildiği andan itibaren 15 dakika geçerlidir.</p>
+{% extends "login.html" %}
+{% block access_content %}
+    <header class="access-head">
+        <h1>E-posta doğrulama</h1>
+        <p><span class="typed">Kimliğinizi doğrulayın</span></p>
+        <p>{{ email_hint }} adresine gönderilen 6 haneli kodu girin. Kod 15 dakika geçerlidir.</p>
+    </header>
     <form class="auth-form" id="verificationForm">
         <div class="form-error" id="formError" role="alert" {% if not delivery_failed %}hidden{% endif %}>{% if delivery_failed %}E-posta gönderilemedi. Yeni kod gönder düğmesiyle tekrar deneyin.{% endif %}</div>
         <div class="float">
@@ -19,14 +20,14 @@
             <label for="verificationPassword">Yeni parola</label>
         </div>
         {% endif %}
-        <button type="submit" class="btn primary block" id="verifyButton">DOĞRULA VE GİRİŞ YAP</button>
+        <button type="submit" class="btn primary block go-btn" id="verifyButton">DOĞRULA VE GİRİŞ YAP<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
         <button type="button" class="btn block" id="resendButton">YENİ KOD GÖNDER</button>
     </form>
     <p class="form-ok" id="formOk" role="status" aria-live="polite" hidden></p>
-    <p class="muted small">Kodu kimseyle paylaşmayın. E-posta gelmediyse spam klasörünü de kontrol edin.</p>
-    <p class="muted small"><a href="/login">← Başka bir hesapla giriş yap</a></p>
-</section>
+    <p class="legal">Kodu kimseyle paylaşmayın. E-posta gelmediyse spam klasörünü de kontrol edin.</p>
+    <div class="divider">ERİŞİM KONTROLÜ</div>
+    <a class="btn block" href="/login">← Başka bir hesapla giriş yap</a>
 {% endblock %}
-{% block scripts %}
+{% block access_script %}
 <script src="{{ url_for('static', path='js/email-verification.js') }}?v={{ asset_v }}"></script>
 {% endblock %}

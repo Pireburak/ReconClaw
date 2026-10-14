@@ -456,6 +456,7 @@ async def email_verification_page(request: Request):
     name, domain = pending['email'].split('@', 1)
     response = templates.TemplateResponse(request, 'email_verification.html', {
         'title': 'ReconClaw | E-posta doğrulama', 'email_hint': name[:1] + '***@' + domain,
+        'version': VERSION, 'codename': CODENAME,
         'company': company_info(request), 'delivery_failed': not pending['sent_at'],
         'needs_password': not pending['has_password'],
     })
