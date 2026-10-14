@@ -34,7 +34,8 @@ jobs:
               sed -i '/^OWNER_EMAIL=/d' .env
               echo "OWNER_EMAIL=${OWNER_EMAIL}" >> .env
             fi
-            docker compose up -d --build
+            # Güncel kodu derle; .env ayarlarını yeni konteynerlere yeniden yükle.
+            docker compose up -d --build --force-recreate
             if [ -n "${OWNER_EMAIL:-}" ]; then
               sleep 5
               docker compose exec -T reconclaw python manage.py make-owner "${OWNER_EMAIL}" \
