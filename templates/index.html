@@ -466,6 +466,7 @@
         {# [10] YÖNETİM (yalnızca sahip, yönetici ve moderatörlere render edilir) #}
         {% if user.is_staff %}
         <section data-page="admin" hidden>
+            <div class="panel-head admin-toolbar"><p class="muted small">Tüm kullanıcıların operasyonları ve sistemin genel durumu</p><button type="button" class="btn sm" id="adminRefresh">YENİLE</button><span class="muted small" id="adminUpdated" role="status" aria-live="polite"></span></div>
             <div class="stats" id="adminStats"></div>
             <div class="grid two">
                 <section class="panel wide" style="--c: var(--cyan)">
@@ -516,6 +517,33 @@
                     </div>
                 </section>
                 {% endif %}
+
+                <section class="panel wide" id="adminOperationsPanel">
+                    <div class="panel-head">
+                        <h3>Tüm operasyonlar</h3>
+                        <input type="search" id="adminOperationSearch" aria-label="Operasyonlarda hedef veya kullanıcı ara" placeholder="Hedef / e-posta / ad ara..." maxlength="100">
+                    </div>
+                    <div class="admin-operation-tabs" role="tablist" aria-label="Operasyon türü">
+                        <button class="btn sm" type="button" role="tab" id="admin-tab-scans" data-operation="scans" aria-selected="true" aria-controls="adminOperationContent">TARAMALAR</button>
+                        <button class="btn sm" type="button" role="tab" id="admin-tab-monitors" data-operation="monitors" aria-selected="false" aria-controls="adminOperationContent" tabindex="-1">İZLEME</button>
+                        <button class="btn sm" type="button" role="tab" id="admin-tab-alerts" data-operation="alerts" aria-selected="false" aria-controls="adminOperationContent" tabindex="-1">ALARMLAR</button>
+                        <button class="btn sm" type="button" role="tab" id="admin-tab-targets" data-operation="targets" aria-selected="false" aria-controls="adminOperationContent" tabindex="-1">HEDEFLER</button>
+                        <button class="btn sm" type="button" role="tab" id="admin-tab-recon" data-operation="recon" aria-selected="false" aria-controls="adminOperationContent" tabindex="-1">PASİF KEŞİF</button>
+                    </div>
+                    <div id="adminOperationContent" role="tabpanel" aria-labelledby="admin-tab-scans">
+                        <div class="table-wrap"><table><thead id="adminOperationHead"></thead><tbody id="adminOperationRows"></tbody></table></div>
+                        <div class="admin-pager">
+                            <span class="muted small" id="adminOperationCount" role="status" aria-live="polite"></span>
+                            <button class="btn sm" id="adminOperationPrev" type="button" disabled>ÖNCEKİ</button>
+                            <button class="btn sm" id="adminOperationNext" type="button" disabled>SONRAKİ</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="panel wide" id="adminSettingsPanel">
+                    <h3>Sistem ayarları ve entegrasyonlar</h3>
+                    <p class="muted small">Sunucuda etkin olan yapılandırma. Değişiklikler sunucunun ayar dosyasından uygulanır.</p>
+                    <div class="grid two" id="adminSettings"><div class="empty">Yükleniyor...</div></div>
+                </section>
                 <section class="panel wide" style="--c: var(--yellow)">
                     <div class="panel-head">
                         <h3>Denetim kaydı</h3>

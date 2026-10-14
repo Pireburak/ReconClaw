@@ -204,3 +204,37 @@ def clear_demo_payments() -> int:
     """Demo (kartsız deneme) ödeme kayıtlarını siler. Gerçek PayTR kayıtlarına dokunmaz."""
     with closing(get_db_connection()) as conn, conn:
         return conn.execute("DELETE FROM payments WHERE status = 'demo'").rowcount
+
+
+# Global operation lists deliberately select display fields only: credentials never leave the DB.
+_OPERATION_LISTS = {
+    'scans': ('scans', 'target', 'r.id, r.user_id, r.target, r.ip_address, r.open_count, r.risk_score, r.risk_level, r.scan_time, r.report IS NOT NULL AS has_report'),
+    'monitors': ('monitors', 'target', "r.id, r.user_id, r.target, r.interval, r.enabled, r.last_run, r.next_run, r.last_status, r.last_scan_id, r.webhook IS NOT NULL AND r.webhook != '' AS has_webhook"),
+    'alerts': ('alerts', 'target', 'r.id, r.user_id, r.target, r.level, r.title, r.detail, r.seen, r.created_at, r.scan_id'),
+    'targets': ('targets', 'host', 'r.id, r.user_id, r.host, r.method, r.verified_at, r.created_at'),
+    'recon': ('recon_runs', 'domain', 'r.id, r.user_id, r.domain, r.created_at'),
+}
+
+
+def operations(resource: str, query: str = '', limit: int = 50, offset: int = 0) -> dict:
+    table, target, columns = _OPERATION_LISTS[resource]
+    # Table/column names come exclusively from the fixed mapping above.
+    base = f' FROM {table} r LEFT JOIN users u ON u.id = r.user_id'
+    where = f' WHERE (r.{target} LIKE ? OR u.email LIKE ? OR u.name LIKE ?)'
+    like = '%' + query.strip() + '%'
+    params = (like, like, like)
+    with closing(get_db_connection()) as conn:
+        total = conn.execute('SELECT COUNT(*)' + base + where, params).fetchone()[0]
+        rows = conn.execute('SELECT ' + columns + ', u.email, u.name' + base + where +
+                            ' ORDER BY r.id DESC LIMIT ? OFFSET ?', (*params, limit, offset)).fetchall()
+    return {'items': [dict(r) for r in rows], 'total': total, 'limit': limit, 'offset': offset}
+
+
+def operation_report(scan_id: int):
+    from core.db_manager import get_scan_report
+
+    with closing(get_db_connection()) as conn:
+        row = conn.execute('SELECT user_id FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    if row is None:
+        return None, None
+    return get_scan_report(scan_id, row['user_id']), row['user_id']

@@ -26,17 +26,21 @@
     async function loadAdmin() {
         try {
             catalog = catalog || await api("/api/plans");
-            const [overview, users, audit, team] = await Promise.all([
+            const [overview, users, audit, team, settings] = await Promise.all([
                 api("/api/admin/overview"),
                 api(`/api/admin/users?q=${encodeURIComponent($("adminSearch").value.trim())}`),
                 api(`/api/admin/audit?limit=60&action=${encodeURIComponent($("auditFilter").value)}`),
                 api("/api/admin/team"),
+                api("/api/admin/settings"),
             ]);
             renderOverview(overview);
             renderTeam(team);
             if (I_MANAGE) loadPayments();
             renderUsers(users);
             renderAudit(audit);
+            renderSettings(settings);
+            await loadOperations();
+            $("adminUpdated").textContent = "Son yenileme: " + new Date().toLocaleTimeString("tr-TR");
         } catch (err) { toast(err.message, "err"); }
     }
 
@@ -250,6 +254,137 @@
             } catch (err) { toast(err.message, "err"); }
         }
     });
+
+
+    let operation = 'scans';
+    let operationOffset = 0;
+    let operationTotal = 0;
+    let operationRequest = 0;
+    let operationSearchTimer;
+    const OPERATION_LIMIT = 25;
+    const operationColumns = {
+        scans: ['#', 'Kullanıcı', 'Hedef / IP', 'Risk', 'Açık port', 'Tarih', 'Rapor'],
+        monitors: ['#', 'Kullanıcı', 'Hedef', 'Sıklık', 'Durum', 'Son / sonraki çalışma', 'Sonuç'],
+        alerts: ['#', 'Kullanıcı', 'Hedef', 'Seviye', 'Olay', 'Görüldü', 'Tarih'],
+        targets: ['#', 'Kullanıcı', 'Hedef', 'Doğrulama', 'Yöntem', 'Kayıt tarihi'],
+        recon: ['#', 'Kullanıcı', 'Alan adı', 'Tarih'],
+    };
+    const cell = (value, cls = '') => '<td class="' + cls + '">' + esc(value ?? '—') + '</td>';
+    const accountCell = (r) => '<td><b>' + esc(r.name || 'Eski kayıt') + '</b><br><span class="muted small">' + esc(r.email || 'Hesap yok') + '</span></td>';
+    const reportLink = (id) => '<a class="btn sm" href="/admin/reports/' + Number(id) + '" target="_blank" rel="noopener">RAPOR</a>';
+
+    function operationRow(r) {
+        let cells = cell(r.id) + accountCell(r);
+        if (operation === 'scans') {
+            cells += '<td><b>' + esc(r.target) + '</b><br><span class="muted small">' + esc(r.ip_address) + '</span></td>';
+            cells += cell(r.risk_score + ' / 100 · ' + r.risk_level) + cell(r.open_count) + cell(r.scan_time, 'small');
+            cells += '<td>' + (r.has_report ? reportLink(r.id) : '<span class="muted small">Eski kayıt</span>') + '</td>';
+        } else if (operation === 'monitors') {
+            const interval = {hourly: 'Saatlik', daily: 'Günlük', weekly: 'Haftalık'};
+            cells += cell(r.target) + cell(interval[r.interval] || r.interval) + cell(r.enabled ? 'Aktif' : 'Duraklatıldı');
+            cells += '<td class="small">Son: ' + esc(r.last_run || 'Henüz çalışmadı') + '<br>Sonraki: ' + esc(r.next_run) + '</td>';
+            cells += '<td class="admin-detail">' + esc(r.last_status || 'Bekliyor') + '<br><span class="muted small">Webhook: ' + (r.has_webhook ? 'Bağlı' : 'Yok') + '</span>' + (r.last_scan_id ? '<br>' + reportLink(r.last_scan_id) : '') + '</td>';
+        } else if (operation === 'alerts') {
+            const level = {critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük', info: 'Bilgi'};
+            cells += cell(r.target) + cell(level[r.level] || r.level);
+            cells += '<td class="admin-detail"><b>' + esc(r.title) + '</b><br><span class="muted small">' + esc(r.detail || '') + '</span>' + (r.scan_id ? '<br>' + reportLink(r.scan_id) : '') + '</td>';
+            cells += cell(r.seen ? 'Evet' : 'Hayır') + cell(r.created_at, 'small');
+        } else if (operation === 'targets') {
+            cells += cell(r.host) + cell(r.verified_at ? 'Doğrulandı · ' + r.verified_at : 'Bekliyor') + cell(r.method) + cell(r.created_at, 'small');
+        } else {
+            cells += cell(r.domain) + cell(r.created_at, 'small');
+        }
+        return '<tr>' + cells + '</tr>';
+    }
+
+    async function loadOperations() {
+        const requestId = ++operationRequest;
+        const content = $('adminOperationContent');
+        content.setAttribute('aria-busy', 'true');
+        $('adminOperationPrev').disabled = true;
+        $('adminOperationNext').disabled = true;
+        $('adminOperationHead').innerHTML = '<tr>' + operationColumns[operation].map(c => '<th>' + esc(c) + '</th>').join('') + '</tr>';
+        $('adminOperationRows').innerHTML = '<tr><td colspan="' + operationColumns[operation].length + '" class="empty">Yükleniyor...</td></tr>';
+        try {
+            const q = encodeURIComponent($('adminOperationSearch').value.trim());
+            const data = await api('/api/admin/' + operation + '?q=' + q + '&limit=' + OPERATION_LIMIT + '&offset=' + operationOffset);
+            if (requestId !== operationRequest) return;
+            operationTotal = data.total;
+            // Records may have been removed since the previous page was opened.
+            if (!data.items.length && operationOffset > 0 && data.total > 0) {
+                operationOffset = Math.floor((data.total - 1) / OPERATION_LIMIT) * OPERATION_LIMIT;
+                return loadOperations();
+            }
+            $('adminOperationRows').innerHTML = data.items.length ? data.items.map(operationRow).join('') : '<tr><td colspan="' + operationColumns[operation].length + '" class="empty">Kayıt bulunamadı.</td></tr>';
+            $('adminOperationCount').textContent = data.total ? (operationOffset + 1) + '–' + (operationOffset + data.items.length) + ' / ' + data.total + ' kayıt' : '0 kayıt';
+            $('adminOperationPrev').disabled = operationOffset === 0;
+            $('adminOperationNext').disabled = operationOffset + OPERATION_LIMIT >= operationTotal;
+        } catch (err) {
+            if (requestId !== operationRequest) return;
+            $('adminOperationRows').innerHTML = '<tr><td colspan="' + operationColumns[operation].length + '" class="empty">' + esc(err.message) + '</td></tr>';
+            $('adminOperationCount').textContent = 'Yüklenemedi · Yenile ile tekrar deneyin';
+        } finally {
+            if (requestId === operationRequest) content.setAttribute('aria-busy', 'false');
+        }
+    }
+
+    function renderSettings(s) {
+        const flag = v => v ? 'Açık' : 'Kapalı';
+        const configured = v => v ? 'Bağlı' : 'Yapılandırılmamış';
+        const groups = [
+            ['Erişim ve tarama', [
+                ['Yeni kayıt', flag(s.allow_signup)], ['İç ağ hedefleri', flag(s.private_targets)],
+                ['Hedef doğrulama', flag(s.target_verification)], ['Zamanlayıcı', flag(s.scheduler)],
+                ['Oturum süresi', s.session_days + ' gün'], ['HTTPS çerezi', flag(s.cookie_secure)],
+                ['Sunucu tarama sınırı', s.scan_rate_limit ? s.scan_rate_limit + ' / dakika' : 'Plan sınırları geçerli'],
+            ]],
+            ['Altyapı ve entegrasyonlar', [
+                ['Veritabanı', s.db_online ? 'Çevrimiçi' : 'Çevrimdışı'], ['Site adresi', s.public_url || 'İstek adresi'],
+                ['AI Analist', s.ai_configured ? s.ai_model : 'Kural tabanlı'], ['E-posta', configured(s.smtp_configured)],
+                ['Bot koruması', configured(s.captcha_configured)], ['Ödeme', {paytr: 'PayTR', demo: 'Demo', off: 'Kapalı'}[s.payment_mode]],
+                ['GeoIP', flag(s.geo_lookup)], ['Varsayılan ülke', s.default_country],
+                ['Vekil IP başlığı', flag(s.trust_proxy_ip)], ['Ülke başlığı', flag(s.trust_country_header)],
+                ['Eklentiler', s.plugins.map(p => p.name + ': ' + flag(p.enabled)).join(' · ') || 'Yok'],
+            ]],
+        ];
+        $('adminSettings').innerHTML = groups.map(([title, rows]) => '<div><h4>' + esc(title) + '</h4><dl class="facts">' + rows.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl></div>').join('');
+    }
+
+    const operationTabs = [...document.querySelectorAll('[data-operation]')];
+    function selectOperation(button) {
+        operation = button.dataset.operation;
+        operationOffset = 0;
+        operationTabs.forEach(tab => {
+            const active = tab === button;
+            tab.setAttribute('aria-selected', String(active));
+            tab.tabIndex = active ? 0 : -1;
+        });
+        $('adminOperationContent').setAttribute('aria-labelledby', button.id);
+        loadOperations();
+    }
+    operationTabs.forEach((button, index) => {
+        button.addEventListener('click', () => selectOperation(button));
+        button.addEventListener('keydown', e => {
+            let next;
+            if (e.key === 'ArrowRight') next = (index + 1) % operationTabs.length;
+            if (e.key === 'ArrowLeft') next = (index + operationTabs.length - 1) % operationTabs.length;
+            if (e.key === 'Home') next = 0;
+            if (e.key === 'End') next = operationTabs.length - 1;
+            if (next === undefined) return;
+            e.preventDefault();
+            operationTabs[next].focus();
+            selectOperation(operationTabs[next]);
+        });
+    });
+    $('adminOperationSearch').addEventListener('input', () => {
+        // Invalidate pending responses immediately, before the debounce expires.
+        ++operationRequest;
+        clearTimeout(operationSearchTimer);
+        operationSearchTimer = setTimeout(() => { operationOffset = 0; loadOperations(); }, 250);
+    });
+    $('adminOperationPrev').addEventListener('click', () => { operationOffset = Math.max(0, operationOffset - OPERATION_LIMIT); loadOperations(); });
+    $('adminOperationNext').addEventListener('click', () => { operationOffset += OPERATION_LIMIT; loadOperations(); });
+    $('adminRefresh').addEventListener('click', loadAdmin);
 
     // Görünüm yalnızca bu dosya yüklendiğinde (yani yalnızca yöneticilere) tanımlanır
     VIEWS.admin = ["YÖNETİM", I_MANAGE ? "Ekip, kullanıcılar, planlar, sistem durumu ve denetim kaydı" : "Ekip, kullanıcılar ve denetim kaydı (moderatör)", "A"];

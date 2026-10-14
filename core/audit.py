@@ -32,6 +32,7 @@ ACTIONS = {
     "monitor_delete": "İzleme görevi silindi",
     "share_create": "Rapor paylaşıma açıldı",
     "share_revoke": "Rapor paylaşımı kapatıldı",
+    "admin_report_view": "Yönetimden rapor görüntülendi",
     "admin_role": "Yönetici rolü değişti",
     "admin_plan": "Yönetici plan atadı",
     "admin_disable": "Hesap askıya alındı",

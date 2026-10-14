@@ -912,3 +912,21 @@ body.access .pub-foot { position: relative; z-index: 2; border-top: 0; padding-b
 .badge.mod-badge { color: #fff; background: var(--cyan); letter-spacing: .16em; }
 
 .allowed-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+
+/* Yönetim operasyonları: mevcut tema değişkenleri ve tablo düzeni */
+.admin-toolbar { flex-wrap: wrap; }
+.admin-toolbar p { flex: 1; }
+.admin-operation-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.admin-operation-tabs [aria-selected="true"] { color: var(--bg); background: var(--text); border-color: var(--text); }
+#adminOperationSearch { width: min(100%, 300px); }
+.admin-pager { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.admin-pager > span { margin-right: auto; }
+#adminOperationRows td { vertical-align: top; }
+#adminOperationRows .admin-detail { max-width: 320px; overflow-wrap: anywhere; }
+#adminSettings .facts { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 860px) {
+    #adminOperationsPanel .panel-head { flex-wrap: wrap; }
+    #adminOperationSearch { width: 100%; }
+    .admin-toolbar { gap: 8px; }
+    .admin-operation-tabs .btn { flex: 1 1 auto; }
+}

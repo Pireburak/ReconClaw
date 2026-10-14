@@ -13,7 +13,7 @@ from typing import Literal
 from urllib.parse import parse_qsl, quote
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -250,10 +250,12 @@ async def login_page(request: Request, error: str = ""):
 @app.get("/admin", include_in_schema=False)
 @app.get("/yonetim", include_in_schema=False)
 async def admin_page(request: Request):
-    """Yönetim paneline kısa yol. Yetkili ekip (sahip / yönetici / moderatör) panele gider;
-    diğer herkes (oturumsuz ziyaretçiler dahil) için bu adres hiç yokmuş gibi 404 döner."""
+    """Oturumsuz ziyaretçiyi girişe, yetkili ekibi panele yönlendirir.
+    Giriş yapmış yetkisiz hesaplar için 404 döner."""
     user = optional_user(request)
-    if user is None or not plans.is_staff(user):
+    if user is None:
+        return RedirectResponse("/login", status_code=303)
+    if not plans.is_staff(user):
         raise HTTPException(status_code=404, detail="Not Found")
     return RedirectResponse("/#admin", status_code=303)
 
@@ -1171,6 +1173,49 @@ async def admin_team(user=Depends(staff_user)):
 async def admin_audit(limit: int = 100, action: str = "", user=Depends(staff_user)):
     return {"entries": await run_in_threadpool(audit.entries, None, limit, action[:40]), "actions": audit.ACTIONS}
 
+
+
+
+@app.get('/api/admin/settings', include_in_schema=False)
+async def admin_settings(user=Depends(staff_user)):
+    return {
+        'allow_signup': config.ALLOW_SIGNUP, 'private_targets': config.ALLOW_PRIVATE_TARGETS,
+        'target_verification': config.REQUIRE_TARGET_VERIFICATION, 'scheduler': config.SCHEDULER_ENABLED,
+        'session_days': config.SESSION_DAYS, 'cookie_secure': config.COOKIE_SECURE,
+        'scan_rate_limit': config.SCAN_RATE_LIMIT, 'public_url': config.PUBLIC_URL,
+        'db_online': await run_in_threadpool(db_ok), 'ai_configured': bool(config.ANTHROPIC_API_KEY),
+        'ai_model': config.AI_MODEL, 'smtp_configured': bool(config.SMTP_HOST),
+        'captcha_configured': captcha.enabled(), 'payment_mode': payment_mode(),
+        'geo_lookup': config.GEO_LOOKUP, 'default_country': config.DEFAULT_COUNTRY,
+        'trust_proxy_ip': config.TRUST_PROXY_IP, 'trust_country_header': config.TRUST_COUNTRY_HEADER,
+        'plugins': [{'name': name, 'enabled': name in set(enabled_names())} for name in available_plugins()],
+    }
+
+
+@app.get('/api/admin/{resource}', include_in_schema=False)
+async def admin_operations(resource: Literal['scans', 'monitors', 'alerts', 'targets', 'recon'],
+                           q: str = '', limit: int = Query(50, ge=1, le=500),
+                           offset: int = Query(0, ge=0), user=Depends(staff_user)):
+    return await run_in_threadpool(admin.operations, resource, q[:100], limit, offset)
+
+
+@app.get('/admin/reports/{scan_id}', include_in_schema=False)
+async def admin_printable_report(request: Request, scan_id: int, user=Depends(staff_user)):
+    report, owner_id = await run_in_threadpool(admin.operation_report, scan_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail='Tarama raporu bulunamadı.')
+    owner = await run_in_threadpool(auth.get_user, owner_id) if owner_id else None
+    audit.log('admin_report_view', owner_id, user['id'], f'Rapor #{scan_id}', client_ip(request))
+    response = templates.TemplateResponse(request, 'report.html', {
+        'title': f"ReconClaw Raporu #{scan_id} – {report['target']}", 'version': VERSION,
+        'r': report, 'user': {'name': owner['name'] if owner else 'Eski kayıt'}, 'shared': True,
+        'intel': intel.analyze(report, monitor.is_monitored(owner_id, report['target'])),
+        'generated': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'admin_view': True,
+    })
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
 
 @app.get("/api/plugins", tags=["scan"])
 async def plugins():

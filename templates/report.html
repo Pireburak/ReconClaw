@@ -62,8 +62,10 @@
     </style>
 </head>
 <body>
-{% if shared %}<div class="shared-note">Bu, ReconClaw kullanıcısının paylaştığı salt-okunur bir rapordur. Bağlantı sahibi tarafından istenildiği an iptal edilebilir.</div>{% endif %}
+{% if admin_view %}<div class="shared-note">Yönetim erişimi · Salt-okunur rapor · Görüntüleme denetim kaydına işlendi.</div>
+{% elif shared %}<div class="shared-note">Bu, ReconClaw kullanıcısının paylaştığı salt-okunur bir rapordur. Bağlantı sahibi tarafından istenildiği an iptal edilebilir.</div>{% endif %}
 <div class="toolbar">
+    {% if admin_view %}<a href="/#admin">Yönetime dön</a>{% endif %}
     {% if not shared %}<a href="/#results">Panele dön</a>{% endif %}
     <button type="button" id="printBtn">Yazdır / PDF kaydet</button>
 </div>

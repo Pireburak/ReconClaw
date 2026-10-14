@@ -292,6 +292,24 @@ Tüm taramalar en yeniden eskiye listelenir. Hedef veya IP'ye göre **anlık ara
 | **API erişimi** | Kişisel API anahtarı oluştur / iptal et, hazır `curl` örneği |
 | **Tehlikeli bölge** | Tüm tarama geçmişini sil, hesabı kalıcı olarak sil |
 
+
+### Yönetim paneli
+
+Yetkili hesapla **/admin** adresini açın veya sol menüdeki **YÖNETİM** düğmesini kullanın. Panel mevcut karanlık / kâğıt temasını ve vurgu rengini kullanır.
+
+- Kullanıcılar, roller, planlar, ödemeler, ekip ve denetim kayıtları.
+- **Tüm operasyonlar:** tüm kullanıcıların taramaları, izleme görevleri, alarmları, doğrulanmış / bekleyen hedefleri ve pasif keşif geçmişi. Hedef, e-posta veya ad ile arama; 25 kayıtlık sayfalar.
+- Tarama raporları ayrı salt-okunur yönetim bağlantısından açılır; görüntüleme denetim kaydına işlenir. Normal kullanıcıların rapor erişimi kendi hesaplarıyla sınırlıdır.
+- **Sistem ayarları:** etkin yapılandırma, veritabanı ve entegrasyon durumları. Ayarlar burada salt okunurdur; değişiklikler sunucu yapılandırmasından uygulanır. Gizli anahtarlar, hedef doğrulama token'ları ve webhook adresleri listelenmez.
+
+Önce kendi hesabınızı oluşturun, sonra sunucu terminalinde yetkilendirin:
+
+```bash
+python manage.py make-owner sizin@adresiniz.com
+```
+
+Sahip ve yönetici ödeme bilgilerini görebilir; moderatörün mevcut kısıtları korunur.
+
 ### 11. PDF Rapor
 
 <p align="center"><img src="docs/screenshots/13-pdf-rapor.jpg" alt="GİZLİ damgalı PDF rapor" width="80%"></p>

@@ -257,7 +257,9 @@ def test_api_token_cannot_reach_admin(app_client):
 def test_admin_shortcut_url(app_client):
     app_client.cookies.clear()
     for path in ("/admin", "/yonetim"):
-        assert app_client.get(path, follow_redirects=False).status_code == 404  # oturumsuz: gizli
+        res = app_client.get(path, follow_redirects=False)
+        assert res.status_code == 303 and res.headers["location"] == "/login"
+        assert app_client.get(path).status_code == 200
     register(app_client, "sade@example.com")
     assert app_client.get("/admin", follow_redirects=False).status_code == 404  # normal üye: gizli
     register(app_client, ADMIN)
@@ -294,3 +296,100 @@ def test_live_site_without_paytr_sells_nothing(app_client, monkeypatch):
     assert res.status_code == 503
     assert app_client.get("/api/me").json()["subscription"]["plan"]["id"] == "free"
     assert app_client.post("/api/billing/checkout", json={"plan": "free"}).status_code == 200
+
+
+@pytest.mark.parametrize('path', ['/api/admin/scans', '/api/admin/monitors', '/api/admin/alerts', '/api/admin/targets', '/api/admin/recon', '/api/admin/settings', '/admin/reports/1'])
+def test_global_admin_data_requires_staff(app_client, path):
+    assert app_client.get(path).status_code == 404
+    register(app_client, 'normal@example.com')
+    assert app_client.get(path).status_code == 404
+
+
+def test_admin_sees_all_operations_with_pagination(app_client):
+    from core.db_manager import get_db_connection
+    from contextlib import closing
+    member = register(app_client, 'operations@example.com')
+    with closing(get_db_connection()) as conn, conn:
+        for target in ['alpha.example.com', 'beta.example.com', 'gamma.example.com']:
+            conn.execute('INSERT INTO scans (target, ip_address, open_count, risk_score, risk_level, scan_time, user_id) VALUES (?, ?, 2, 70, ?, ?, ?)',
+                         (target, '192.0.2.1', 'Yüksek', '2026-10-13 12:00:00', member['id']))
+        conn.execute('INSERT INTO monitors (user_id, target, interval, next_run, created_at, webhook) VALUES (?, ?, ?, ?, ?, ?)',
+                     (member['id'], 'alpha.example.com', 'daily', '2026-10-14', '2026-10-13', 'https://secret.example/token'))
+        conn.execute('INSERT INTO alerts (user_id, target, level, title, created_at) VALUES (?, ?, ?, ?, ?)',
+                     (member['id'], 'alpha.example.com', 'high', 'Yeni açık port', '2026-10-13'))
+        conn.execute('INSERT INTO targets (user_id, host, token, created_at) VALUES (?, ?, ?, ?)',
+                     (member['id'], 'alpha.example.com', 'secret-verification-token', '2026-10-13'))
+        conn.execute('INSERT INTO recon_runs (user_id, domain, result, created_at) VALUES (?, ?, ?, ?)',
+                     (member['id'], 'alpha.example.com', '{}', '2026-10-13'))
+    register(app_client, ADMIN)
+    page = app_client.get('/api/admin/scans?limit=2').json()
+    assert page['total'] == 3 and len(page['items']) == 2
+    second = app_client.get('/api/admin/scans?limit=2&offset=2').json()
+    assert [r['target'] for r in second['items']] == ['alpha.example.com']
+    filtered = app_client.get('/api/admin/scans?q=beta').json()
+    assert filtered['total'] == 1 and filtered['items'][0]['email'] == 'operations@example.com'
+    for resource in ['monitors', 'alerts', 'targets', 'recon']:
+        response = app_client.get('/api/admin/' + resource)
+        assert response.status_code == 200
+        assert response.json()['total'] == 1
+        assert response.json()['items'][0]['email'] == 'operations@example.com'
+        assert 'secret' not in response.text
+    assert app_client.get('/api/admin/scans?offset=-1').status_code == 422
+    assert app_client.get('/api/admin/scans?limit=501').status_code == 422
+
+
+def test_admin_reads_other_users_report_without_changing_user_access(app_client):
+    member = register(app_client, 'report-owner@example.com')
+    result = app_client.post('/api/scan', json={'target': '127.0.0.1', 'timeout': 0.2}).json()
+    scan_id = result['scan_id']
+    register(app_client, 'other@example.com')
+    assert app_client.get(f'/api/scans/{scan_id}').status_code == 404
+    assert app_client.get(f'/admin/reports/{scan_id}').status_code == 404
+    register(app_client, ADMIN)
+    assert app_client.get(f'/api/scans/{scan_id}').status_code == 404
+    response = app_client.get(f'/admin/reports/{scan_id}')
+    assert response.status_code == 200 and '127.0.0.1' in response.text
+    assert app_client.get('/admin/reports/999999').status_code == 404
+
+
+def test_admin_settings_are_safe_read_only_summary(app_client):
+    register(app_client, ADMIN)
+    response = app_client.get('/api/admin/settings')
+    assert response.status_code == 200
+    settings = response.json()
+    assert isinstance(settings['allow_signup'], bool)
+    assert isinstance(settings['db_online'], bool)
+    assert 'anthropic_api_key' not in settings and 'owner_email' not in settings
+    assert 'payment_mode' in settings and 'session_days' in settings
+
+
+def test_new_panels_render_only_inside_staff_admin_page(app_client):
+    from html.parser import HTMLParser
+
+    class PanelLocations(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.sections = []
+            self.locations = {}
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'section':
+                self.sections.append(attrs.get('data-page'))
+            if attrs.get('id') in ('adminOperationsPanel', 'adminSettingsPanel'):
+                self.locations[attrs['id']] = list(self.sections)
+
+        def handle_endtag(self, tag):
+            if tag == 'section':
+                self.sections.pop()
+
+    register(app_client, 'page-member@example.com')
+    member_page = PanelLocations()
+    member_page.feed(app_client.get('/').text)
+    assert member_page.locations == {}
+    register(app_client, ADMIN)
+    admin_page = PanelLocations()
+    admin_page.feed(app_client.get('/').text)
+    assert set(admin_page.locations) == {'adminOperationsPanel', 'adminSettingsPanel'}
+    for sections in admin_page.locations.values():
+        assert 'admin' in sections and 'results' not in sections
