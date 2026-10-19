@@ -8,7 +8,7 @@ The infrastructure combines Python 3.12 slim images, Caddy reverse proxying, aut
 
 Two environments exist in the repository. There is no staging configuration.
 
-- **Local**: `python main.py` on `http://127.0.0.1:8000`. `ALLOW_PRIVATE_TARGETS` defaults to true so lab hosts can be scanned.
+- **Local**: `./scripts/dev.sh` (Linux/macOS) or `.\scripts\dev.ps1` (Windows) on `http://127.0.0.1:8000`. `ALLOW_PRIVATE_TARGETS` defaults to true so lab hosts can be scanned.
 - **Production**: [[docker-compose.yml]] with Caddy and a Cloudflare origin certificate. Set `ALLOW_PRIVATE_TARGETS=false` on any internet-facing server.
 
 ## Containerization architecture

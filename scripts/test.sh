@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# ReconClaw Test Runner
+# ReconClaw Test Runner (Cross-Platform: Linux / macOS / Windows)
 # Features:
-#   - Automated uv detection and test dependency verification
-#   - Pytest execution with progress reporting and timing
+#   - Automated uv detection across Linux, macOS, and Windows
+#   - Cross-platform virtual environment detection (.venv/bin or .venv/Scripts)
+#   - Pytest execution with progress reporting and execution timing
 # ==============================================================================
 
 set -eo pipefail
@@ -29,28 +30,44 @@ cd "${ROOT_DIR}"
 
 export UV_LINK_MODE=copy
 
-UV_BIN=""
-if command -v uv >/dev/null 2>&1; then
-    UV_BIN="$(command -v uv)"
-elif [[ -x "/opt/homebrew/bin/uv" ]]; then
-    UV_BIN="/opt/homebrew/bin/uv"
-elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
-    UV_BIN="$HOME/.cargo/bin/uv"
-elif [[ -x "$HOME/.local/bin/uv" ]]; then
-    UV_BIN="$HOME/.local/bin/uv"
-fi
+detect_uv() {
+    if command -v uv >/dev/null 2>&1; then
+        command -v uv
+    elif command -v uv.exe >/dev/null 2>&1; then
+        command -v uv.exe
+    elif [[ -x "/opt/homebrew/bin/uv" ]]; then
+        echo "/opt/homebrew/bin/uv"
+    elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
+        echo "$HOME/.cargo/bin/uv"
+    elif [[ -x "$HOME/.cargo/bin/uv.exe" ]]; then
+        echo "$HOME/.cargo/bin/uv.exe"
+    elif [[ -x "$HOME/.local/bin/uv" ]]; then
+        echo "$HOME/.local/bin/uv"
+    elif [[ -n "$LOCALAPPDATA" && -x "$LOCALAPPDATA/bin/uv.exe" ]]; then
+        echo "$LOCALAPPDATA/bin/uv.exe"
+    elif [[ -x "/usr/local/bin/uv" ]]; then
+        echo "/usr/local/bin/uv"
+    elif [[ -x "/usr/bin/uv" ]]; then
+        echo "/usr/bin/uv"
+    fi
+}
+
+UV_BIN="$(detect_uv)"
 
 if [[ -z "${UV_BIN}" ]]; then
     error "Astral 'uv' is required to run test suite."
     exit 1
 fi
 
-if [[ ! -d ".venv" || ! -f ".venv/bin/python" ]]; then
+has_venv() {
+    [[ -f ".venv/bin/python" || -f ".venv/Scripts/python.exe" || -f ".venv/bin/python3" ]]
+}
+
+if ! has_venv; then
     step "Initializing isolated test virtualenv at .venv..."
     "${UV_BIN}" venv .venv
 fi
 
-# Ensure pytest is installed
 if ! "${UV_BIN}" run python -c "import pytest, pytest_asyncio" >/dev/null 2>&1; then
     step "Installing test dependencies (pytest, pytest-asyncio)..."
     "${UV_BIN}" pip install -r requirements.txt pytest pytest-asyncio >/dev/null 2>&1

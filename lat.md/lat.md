@@ -14,12 +14,17 @@ Essential operational commands for local development, test validation, container
 
 ### Run development server
 
-Start the local FastAPI application with uv, dependency sync, and hot reload.
+Start the local FastAPI application with uv, dependency sync, and hot reload across Linux, macOS, and Windows.
 
 ```bash
+# Linux / macOS / Git Bash / WSL
 ./scripts/dev.sh
-# Or: make dev
-# Automatically checks uv, prepares .venv, provisions .env, and starts uvicorn on http://127.0.0.1:8000
+
+# Windows PowerShell
+.\scripts\dev.ps1
+
+# Makefile (Linux / macOS)
+make dev
 ```
 
 ### Build and verify project
@@ -27,9 +32,14 @@ Start the local FastAPI application with uv, dependency sync, and hot reload.
 Execute multi-phase bytecode compilation, module import verification, and database schema sanity tests.
 
 ```bash
+# Linux / macOS / Git Bash / WSL
 ./scripts/build.sh
-# Or: make build
-# Validates syntax, imports, database migrations, and Jinja2 templates (add --docker to build images)
+
+# Windows PowerShell
+.\scripts\build.ps1
+
+# Makefile (Linux / macOS)
+make build
 ```
 
 ### Run test suite
@@ -37,9 +47,14 @@ Execute multi-phase bytecode compilation, module import verification, and databa
 Execute the automated test suite across network engines, analyzers, and security checks using uv.
 
 ```bash
+# Linux / macOS / Git Bash / WSL
 ./scripts/test.sh
-# Or: make test
-# Runs all 154 unit and integration test specs via uv run pytest
+
+# Windows PowerShell
+.\scripts\test.ps1
+
+# Makefile (Linux / macOS)
+make test
 ```
 
 ### Build and deploy containers

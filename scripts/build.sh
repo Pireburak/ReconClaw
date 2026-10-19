@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# ReconClaw Build and Verification Engine
+# ReconClaw Build and Verification Engine (Cross-Platform: Linux / macOS / Windows)
 # Features:
-#   - Automated uv detection and dependency validation
+#   - Automated uv detection across Linux, macOS, and Windows
+#   - Cross-platform virtual environment detection (.venv/bin or .venv/Scripts)
 #   - Multi-phase verification: Bytecode, Imports, DB Schema, Templates, Docker
+#   - Universal tempfile creation and cleanup via Python standard library
 #   - Detailed phase timing, progress reporting, and exception diagnostics
 # ==============================================================================
 
@@ -40,7 +42,6 @@ echo " |  _ <  __/ (_| (_) | | | || |_) | |_| | | | (_| |"
 echo " |_| \_\___|\___\___/|_| |_||____/ \__,_|_|_|\__,_|"
 echo -e "${RESET}${DIM}  Build Validation, Bytecode Compilation & Integrity Suite${RESET}"
 
-# Parse optional arguments
 BUILD_DOCKER=0
 for arg in "$@"; do
     case $arg in
@@ -56,16 +57,29 @@ done
 # ------------------------------------------------------------------------------
 info "Phase 1: Environment & Package Manager Verification"
 
-UV_BIN=""
-if command -v uv >/dev/null 2>&1; then
-    UV_BIN="$(command -v uv)"
-elif [[ -x "/opt/homebrew/bin/uv" ]]; then
-    UV_BIN="/opt/homebrew/bin/uv"
-elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
-    UV_BIN="$HOME/.cargo/bin/uv"
-elif [[ -x "$HOME/.local/bin/uv" ]]; then
-    UV_BIN="$HOME/.local/bin/uv"
-fi
+detect_uv() {
+    if command -v uv >/dev/null 2>&1; then
+        command -v uv
+    elif command -v uv.exe >/dev/null 2>&1; then
+        command -v uv.exe
+    elif [[ -x "/opt/homebrew/bin/uv" ]]; then
+        echo "/opt/homebrew/bin/uv"
+    elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
+        echo "$HOME/.cargo/bin/uv"
+    elif [[ -x "$HOME/.cargo/bin/uv.exe" ]]; then
+        echo "$HOME/.cargo/bin/uv.exe"
+    elif [[ -x "$HOME/.local/bin/uv" ]]; then
+        echo "$HOME/.local/bin/uv"
+    elif [[ -n "$LOCALAPPDATA" && -x "$LOCALAPPDATA/bin/uv.exe" ]]; then
+        echo "$LOCALAPPDATA/bin/uv.exe"
+    elif [[ -x "/usr/local/bin/uv" ]]; then
+        echo "/usr/local/bin/uv"
+    elif [[ -x "/usr/bin/uv" ]]; then
+        echo "/usr/bin/uv"
+    fi
+}
+
+UV_BIN="$(detect_uv)"
 
 if [[ -z "${UV_BIN}" ]]; then
     error "Astral 'uv' is required for build verification."
@@ -73,7 +87,11 @@ if [[ -z "${UV_BIN}" ]]; then
 fi
 step "Package manager: ${DIM}${UV_BIN}${RESET} ($(${UV_BIN} --version))"
 
-if [[ ! -d ".venv" || ! -f ".venv/bin/python" ]]; then
+has_venv() {
+    [[ -f ".venv/bin/python" || -f ".venv/Scripts/python.exe" || -f ".venv/bin/python3" ]]
+}
+
+if ! has_venv; then
     step "Initializing isolated build virtualenv at .venv..."
     "${UV_BIN}" venv .venv
 fi
@@ -91,14 +109,27 @@ success "Environment & dependencies verified."
 info "Phase 2: Bytecode Compilation & Syntax Verification"
 
 step "Compiling core modules and entrypoints..."
-COMPILED_COUNT=0
-for py_file in main.py manage.py $(find core -type f -name "*.py") $(find tests -type f -name "*.py"); do
-    if ! "${UV_BIN}" run python -m py_compile "${py_file}"; then
-        error "Syntax error encountered in ${py_file}"
-        exit 1
-    fi
-    COMPILED_COUNT=$((COMPILED_COUNT + 1))
-done
+COMPILED_COUNT=$("${UV_BIN}" run python -c "
+import py_compile, os, sys
+
+count = 0
+files = ['main.py', 'manage.py']
+for base in ['core', 'tests']:
+    for root, _, fs in os.walk(base):
+        for f in fs:
+            if f.endswith('.py'):
+                files.append(os.path.join(root, f))
+
+for path in files:
+    try:
+        py_compile.compile(path, doraise=True)
+        count += 1
+    except py_compile.PyCompileError as e:
+        sys.stderr.write(f'Syntax error in {path}:\n{e}\n')
+        sys.exit(1)
+
+print(count)
+")
 success "Successfully compiled ${COMPILED_COUNT} Python source files with 0 syntax errors."
 
 # ------------------------------------------------------------------------------
@@ -131,19 +162,30 @@ success "All core modules imported cleanly without missing dependencies or cycle
 info "Phase 4: Database Schema Sanity Test"
 
 step "Running isolated schema migration against temporary database..."
-TEST_DB="$(mktemp -t reconclaw_build_test_XXXXXX.db)"
-RECONCLAW_DB="${TEST_DB}" "${UV_BIN}" run python -c "
+"${UV_BIN}" run python -c "
+import tempfile, os
 from core.db_manager import init_db, get_db_connection
-init_db()
-conn = get_db_connection()
-tables = [row[0] for row in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()]
-expected = {'scans', 'open_ports', 'findings', 'users'}
-missing = expected - set(tables)
-if missing:
-    raise RuntimeError(f'Missing expected tables: {missing}')
-conn.close()
+
+with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tf:
+    temp_db_path = tf.name
+
+try:
+    os.environ['RECONCLAW_DB'] = temp_db_path
+    init_db()
+    conn = get_db_connection()
+    tables = [row[0] for row in conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()]
+    expected = {'scans', 'open_ports', 'findings', 'users'}
+    missing = expected - set(tables)
+    if missing:
+        raise RuntimeError(f'Missing expected tables: {missing}')
+    conn.close()
+finally:
+    if os.path.exists(temp_db_path):
+        try:
+            os.remove(temp_db_path)
+        except OSError:
+            pass
 "
-rm -f "${TEST_DB}"
 success "Database schema initialized and verified (foreign keys, indices, and tables intact)."
 
 # ------------------------------------------------------------------------------
