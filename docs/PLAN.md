@@ -7,6 +7,7 @@ Planned work only. Nothing here exists yet. When a phase is built, document it i
 | Phase | Name | Status |
 |---|---|---|
 | S | Staging environment | Planned |
+| B | 2026 SecOps Typography, GPU Font Smoothing & Apple HIG Icon Overhaul | Planned |
 
 ---
 
@@ -28,3 +29,22 @@ Planned work only. Nothing here exists yet. When a phase is built, document it i
 | S8 | Document staging in `lat.md/devops-and-environments.md` and run `lat check` | Graph matches the repository |
 
 **UX:** show a visible "STAGING" label (text, not color alone) in the top bar so it is never mistaken for production. Follow `docs/UX.md` sections 1 and 4.
+
+---
+
+## Phase B: 2026 SecOps Typography, GPU Font Smoothing & Apple HIG Icon Overhaul
+
+**Why:** Modernize ReconClaw's design system with 2026 SecOps developer-grade typography, hardware GPU-accelerated font smoothing, zero-jitter tabular OpenType figures, and an Apple HIG-compliant minimal icon/logo that remains crisp at 16px/32px favicon scales.
+
+**Detailed Specifications & Steps:** See [`docs/BURAK.md`](BURAK.md) for full guide, CSS hardware tokens, and asset requirements.
+
+| Step | Do | Done when |
+|---|---|---|
+| B1 | Download & self-host `Inter Variable` and `JetBrains Mono Variable` in `static/fonts/` | Fonts load locally without external CDN requests |
+| B2 | Add GPU smoothing (`-webkit-font-smoothing`, `-moz-osx-font-smoothing`) and `tabular-nums` | Zero text blur on Retina; zero column jitter during real-time scan streaming |
+| B3 | Implement `--surface-0`…`--surface-2` and WCAG AAA severity tokens in `static/css/style.css` | All text passes ≥ 4.5:1 and all borders/pills pass ≥ 3:1 in dark and light modes |
+| B4 | Design minimal memorable vector claw glyph (1024×1024) following Apple HIG keylines | Master SVG exists with bold silhouette, no text, and distinct shape at 16px |
+| B5 | Export optical `favicon.ico` (16/32/48px), `favicon.svg` (dark/light), and `apple-touch-icon.png` | Browser tab at 16px shows a sharp, recognizable icon in all major browsers |
+| B6 | Wire new favicon and font assets into `templates/base.html` | All views render new typography and icons with zero broken links |
+| B7 | Update `docs/UX.md` section 6 and run `lat check` | Documentation and knowledge graph validate with 0 errors |
+
