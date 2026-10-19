@@ -26,11 +26,11 @@ Per-user scanning quotas are enforced via `core/plans.py` based on active subscr
 
 User identities, passwords, and API credentials follow strict defensive cryptography standards.
 
-Passwords are hashed using salted PBKDF2/SHA256, sessions use high-entropy random tokens stored as SHA-256 digests in SQLite, and session cookies enforce `HttpOnly`, `SameSite`, and `Secure` attributes in production.
+Passwords are hashed with salted scrypt in [[core/auth.py]]. Session and API tokens are stored only as SHA-256 digests.
 
 ## Audit logging and compliance accountability
 
-Security-critical operations are recorded in an append-only audit trail for non-repudiation.
+Security-critical operations are written to the `audit_log` table. The code only inserts and reads; nothing enforces append-only.
 
 Function [[core/audit.py#log]] records user authentication attempts, permission changes, target additions, and administrative interventions alongside source IP addresses and timestamps, supporting ISO/IEC 27001 audit requirements.
 

@@ -20,17 +20,16 @@ Each scanning task operates under an asyncio semaphore inside [[core/engine.py#A
 
 Surface comparison isolates actionable changes between sequential target scans.
 
-Function `compare_reports` in `core/insights.py` examines the current scan against historical results. The delta calculation identifies opened ports, closed ports, altered service banners, novel CVE signatures, and risk score variances.
+Function [[core/insights.py#compare_reports]] examines the current scan against historical results. The delta calculation identifies opened ports, closed ports, altered service banners, novel CVE signatures, and risk score variances.
 
 ### Alert classification hierarchy
 
 Detected changes are categorized into strict severity tiers based on risk exposure.
 
-- **Critical**: Newly detected CVE signatures or exposure of critical database and remote access ports.
-- **High**: New high-severity plugin findings or risk score increases of 10 or more points.
-- **Medium**: Service version banner modifications or medium-severity configuration findings.
-- **Low**: Minor configuration observations or low-impact findings.
-- **Info**: Ports safely closed, CVEs remediated, or risk score reductions.
+- **Critical**: new CVE signatures and newly opened critical ports.
+- **High**: new high-severity plugin findings, or risk score up 10 or more.
+- **Medium**: changed service banners and new medium-severity findings.
+- **Info**: closed ports, resolved CVEs, risk score down 10 or more.
 
 ## Alert dispatching and webhook integration
 
@@ -38,8 +37,8 @@ Security alerts are persisted in the database and relayed to external operations
 
 Function [[core/monitor.py#send_webhook]] formats alert payloads into compatible schemas for Discord, Slack, and custom HTTP endpoints. Webhook URLs undergo strict scheme and host validation to prevent internal network abuse.
 
-## Live and staging task tracking
+## Task status
 
-Task tracking guarantees visibility into background jobs across environments.
+Each monitor row keeps `last_run`, `next_run` and a free-text `last_status`; there is no separate job state machine.
 
-Operators can monitor job states (`scheduled`, `running`, `completed`, `error`, `skipped`), review failure traces in the audit log, and trigger on-demand runs via [[core/monitor.py#run_monitor]].
+[[core/monitor.py#run_monitor]] writes `last_status` (for example "Değişiklik yok" or "HATA: ...") and stores a failed scan as a medium alert.

@@ -38,19 +38,19 @@ When an Anthropic API key is available, [[core/ai.py#ask_claude]] passes structu
 
 Untrusted telemetry from target banners is strictly isolated inside fenced data tags.
 
-Function [[core/ai.py#build_context]] sanitizes and serializes Layer 1 findings into a `<rapor_verisi>` XML block. The system instructions in [[core/ai.py#SYSTEM_PROMPT]] instruct the model to treat all enclosed text strictly as untrusted data rather than instructions.
+Function [[core/ai.py#build_context]] serializes Layer 1 findings (banners cut to 120 characters) into a `<rapor_verisi>` XML block. The system instructions in [[core/ai.py#SYSTEM_PROMPT]] instruct the model to treat all enclosed text strictly as untrusted data rather than instructions.
 
 ### Hallucination limiter constraints
 
-The system enforces four rigid negative constraints to guarantee grounding and factual fidelity.
+The system prompt gives the model four rules that limit invention. They are instructions, not a post-check.
 
 1. **Strict Evidence Constraint**: The model is forbidden from inventing CVE identifiers, software versions, or port numbers not present in `<rapor_verisi>`.
 2. **Deterministic Fallback**: If the API call fails, times out, or the model refuses the prompt, [[core/ai.py#analyze]] automatically triggers [[core/ai.py#offline]] to produce a deterministic action plan.
 3. **Structured Roadmap**: Action items must follow predefined timeline tags (`[P1 · 24 saat]`, `[P2 · 1 hafta]`, `[P3 · 30 gün]`).
 4. **Defensive Guidance Only**: The model is prohibited from outputting actionable exploit code or attack payloads.
 
-### Dual-layer output verification workflow
+### Known gap: no output verification
 
-Every final response is verified to match Layer 1 findings before presentation to the operator.
+Claude's answer is not compared with Layer 1 findings after it is generated.
 
-If an LLM output deviates from verified port states, the offline deterministic fallback in [[core/ai.py#offline]] provides guaranteed accurate recommendations based on verified findings and [[core/intel.py#analyze]].
+Only API failure or refusal switches to [[core/ai.py#offline]]. A hallucinated answer that the API accepts is shown as is, so the prompt rules above are the only guard.

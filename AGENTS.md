@@ -32,9 +32,10 @@ ReconClaw enforces strict output determinism and grounding to eliminate AI hallu
 
 ---
 
-# DevOps, Staging & Live Task Tracking
+# DevOps & Live Task Tracking
 
 - **Local Development**: `http://127.0.0.1:8000` via Uvicorn. Internal IP scanning enabled only when testing in local lab environments (`ALLOW_PRIVATE_TARGETS=true`).
+- **Staging**: not implemented yet. Planned in `docs/PLAN.md` (Phase S). Do not describe it as existing in `lat.md/` until it is built.
 - **Production / Live**: Multi-container Docker deployment (`docker-compose.yml`) behind Caddy with automated Cloudflare origin TLS.
 - **Continuous Monitoring**: All recurring tasks run via `core/monitor.py#scheduler_loop` using atomic updates on SQLite without blocking the main event loop.
 - **Delta Engine**: Always verify changes through `compare_reports` before generating alerts. Newly opened database or administrative ports are classified as `critical`.
