@@ -8,6 +8,67 @@ ReconClaw is an asynchronous attack surface management, port reconnaissance, and
 
 This knowledge graph anchors source code to domain concepts, architectural invariants, threat models, and operational runbooks. It serves as the single source of truth for engineering and agentic workflows.
 
+## Execution commands
+
+Essential operational commands for local development, test validation, container builds, and graph checks.
+
+### Run development server
+
+Start the local FastAPI application with uv, dependency sync, and hot reload.
+
+```bash
+./scripts/dev.sh
+# Or: make dev
+# Automatically checks uv, prepares .venv, provisions .env, and starts uvicorn on http://127.0.0.1:8000
+```
+
+### Build and verify project
+
+Execute multi-phase bytecode compilation, module import verification, and database schema sanity tests.
+
+```bash
+./scripts/build.sh
+# Or: make build
+# Validates syntax, imports, database migrations, and Jinja2 templates (add --docker to build images)
+```
+
+### Run test suite
+
+Execute the automated test suite across network engines, analyzers, and security checks using uv.
+
+```bash
+./scripts/test.sh
+# Or: make test
+# Runs all 154 unit and integration test specs via uv run pytest
+```
+
+### Build and deploy containers
+
+Spin up the containerized deployment fronted by Caddy reverse proxy with automated TLS.
+
+```bash
+docker compose up -d --build
+```
+
+### Operational management CLI
+
+Execute administrative user role provisioning and account maintenance routines.
+
+```bash
+python manage.py list-admins
+python manage.py make-admin <email>
+```
+
+### Knowledge graph operations
+
+Validate documentation cross-references, update semantic search vectors, and serve the web UI.
+
+```bash
+lat check
+lat reindex
+lat ui
+```
+
 ## Navigation and domain indices
 
 Select the domain guide matching your active task to understand implemented architecture, constraints, and source locations.
