@@ -1,0 +1,44 @@
+[project]
+name = "reconclaw"
+version = "8.2.0"
+description = "Deterministic Attack Surface Management, Port Reconnaissance & AI-Grounded Security Pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "ReconClaw Contributors" }
+]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "jinja2>=3.1.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.27.0",
+    "pyjwt[crypto]>=2.8.0",
+    "anthropic>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "data",
+]

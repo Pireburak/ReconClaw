@@ -10,3 +10,5 @@ data/
 .venv/
 .pytest_cache/
 *.p8
+.lat-build
+lat.md/.cache
