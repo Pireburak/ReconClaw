@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    {% if description %}<meta name="description" content="{{ description }}">{% endif %}
-    {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+    <meta name="description" content="{{ description or 'ReconClaw: ağ keşfi, port tarama ve risk analizi için web tabanlı siber güvenlik aracı.' }}">
+    <meta name="theme-color" content="#0b0d10">
+    <meta property="og:title" content="{{ heading or title }}">
+    <meta property="og:description" content="{{ description or 'Ağ keşfi, port tarama ve risk analizi.' }}">
+    <meta property="og:type" content="website">
+    {% if canonical %}<link rel="canonical" href="{{ canonical }}"><meta property="og:url" content="{{ canonical }}">{% endif %}
     <link rel="icon" href="{{ url_for('static', path='favicon.png') }}?v={{ asset_v }}" type="image/png">
     <script src="{{ url_for('static', path='js/theme.js') }}?v={{ asset_v }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', path='fonts/fonts.css') }}?v={{ asset_v }}">

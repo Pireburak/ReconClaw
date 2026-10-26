@@ -147,8 +147,19 @@ def test_public_and_legal_pages(client, monkeypatch):
     assert "destek@example.com" in client.get("/iletisim").text
     login = client.get("/login").text
     assert "/yasal/mesafeli-satis" in login and "acceptTerms" in login
-    assert "Disallow: /api/" in client.get("/robots.txt").text
+    robots = client.get("/robots.txt").text
+    assert "Disallow: /api/" in robots and "Sitemap:" in robots and "/sitemap.xml" in robots
     assert "mailto:destek@example.com" in client.get("/.well-known/security.txt").text
+    # SEO: sitemap herkese açık sayfaları içerir, meta açıklama ve canonical var
+    sm = client.get("/sitemap.xml")
+    assert sm.status_code == 200 and "application/xml" in sm.headers["content-type"]
+    assert "/fiyatlandirma" in sm.text and "/sss" in sm.text and "/yasal/kvkk" in sm.text
+    faq = client.get("/sss")
+    assert faq.status_code == 200 and "Ücretsiz" in faq.text and 'name="description"' in faq.text
+    assert 'name="description"' in login and 'property="og:title"' in login
+    # Statik dosyalar uzun süre önbelleklenir (sürümlü adres)
+    css = client.get("/static/css/style.css")
+    assert "immutable" in css.headers.get("cache-control", "")
 
 
 def test_register_rejects_unaccepted_terms(client):

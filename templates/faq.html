@@ -1,0 +1,47 @@
+{% extends "public.html" %}
+{% block content %}
+<article class="doc">
+    <p class="doc-kicker">Yardım</p>
+    <h1>Sık Sorulan Sorular</h1>
+
+    <h2>ReconClaw ne işe yarar?</h2>
+    <p>ReconClaw bir ağ keşfi ve risk analizi aracıdır. Bir alan adı veya IP adresinin açık portlarını tarar, çalışan
+    servisleri ve sürümlerini tespit eder, bilinen zafiyet imzalarıyla eşleştirir ve sonucu anlaşılır bir risk raporuna
+    dönüştürür. Amaç, kendi sistemlerinizin dışarıdan nasıl göründüğünü görüp açıkları kapatmanıza yardımcı olmaktır.</p>
+
+    <h2>Ücretsiz (Free) planın sınırları neler?</h2>
+    <p>Free plan; günde <b>5 tarama</b>, dakikada <b>2 istek</b>, <b>1–100</b> port aralığı ve <b>1 doğrulanmış hedef</b>
+    sunar. PDF/CSV rapor, API erişimi, pasif keşif, sürekli izleme ve AI analist ücretli planlarda açılır. Tüm planların
+    kapsamını <a href="/fiyatlandirma">Fiyatlandırma</a> sayfasında karşılaştırabilirsiniz.</p>
+
+    <h2>Hangi hedefleri tarayabilirim?</h2>
+    <p>Yalnızca <b>sahibi olduğunuz veya yazılı izin aldığınız</b> sistemleri. Bu sunucuda, bir hedefi taramadan önce o
+    adresin size ait olduğunu kanıtlamanız gerekir: alan adına bir <b>DNS TXT</b> kaydı ekleyin ya da siteye bir
+    <b>doğrulama dosyası</b> koyun (Abonelik → Doğrulanmış hedefler). İzinsiz tarama, 5237 sayılı TCK'nın bilişim
+    suçlarına ilişkin maddeleri kapsamında suç oluşturabilir.</p>
+
+    <h2>Denemek için izinli bir hedef var mı?</h2>
+    <p>Evet. Sahipleri tarafından herkese açık biçimde taranmaya izin verilmiş test sunucuları doğrulama gerektirmeden
+    taranabilir (ör. <code>scanme.nmap.org</code>, <code>testphp.vulnweb.com</code>). Bunlar Abonelik sayfasında liste
+    halinde görünür; üzerine tıklayınca tarama alanına otomatik gelir.</p>
+
+    <h2>ReconClaw bir sistemin "%100 güvenli" olduğunu söyler mi?</h2>
+    <p>Hayır. Tarama sonuçları yalnızca dışarıdan gözlemlenebilen durumu özetler; hiçbir araç bir sistemin tamamen
+    güvenli olduğunu garanti edemez. Rapor, risk önceliklendirmede yol gösterir, kesin güvenlik beyanı değildir.</p>
+
+    <h2>Verilerim ne oluyor?</h2>
+    <p>Parolanız geri döndürülemez biçimde (scrypt) özetlenerek saklanır; düz metin parola tutulmaz. Tarama sonuçlarınız
+    yalnızca sizindir; siz paylaşım bağlantısı oluşturmadıkça kimse göremez. Ayrıntılar:
+    <a href="/yasal/kvkk">KVKK Aydınlatma Metni</a> ve <a href="/yasal/gizlilik">Gizlilik ve Çerezler</a>.</p>
+
+    <h2>Ödeme nasıl alınır? Kartımı görüyor musunuz?</h2>
+    <p>Ödeme, gerçek ödeme altyapısı (PayTR) üzerinden güvenli ödeme sayfasında alınır; kart bilgileriniz ReconClaw'a
+    ulaşmaz ve saklanmaz. Türkiye'den gelenler TL, yurt dışından gelenler Euro öder; para birimi IP adresinize göre
+    otomatik belirlenir. Abonelik otomatik yenilenmez. Koşullar: <a href="/yasal/mesafeli-satis">Mesafeli Satış
+    Sözleşmesi</a>, <a href="/yasal/iade">İptal ve İade</a>.</p>
+
+    <h2>Destek ve iletişim</h2>
+    <p>Soru, öneri ve KVKK başvuruları için <a href="/iletisim">İletişim</a> sayfasındaki kanalları kullanabilirsiniz.
+    Güvenlik açığı bildirimleri için <a href="/.well-known/security.txt">security.txt</a> dosyasındaki adres geçerlidir.</p>
+</article>
+{% endblock %}
