@@ -8,7 +8,7 @@ import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from urllib.parse import parse_qsl, quote
 
@@ -121,6 +121,9 @@ async def security_headers(request: Request, call_next):
         response.headers.setdefault("Content-Security-Policy", CSP)
     if config.COOKIE_SECURE:
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    # Statik dosyalar ?v=<sürüm> ile sürümlendiği için uzun süre önbelleklenebilir (değişince adres değişir)
+    if request.url.path.startswith("/static/") and response.status_code == 200:
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 
 
@@ -324,6 +327,30 @@ async def pricing_page(request: Request):
                    description="ReconClaw ağ keşfi ve risk analizi planları: Free, Pro, Pro Max, Ultra ve Ultra Max.")
 
 
+@app.get("/sss", include_in_schema=False)
+async def faq_page(request: Request):
+    return _public(request, "faq.html", "Sık Sorulan Sorular",
+                   description="ReconClaw hakkında sık sorulan sorular: ne işe yarar, ücretsiz plan sınırları, "
+                               "hangi hedefleri tarayabilirim, verilerim ve ödeme.")
+
+
+# Google Search Console ve arama motorları için site haritası
+SITEMAP_PATHS = ["/login", "/fiyatlandirma", "/iletisim", "/sss",
+                 *(f"/yasal/{slug}" for slug in LEGAL_PAGES)]
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap(request: Request):
+    site = _site_url(request)
+    today = date.today().isoformat()
+    urls = "".join(
+        f"<url><loc>{site}{p}</loc><lastmod>{today}</lastmod>"
+        f"<priority>{'0.8' if p in ('/login', '/fiyatlandirma') else '0.5'}</priority></url>"
+        for p in SITEMAP_PATHS)
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    return Response(xml, media_type="application/xml")
+
+
 @app.get("/sifremi-unuttum", include_in_schema=False)
 async def forgot_page(request: Request):
     if not mailer.enabled():
@@ -344,9 +371,10 @@ async def reset_page(request: Request, t: str = ""):
 async def robots(request: Request):
     return PlainTextResponse(
         "User-agent: *\n"
-        "Allow: /login\nAllow: /fiyatlandirma\nAllow: /iletisim\nAllow: /yasal/\n"
+        "Allow: /login\nAllow: /fiyatlandirma\nAllow: /iletisim\nAllow: /sss\nAllow: /yasal/\n"
         "Disallow: /api/\nDisallow: /share/\nDisallow: /reports/\nDisallow: /odeme/\nDisallow: /sifre-sifirla\n"
-        "Disallow: /docs\nDisallow: /redoc\nDisallow: /openapi.json\n")
+        "Disallow: /docs\nDisallow: /redoc\nDisallow: /openapi.json\n"
+        f"\nSitemap: {_site_url(request)}/sitemap.xml\n")
 
 
 @app.get("/.well-known/security.txt", include_in_schema=False)
