@@ -12,10 +12,20 @@ jobs:
       - name: Update server
         uses: appleboy/ssh-action@v1.2.2
         env:
-          # GitHub → Settings → Secrets and variables → Actions → OWNER_EMAIL (sahip hesabın e-postası)
-          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          # GitHub → Settings → Secrets and variables → Actions → New repository secret
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}              # sahip hesabın e-postası
+          # Yasal sayfalarda (KVKK, Mesafeli Satış, İletişim) görünen satıcı bilgileri.
+          # Bunlar kodda DEĞİL burada tutulur; koda yazılırsa açık depoya kalıcı düşer.
+          COMPANY_TITLE: ${{ secrets.COMPANY_TITLE }}          # ticari unvan / ad soyad
+          COMPANY_ADDRESS: ${{ secrets.COMPANY_ADDRESS }}
+          COMPANY_PHONE: ${{ secrets.COMPANY_PHONE }}
+          COMPANY_EMAIL: ${{ secrets.COMPANY_EMAIL }}
+          COMPANY_TAX_OFFICE: ${{ secrets.COMPANY_TAX_OFFICE }}
+          COMPANY_TAX_NO: ${{ secrets.COMPANY_TAX_NO }}
+          COMPANY_MERSIS: ${{ secrets.COMPANY_MERSIS }}
+          COMPANY_KEP: ${{ secrets.COMPANY_KEP }}
         with:
-          envs: OWNER_EMAIL
+          envs: OWNER_EMAIL,COMPANY_TITLE,COMPANY_ADDRESS,COMPANY_PHONE,COMPANY_EMAIL,COMPANY_TAX_OFFICE,COMPANY_TAX_NO,COMPANY_MERSIS,COMPANY_KEP
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
@@ -34,6 +44,14 @@ jobs:
               sed -i '/^OWNER_EMAIL=/d' .env
               echo "OWNER_EMAIL=${OWNER_EMAIL}" >> .env
             fi
+            # Satıcı/şirket bilgileri: her secret için .env satırını tazele (secret boşsa satır silinir)
+            for kv in COMPANY_TITLE COMPANY_ADDRESS COMPANY_PHONE COMPANY_EMAIL COMPANY_TAX_OFFICE COMPANY_TAX_NO COMPANY_MERSIS COMPANY_KEP; do
+              sed -i "/^${kv}=/d" .env
+              val="$(printenv "$kv" || true)"
+              if [ -n "$val" ]; then
+                printf '%s="%s"\n' "$kv" "$val" >> .env
+              fi
+            done
             # Güncel kodu derle; .env ayarlarını yeni konteynerlere yeniden yükle.
             docker compose up -d --build --force-recreate
             if [ -n "${OWNER_EMAIL:-}" ]; then
