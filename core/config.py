@@ -119,9 +119,11 @@ PAYTR_DEFAULT_PHONE = env("PAYTR_DEFAULT_PHONE") or env("COMPANY_PHONE") or "050
 # Sanal POS başvurusunda bu sayfaların sitede yayında olması istenir.
 COMPANY_NAME = env("COMPANY_NAME", "ReconClaw") or "ReconClaw"
 COMPANY_TITLE = env("COMPANY_TITLE") or COMPANY_NAME          # ticari unvan / şahıs şirketi adı
-COMPANY_ADDRESS = env("COMPANY_ADDRESS")
-COMPANY_PHONE = env("COMPANY_PHONE")
-COMPANY_EMAIL = env("COMPANY_EMAIL")
+# İletişim bilgileri yasal sayfalarda (KVKK, Mesafeli Satış, İletişim) herkese görünür.
+# E-posta ve telefon doğrudan buraya yazıldı; tam sokak adresi şirket kaydında eklenir (ortam değişkeni ile).
+COMPANY_ADDRESS = env("COMPANY_ADDRESS") or "Beylikdüzü / İstanbul"
+COMPANY_PHONE = env("COMPANY_PHONE") or "+90 530 738 03 99"
+COMPANY_EMAIL = env("COMPANY_EMAIL") or "admin@reconclaw.com.tr"
 COMPANY_TAX_OFFICE = env("COMPANY_TAX_OFFICE")
 COMPANY_TAX_NO = env("COMPANY_TAX_NO")
 COMPANY_MERSIS = env("COMPANY_MERSIS")
