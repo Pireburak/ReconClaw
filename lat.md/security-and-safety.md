@@ -10,6 +10,14 @@ Target verification ensures operators only scan infrastructure they legitimately
 
 When verification is enforced, [[core/verify.py#ensure_allowed]] requires domain ownership verification via DNS TXT records or HTTP token files hosted at `/.well-known/reconclaw-verify.txt`. Public test environments like `scanme.nmap.org` are maintained as allowed test targets.
 
+A TXT record may sit on the target or a parent domain ([[core/verify.py#_check_dns]]). Domains verified by DNS or corporate email also cover their subdomains; file verification covers only the exact host.
+
+### Corporate email domain authorization
+
+A user with a verified corporate email can claim that email's domain as a verified target without DNS changes.
+
+[[core/verify.py#claim_email_domain]] accepts only mailboxes verified by OAuth or emailed code, requires an explicit "authorized for this domain" declaration, and writes a `target_email_claim` audit entry. [[core/verify.py#email_domain_status]] rejects free mail providers (gmail, outlook…) and public-sector, education and military domains (`gov`, `edu`, `mil`, `ac`, `k12`…), which still require DNS proof.
+
 ## SSRF and internal network isolation
 
 ReconClaw blocks unauthorized scanning of private subnets and local host loopbacks.
