@@ -957,7 +957,8 @@ function renderTargets(t) {
             <div class="target-row">
                 <div class="target-head">
                     <b>${esc(x.host)}</b>
-                    ${x.verified_at ? `<span class="badge risk-low">DOĞRULANDI · ${esc(x.method === "dns" ? "DNS" : "DOSYA")}</span>` : '<span class="badge sev-medium">BEKLİYOR</span>'}
+                    ${x.verified_at ? `<span class="badge risk-low">DOĞRULANDI · ${esc({ dns: "DNS", file: "DOSYA", email: "KURUMSAL E-POSTA" }[x.method] || "—")}</span>` : '<span class="badge sev-medium">BEKLİYOR</span>'}
+                    ${x.verified_at && x.method !== "file" ? '<span class="muted small">alt alan adları dahil</span>' : ""}
                     <span class="actions" style="margin-left:auto">
                         ${x.verified_at ? "" : `<button type="button" class="btn sm primary" data-verify="${x.id}">DOĞRULA</button>`}
                         <button type="button" class="btn sm danger" data-untarget="${x.id}">SİL</button>
@@ -970,6 +971,7 @@ function renderTargets(t) {
                 </div>`}
             </div>`).join("")
         : '<div class="empty">Henüz hedef eklenmedi.</div>';
+    renderEmailDomain(t.email_domain);
     const box = document.getElementById("allowedTargets");
     if (box) {
         const list = t.always_allowed || [];
@@ -981,6 +983,30 @@ function renderTargets(t) {
                </div>`
             : "";
     }
+}
+
+// Kurumsal e-posta ile alan adı yetkisi: ali@firma.com doğrulandıysa firma.com tek tıkla eklenir
+function renderEmailDomain(ed) {
+    const box = $("emailDomainBox");
+    if (!box || !ed) return;
+    const d = esc(ed.domain);
+    let body;
+    if (ed.claimed) {
+        body = `<b>${d}</b> kurumsal e-postanızla doğrulandı. Bu alan adını ve alt alan adlarını (www.${d}, mail.${d}…) tarayabilirsiniz.`;
+    } else if (!ed.eligible) {
+        body = ed.reason === "free_mail"
+            ? `E-postanız (<b>${esc(ed.email)}</b>) kişisel bir adres. Şirket alan adınızı otomatik açmak için <b>kurumsal e-postanızla</b> kayıt olun ya da aşağıdan DNS TXT kaydıyla doğrulayın.`
+            : ed.reason === "restricted"
+                ? `Kamu, eğitim ve askeri alan adları (<b>${d}</b>) e-postayla açılamaz; kurumun bilgi işlem birimiyle DNS TXT kaydı ekleyin.`
+                : "E-posta adresinizden bir alan adı çıkarılamadı; aşağıdan DNS TXT kaydıyla doğrulayın.";
+    } else if (!ed.verified) {
+        body = `E-postanız <b>${esc(ed.email)}</b> henüz doğrulanmadı. Kurumsal <b>Google</b> veya <b>Microsoft</b> hesabınızla giriş yapın (ya da e-postanıza gelen kodu girin); ardından <b>${d}</b> alan adını tek tıkla ekleyebilirsiniz.`;
+    } else {
+        body = `Doğrulanmış kurumsal e-postanız (<b>${esc(ed.email)}</b>) sayesinde <b>${d}</b> alan adını DNS kaydı eklemeden hedeflerinize ekleyebilirsiniz.
+            <label class="consent"><input type="checkbox" id="emailDomainConfirm"><span><b>${d}</b> alan adının yetkilisiyim veya bu sistemleri taramak için yazılı yetkim var. İşlem denetim kaydına yazılır.</span></label>
+            <button type="button" class="btn sm primary" id="emailDomainClaim">${d} ALAN ADINI EKLE</button>`;
+    }
+    box.innerHTML = `<div class="target-help email-domain"><span class="muted small">KURUMSAL E-POSTA İLE DOĞRULAMA</span><div>${body}</div></div>`;
 }
 
 function openCheckout(planId) {
@@ -1355,6 +1381,19 @@ $("targetForm").addEventListener("submit", async (e) => {
         toast("Hedef eklendi. Doğrulama anahtarını DNS kaydına veya dosyaya ekleyin.");
         loadPlans();
     } catch (err) { toast(err.message, "err"); }
+});
+document.getElementById("emailDomainBox")?.addEventListener("click", async (e) => {
+    if (e.target.id !== "emailDomainClaim") return;
+    if (!$("emailDomainConfirm").checked) { toast("Devam etmek için yetkili olduğunuzu onaylayın.", "err"); return; }
+    e.target.disabled = true;
+    try {
+        const r = await api("/api/targets/email-domain", { method: "POST", body: { confirm: true } });
+        toast(`${r.host} doğrulanmış hedeflerinize eklendi (alt alan adları dahil).`);
+        renderTargets(await api("/api/targets"));
+    } catch (err) {
+        toast(err.message, "err");
+        e.target.disabled = false;
+    }
 });
 document.getElementById("allowedTargets")?.addEventListener("click", (e) => {
     const chip = e.target.closest("[data-testtarget]");

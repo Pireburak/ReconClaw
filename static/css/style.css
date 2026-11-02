@@ -930,3 +930,6 @@ body.access .pub-foot { position: relative; z-index: 2; border-top: 0; padding-b
     .admin-toolbar { gap: 8px; }
     .admin-operation-tabs .btn { flex: 1 1 auto; }
 }
+
+.email-domain { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--cyan); }
+.email-domain .btn { margin-top: 6px; }

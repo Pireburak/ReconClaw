@@ -1097,7 +1097,22 @@ async def targets(user=Depends(current_user)):
     plan = plans.effective_plan(user)
     return {"targets": verify.list_targets(user["id"]), "limit": plan.targets,
             "required": config.REQUIRE_TARGET_VERIFICATION, "well_known": verify.WELL_KNOWN,
-            "always_allowed": sorted(verify.ALWAYS_ALLOWED)}
+            "always_allowed": sorted(verify.ALWAYS_ALLOWED),
+            "email_domain": verify.email_domain_status(user)}
+
+
+class EmailDomainClaim(BaseModel):
+    confirm: bool = False  # "Bu alan adının yetkilisiyim / tarama yetkim var" beyanı
+
+
+@app.post("/api/targets/email-domain", tags=["billing"])
+async def claim_email_domain(body: EmailDomainClaim, request: Request, user=Depends(current_user)):
+    """Doğrulanmış kurumsal e-postanın alan adını (ve alt alan adlarını) doğrulanmış hedef olarak ekler."""
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="Devam etmek için bu alan adının yetkilisi olduğunuzu onaylayın.")
+    result = await run_in_threadpool(verify.claim_email_domain, user)
+    audit.log("target_email_claim", user["id"], detail=f"{result['host']} · {user['email']}", ip=client_ip(request))
+    return result
 
 
 @app.post("/api/targets", tags=["billing"])

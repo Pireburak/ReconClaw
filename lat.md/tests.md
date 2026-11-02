@@ -57,3 +57,9 @@ Validates that newly opened database ports generate critical alerts, risk score 
 Authentication suites verify session token safety, rate limiting, and access control.
 
 Test suites [[tests/test_auth.py]] and [[tests/test_admin.py]] validate role-based access control (owner, admin, moderator, user), password hashing, session lifecycle, and audit log generation.
+
+### Target ownership verification tests
+
+Ownership tests confirm only proven domains can be scanned.
+
+[[tests/test_email_domain.py]] covers corporate email domain claims and subdomain coverage, rejection of free-mail and public-sector domains, isolation between users, DNS-vs-file subdomain rules and parent-domain TXT lookup.

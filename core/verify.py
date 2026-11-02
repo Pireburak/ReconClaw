@@ -48,6 +48,79 @@ class VerifyError(Exception):
     pass
 
 
+# ---------------------------------------------------------------- kurumsal e-posta ile alan adı yetkisi
+# Doğrulanmış kurumsal e-postası olan kullanıcı (ali@firma.com) kendi şirketinin alan adını (firma.com)
+# DNS kaydı eklemeden hedef olarak ekleyebilir. Kişisel e-posta sağlayıcıları ve kamu / eğitim / askeri
+# alan adları bu yoldan açılamaz: oralarda e-posta adresi, alan adının yetkilisi olmayı kanıtlamaz.
+FREE_MAIL_DOMAINS = {
+    "gmail.com", "googlemail.com", "outlook.com", "outlook.com.tr", "hotmail.com", "hotmail.com.tr",
+    "live.com", "msn.com", "yahoo.com", "yahoo.com.tr", "ymail.com", "icloud.com", "me.com", "mac.com",
+    "aol.com", "yandex.com", "yandex.com.tr", "yandex.ru", "mail.ru", "proton.me", "protonmail.com",
+    "pm.me", "gmx.com", "gmx.de", "gmx.net", "web.de", "zoho.com", "tutanota.com", "tuta.io",
+    "mynet.com", "superonline.com", "ttmail.com", "hushmail.com", "fastmail.com", "qq.com", "163.com",
+}
+RESTRICTED_LABELS = {"gov", "edu", "mil", "ac", "k12", "pol", "bel", "tsk", "int"}
+
+
+def email_domain_status(user) -> dict:
+    """Kullanıcının e-posta alan adı, kurumsal yetki için uygun mu ve hedeflerine eklenmiş mi?"""
+    email = (user["email"] or "").strip().lower()
+    domain = email.rsplit("@", 1)[-1] if "@" in email else ""
+    labels = domain.split(".")
+    status = {"email": email, "domain": domain, "verified": bool(user["email_verified"]),
+              "eligible": False, "claimed": False, "reason": ""}
+    if not domain or len(labels) < 2:
+        status["reason"] = "invalid"
+    elif domain in FREE_MAIL_DOMAINS:
+        status["reason"] = "free_mail"
+    elif labels[-1] in RESTRICTED_LABELS or labels[-2] in RESTRICTED_LABELS:
+        status["reason"] = "restricted"
+    else:
+        status["eligible"] = True
+    if domain:
+        with closing(get_db_connection()) as conn:
+            status["claimed"] = conn.execute(
+                "SELECT 1 FROM targets WHERE user_id = ? AND host = ? AND method = 'email' AND verified_at IS NOT NULL",
+                (user["id"], domain)).fetchone() is not None
+    return status
+
+
+def claim_email_domain(user) -> dict:
+    """Doğrulanmış kurumsal e-postanın alan adını doğrulanmış hedef olarak ekler (alt alan adları dahil)."""
+    st = email_domain_status(user)
+    if not st["eligible"]:
+        raise VerifyError({
+            "free_mail": "Kişisel e-posta adresleriyle (gmail, outlook vb.) alan adı yetkisi alınamaz. "
+                         "Kurumsal e-postanızla kayıt olun ya da DNS TXT kaydıyla doğrulayın.",
+            "restricted": "Kamu, eğitim ve askeri alan adları e-posta ile doğrulanamaz; "
+                          "kurumun bilgi işlem birimiyle DNS TXT kaydı ekleyerek doğrulayın.",
+        }.get(st["reason"], "E-posta adresinizden geçerli bir alan adı çıkarılamadı."))
+    if not st["verified"]:
+        raise VerifyError("Önce e-posta adresinizi doğrulayın: kurumsal Google veya Microsoft hesabınızla giriş "
+                          "yapın ya da e-postanıza gelen doğrulama kodunu girin.")
+    domain = normalize_target(st["domain"])
+    existing = {t["host"]: t for t in list_targets(user["id"])}
+    with closing(get_db_connection()) as conn, conn:
+        if domain in existing:
+            conn.execute("UPDATE targets SET method = 'email', verified_at = ? WHERE id = ?",
+                         (_now(), existing[domain]["id"]))
+            target_id = existing[domain]["id"]
+        else:
+            plan = effective_plan(user)
+            if plan.targets != UNLIMITED and len(existing) >= plan.targets:
+                raise PlanError(f"{plan.name} planında en fazla {plan.targets} hedef eklenebilir. Planınızı yükseltin.")
+            target_id = conn.execute(
+                "INSERT INTO targets (user_id, host, token, method, verified_at, created_at) VALUES (?, ?, ?, 'email', ?, ?)",
+                (user["id"], domain, f"email:{st['email']}", _now(), _now())).lastrowid
+    return {"id": target_id, "host": domain, "method": "email"}
+
+
+def _parents(host: str) -> list:
+    """sub.firma.com -> [sub.firma.com, firma.com] (yalnızca TLD olan parçayı içermez)."""
+    labels = host.split(".")
+    return [".".join(labels[i:]) for i in range(len(labels) - 1)]
+
+
 def _now():
     return datetime.now().replace(microsecond=0).isoformat(" ")
 
@@ -89,13 +162,18 @@ def _is_public_host(host: str) -> bool:
 
 
 async def _check_dns(client: httpx.AsyncClient, host: str, token: str) -> bool:
-    try:
-        res = await client.get(DOH_URL, params={"name": host, "type": "TXT"},
-                               headers={"Accept": "application/dns-json"})
-        answers = res.json().get("Answer", [])
-    except (httpx.HTTPError, ValueError):
-        return False
-    return any(token in a.get("data", "").replace('"', "") for a in answers)
+    """TXT kaydı hedefin kendisinde ya da üst alan adında (www.firma.com için firma.com) olabilir:
+    ana alan adının DNS'ini yöneten kişi alt alan adlarını da yönetir."""
+    for name in _parents(host):
+        try:
+            res = await client.get(DOH_URL, params={"name": name, "type": "TXT"},
+                                   headers={"Accept": "application/dns-json"})
+            answers = res.json().get("Answer", [])
+        except (httpx.HTTPError, ValueError):
+            continue
+        if any(token in a.get("data", "").replace('"', "") for a in answers):
+            return True
+    return False
 
 
 async def _check_file(client: httpx.AsyncClient, host: str, token: str) -> bool:
@@ -149,9 +227,12 @@ def ensure_allowed(user_id, target: str):
     if host in ALWAYS_ALLOWED:
         return
     with closing(get_db_connection()) as conn:
-        ok = conn.execute(
-            "SELECT 1 FROM targets WHERE user_id = ? AND host = ? AND verified_at IS NOT NULL",
-            (user_id, host)).fetchone()
+        rows = conn.execute("SELECT host, method FROM targets WHERE user_id = ? AND verified_at IS NOT NULL",
+                            (user_id,)).fetchall()
+    # Tam eşleşme her yöntemde geçerli. DNS veya kurumsal e-postayla doğrulanmış alan adı, alt alan adlarını
+    # da kapsar (www.firma.com, mail.firma.com). Dosya yöntemi yalnızca o sunucuyu kanıtladığı için kapsamaz.
+    ok = any(r["host"] == host or (r["method"] in ("dns", "email") and not _is_ip(host)
+                                   and host.endswith("." + r["host"])) for r in rows)
     if not ok:
         raise VerifyError(f"{host} doğrulanmış hedefleriniz arasında değil. Bu sunucuda yalnızca sahipliği "
                           f"kanıtlanmış hedefler taranabilir (Abonelik → Doğrulanmış hedefler).")

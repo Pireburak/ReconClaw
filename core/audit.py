@@ -33,6 +33,7 @@ ACTIONS = {
     "monitor_create": "İzleme görevi eklendi",
     "monitor_delete": "İzleme görevi silindi",
     "share_create": "Rapor paylaşıma açıldı",
+    "target_email_claim": "Alan adı kurumsal e-postayla eklendi",
     "share_revoke": "Rapor paylaşımı kapatıldı",
     "admin_report_view": "Yönetimden rapor görüntülendi",
     "admin_role": "Yönetici rolü değişti",
