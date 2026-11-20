@@ -98,7 +98,7 @@ Select the domain guide matching your active task to understand implemented arch
 
 ## System overview
 
-Core technology stack, security boundaries, and architectural principles governing ReconClaw v9.0 Cortex.
+Core technology stack, security boundaries, and architectural principles governing ReconClaw v9.1 Cortex.
 
 - **Asynchronous Foundation**: Built on Python 3.10+, FastAPI, and asyncio with semaphores limiting network socket exhaustion ([[core/engine.py#AsyncScanner]]).
 - **Deterministic First**: Every calculation (risk scores, MITRE ATT&CK techniques, ISO 27001/KVKK compliance) is computed deterministically before reaching any LLM ([[core/intel.py#analyze]]).

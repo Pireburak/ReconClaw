@@ -30,7 +30,7 @@ from core.engine import COMMON_PORTS, AsyncScanner, RiskAnalyzer
 from core.insights import build_stats, compare_reports
 from core.plugins import available_plugins, enabled_names, run_plugins
 
-VERSION = "9.0"
+VERSION = "9.1"
 CODENAME = "Cortex"
 STARTED_AT = time.time()
 
