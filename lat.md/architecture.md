@@ -1,6 +1,6 @@
 # System Architecture
 
-ReconClaw v9.0 Cortex is an asynchronous modular reconnaissance and threat modeling platform designed for high-concurrency scans.
+ReconClaw v9.1 Cortex is an asynchronous modular reconnaissance and threat modeling platform designed for high-concurrency scans.
 
 It processes network targets from user inputs through asynchronous TCP connection routines, rule-based security analyzers, offline and online threat intelligence layers, and reactive event notifications.
 

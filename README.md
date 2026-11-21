@@ -1,18 +1,20 @@
 <p align="center"><img src="static/img/banner.jpg" alt="ReconClaw — rakun maskotu" width="100%"></p>
 
-<h1 align="center">🦝 ReconClaw v9.0 Cortex</h1>
+<h1 align="center">🦝 ReconClaw v9.1 Cortex</h1>
 
 <p align="center"><b>Asenkron Ağ Keşfi, Sürekli Saldırı Yüzeyi İzleme ve Yapay Zekâ Destekli Risk Analiz Platformu</b><br>
 <i>Maskeli gözlerle keşfeder, pençesiyle açıkları yakalar.</i></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/Version-v9.0%20Cortex-E8751A?style=for-the-badge" alt="Version">
+<a href="https://reconclaw.com.tr"><img src="https://img.shields.io/badge/Canl%C4%B1-reconclaw.com.tr-9E1F17?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Canlı sürüm"></a>
+<img src="https://img.shields.io/badge/Version-v9.1%20Cortex-E8751A?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/A%C3%A7%C4%B1k%20Kaynak-Kendi%20sunucunda%20%C3%A7al%C4%B1%C5%9Ft%C4%B1r-4F6B2F?style=for-the-badge&logo=github&logoColor=white" alt="Açık kaynak">
 <img src="https://img.shields.io/badge/Python-3.10%2B-2B2B2B?style=for-the-badge&logo=python&logoColor=F5B041" alt="Python">
 <img src="https://img.shields.io/badge/FastAPI-Web%20Framework-2B2B2B?style=for-the-badge&logo=fastapi&logoColor=F5B041" alt="FastAPI">
 <img src="https://img.shields.io/badge/SQLite-Database-2B2B2B?style=for-the-badge&logo=sqlite&logoColor=F5B041" alt="SQLite">
 <img src="https://img.shields.io/badge/Docker-HTTPS%20Ready-2B2B2B?style=for-the-badge&logo=docker&logoColor=F5B041" alt="Docker">
 <br>
-<img src="https://img.shields.io/badge/Testler-96%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
+<img src="https://img.shields.io/badge/Testler-159%20ge%C3%A7ti-4F6B2F?style=for-the-badge&logo=pytest&logoColor=white" alt="Testler">
 <img src="https://img.shields.io/badge/Giri%C5%9F-E--posta%20%7C%20Google%20%7C%20GitHub%20%7C%20Microsoft%20%7C%20Apple-2B2B2B?style=for-the-badge" alt="Giriş">
 <img src="https://img.shields.io/badge/Aray%C3%BCz-Gizli%20Dosya-9E1F17?style=for-the-badge" alt="Arayüz">
 <img src="https://img.shields.io/badge/License-Educational-C9A227?style=for-the-badge" alt="License">
@@ -34,7 +36,7 @@
 <a href="#-neden-rakun">Maskot</a> •
 <a href="#-sorun-giderme">Sorun Giderme</a> •
 <a href="#️-yol-haritası">Yol Haritası</a> •
-<a href="docs/YARISMA.md">TÜBİTAK / TEKNOFEST</a>
+<a href="docs/teknofest-tubitak/">🏆 TÜBİTAK / TEKNOFEST Dosyası</a>
 </p>
 
 <p align="center">
@@ -43,6 +45,35 @@
 
 > [!IMPORTANT]
 > ReconClaw yalnızca **sahibi olduğunuz** veya **yazılı izin aldığınız** sistemlerde kullanılmalıdır. İzinsiz port taraması Türkiye'de TCK 243–245 kapsamında suç teşkil edebilir. Ayrıntılar için [Yasal Uyarı](#️-yasal-uyarı) bölümüne bakın.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🌐 Canlı sürüm
+
+**[reconclaw.com.tr](https://reconclaw.com.tr)** üzerinden kurulum yapmadan kullanın.
+
+- Ücretsiz hesapla hemen tarama
+- Kurumsal e-postanızla şirket alan adınızı tek tıkla doğrulama
+- [Sık Sorulan Sorular](https://reconclaw.com.tr/sss) · [Fiyatlandırma](https://reconclaw.com.tr/fiyatlandirma) · [İletişim](https://reconclaw.com.tr/iletisim)
+
+</td>
+<td width="50%" valign="top">
+
+### 🧑‍💻 Açık kaynak
+
+Kodun tamamı bu depoda. **Kendi bilgisayarınızda veya sunucunuzda** ücretsiz çalıştırabilirsiniz; kendi kurulumunuzda tüm özellikler sizin yapılandırmanıza göre açıktır.
+
+```bash
+git clone https://github.com/Pireburak/ReconClaw.git
+cd ReconClaw && pip install -r requirements.txt
+python main.py   # http://127.0.0.1:8000
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -92,7 +123,7 @@
 - [Sunum Rehberi](#-sunum-rehberi)
 - [Yol Haritası](#️-yol-haritası)
 - [Yasal Uyarı](#️-yasal-uyarı)
-- [TÜBİTAK / TEKNOFEST proje dosyası](docs/YARISMA.md)
+- [🏆 TÜBİTAK / TEKNOFEST proje dosyası](docs/teknofest-tubitak/)
 
 </details>
 
@@ -293,22 +324,6 @@ Tüm taramalar en yeniden eskiye listelenir. Hedef veya IP'ye göre **anlık ara
 | **Tehlikeli bölge** | Tüm tarama geçmişini sil, hesabı kalıcı olarak sil |
 
 
-### Yönetim paneli
-
-Yetkili hesapla **/admin** adresini açın veya sol menüdeki **YÖNETİM** düğmesini kullanın. Panel mevcut karanlık / kâğıt temasını ve vurgu rengini kullanır.
-
-- Kullanıcılar, roller, planlar, ödemeler, ekip ve denetim kayıtları.
-- **Tüm operasyonlar:** tüm kullanıcıların taramaları, izleme görevleri, alarmları, doğrulanmış / bekleyen hedefleri ve pasif keşif geçmişi. Hedef, e-posta veya ad ile arama; 25 kayıtlık sayfalar.
-- Tarama raporları ayrı salt-okunur yönetim bağlantısından açılır; görüntüleme denetim kaydına işlenir. Normal kullanıcıların rapor erişimi kendi hesaplarıyla sınırlıdır.
-- **Sistem ayarları:** etkin yapılandırma, veritabanı ve entegrasyon durumları. Ayarlar burada salt okunurdur; değişiklikler sunucu yapılandırmasından uygulanır. Gizli anahtarlar, hedef doğrulama token'ları ve webhook adresleri listelenmez.
-
-Önce kendi hesabınızı oluşturun, sonra sunucu terminalinde yetkilendirin:
-
-```bash
-python manage.py make-owner sizin@adresiniz.com
-```
-
-Sahip ve yönetici ödeme bilgilerini görebilir; moderatörün mevcut kısıtları korunur.
 
 ### 11. PDF Rapor
 
@@ -485,7 +500,9 @@ Ziyaretçinin ülkesi **IP adresinden** bulunur. **Türkiye'den** gelenler fiyat
 </table>
 
 > [!NOTE]
-> Ödeme şimdilik **demo modundadır**: kart bilgisi istenmez ve saklanmaz, plan anında etkinleşir ve `payments` tablosuna `demo` durumlu bir kayıt düşülür. Gerçek ödeme altyapısı (iyzico, Lemon Squeezy vb.) `core/plans.py` içindeki `checkout()` fonksiyonunun yerine bağlanacak şekilde tasarlandı.
+> **Ücretlendirme durumu:** Canlı sitede ([reconclaw.com.tr](https://reconclaw.com.tr)) ücretli planlar, ilgili mevzuat kapsamında resmi görüş süreci tamamlanana kadar **satışa kapalıdır** ve "Çok yakında" olarak görünür. Ücretlendirme modeli bu sürecin sonucuna göre değişebilir veya tamamen kaldırılabilir. Ücretsiz plan ve açık kaynak kurulum bundan etkilenmez.
+>
+> **Teknik altyapı hazırdır:** PayTR iFrame API entegrasyonu (kart bilgisi ReconClaw'a hiç gelmez; plan yalnızca imzası doğrulanmış ödeme bildirimiyle açılır). PayTR anahtarları tanımlı değilken yerel kurulumda kartsız **demo ödeme** çalışır; HTTPS ile yayındaki sitede demo ödeme otomatik kapanır (`DEMO_PAYMENTS`). Kurulum: [docs/YAYIN.md](docs/YAYIN.md).
 
 ### 🎯 Hedef sahipliği doğrulama
 
@@ -497,6 +514,17 @@ Ziyaretçinin ülkesi **IP adresinden** bulunur. **Türkiye'den** gelenler fiyat
 | **Dosya** | `https://<hedef>/.well-known/reconclaw-verify.txt` adresine anahtarı içeren dosya |
 
 Ardından **DOĞRULA**'ya basın. DNS sorgusu DNS-over-HTTPS ile yapılır; iç ağ adresleri `ALLOW_PRIVATE_TARGETS=false` iken doğrulanamaz (SSRF koruması).
+
+| Yöntem | Kapsam |
+|--------|--------|
+| **DNS TXT** | Alan adı **ve tüm alt alan adları** (`www.`, `mail.`…). TXT kaydı alt alan adı yerine ana alan adına (`firma.com`) da eklenebilir. |
+| **Doğrulama dosyası** | Yalnızca dosyanın bulunduğu sunucu (alt alan adlarını kapsamaz) |
+| **Kurumsal e-posta** *(v9.1)* | `ali@firma.com` gibi **doğrulanmış** kurumsal e-postası olan kullanıcı, "bu alan adının yetkilisiyim" beyanıyla `firma.com` alan adını DNS kaydı eklemeden açar (alt alan adları dahil). İşlem denetim kaydına yazılır. |
+
+> [!IMPORTANT]
+> Kurumsal e-posta yöntemi **kişisel e-posta sağlayıcılarında** (gmail, outlook, hotmail, yandex…) ve **kamu, eğitim, askeri** alan adlarında (`gov`, `edu`, `mil`, `ac`, `k12`…) çalışmaz. Bu alan adlarında bir kurum çalışanının veya öğrencinin kurumun tamamını tarayabilmesi istenmediği için DNS kanıtı şarttır.
+
+**Doğrulamasız denenebilen açık test hedefleri:** Sahipleri tarafından herkese açık biçimde taranmaya izin verilmiş sunucular (`scanme.nmap.org`, `testphp.vulnweb.com` ve diğer Acunetix test siteleri, `demo.testfire.net`, `badssl.com`) doğrulama gerektirmez; Abonelik sayfasında tıklanabilir liste olarak görünür.
 
 ---
 
@@ -878,7 +906,21 @@ Kartal gökyüzünden, uzaktan bakar. Bu da **pasif** keşfe (OSINT, arama motor
 
 ## 📜 Sürüm Geçmişi
 
-### 💳 v9.0 Cortex *(mevcut sürüm)*
+### 🏢 v9.1 Cortex *(mevcut sürüm)*
+
+| Özellik | Açıklama |
+|---------|----------|
+| Kurumsal e-posta ile alan adı | Doğrulanmış kurumsal e-posta, şirket alan adını DNS kaydı olmadan açar; kişisel ve kamu / eğitim alan adları hariç |
+| Alt alan adı kapsamı | DNS veya kurumsal e-postayla doğrulanan alan adı alt alan adlarını kapsar; TXT kaydı ana alan adında da aranır |
+| E-posta doğrulama | Kayıtta e-postaya gelen kodla doğrulama (deneme sınırı, tek kullanım), sosyal girişle doğrulanmış hesap birleştirme güvenliği |
+| Açık test hedefleri | scanme.nmap.org, Acunetix test siteleri, demo.testfire.net, badssl.com doğrulamasız taranabilir |
+| Bölge yalnızca IP'den | Fiyat bölgesi seçilemez; Cloudflare arkasında gerçek ülke otomatik algılanır, ülke bulunamazsa ödeme durur |
+| Canlı sitede demo kapalı | HTTPS yayında ücretli planlar kartsız açılamaz |
+| SEO ve hız | Meta açıklama, Open Graph, `sitemap.xml`, Sık Sorulan Sorular sayfası, statik dosyalarda uzun süreli önbellek |
+| Otomatik yayın | GitHub Actions ile her birleştirmede sunucuya yayın; ayarlar GitHub Secrets'tan |
+| Mimari belgeleri | `lat.md/` bilgi grafiği ve çift katmanlı deterministik analiz kuralları (`AGENTS.md`) |
+
+### 💳 v9.0 Cortex
 
 | Özellik | Açıklama |
 |---------|----------|
@@ -1036,7 +1078,7 @@ ReconClaw/
 │   └── favicon.png
 ├── tests/                  # 96 otomatik test (pytest)
 ├── docs/
-│   ├── YARISMA.md          # TÜBİTAK / TEKNOFEST proje dosyası
+│   ├── teknofest-tubitak/  # TÜBİTAK / TEKNOFEST proje dosyası (görselli)
 │   └── screenshots/        # README ekran görüntüleri
 ├── deploy/Caddyfile        # HTTPS ters vekil ayarı
 ├── Dockerfile · docker-compose.yml
@@ -1079,20 +1121,24 @@ pip install pytest
 pytest
 ```
 
+Toplam **159 test**; ağ gerektiren bileşenler sahte (mock) fonksiyonlarla izole edilir.
+
 | Dosya | Test | Kapsam |
 |-------|:----:|--------|
+| `test_admin.py` | 34 | Erişim kontrolü, hesap ve oturum güvenliği, denetim kaydı, CSRF |
 | `test_engine.py` | 18 | Hedef temizleme, asenkron tarayıcı, banner, risk motoru, CVE imzaları |
-| `test_api.py` | 11 | Tarama/geçmiş/silme, kullanıcı izolasyonu, CSV, rapor, karşılaştırma, istatistik, iç ağ engeli, API anahtarı, güvenlik başlıkları, önbellek etiketi |
-| `test_auth.py` | 10 | scrypt, kayıt/giriş/çıkış, doğrulama, parola değişimi, hesap silme, OAuth state ve hesap bağlama |
+| `test_email_verification.py` | 14 | Kayıtta kod ile e-posta doğrulama, deneme sınırı, tek kullanım, sosyal hesap birleştirme güvenliği |
+| `test_payments.py` | 13 | PayTR imzası ve bildirimi, tekrar eden / eksik tutarlı bildirim, yasal ve herkese açık sayfalar, sitemap, şifre sıfırlama |
+| `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, süre dolumu, API kilidi, hedef doğrulama ve açık test hedefleri |
+| `test_api.py` | 11 | Tarama/geçmiş/silme, kullanıcı izolasyonu, CSV, rapor, karşılaştırma, iç ağ engeli, güvenlik başlıkları |
+| `test_intel.py` | 11 | ATT&CK eşlemesi ve saldırı zinciri, karne ve not tavanı, uyum, kural tabanlı analist, istem enjeksiyonu koruması, paylaşım |
+| `test_auth.py` | 10 | scrypt, kayıt/giriş/çıkış, parola değişimi, hesap silme, OAuth state ve hesap bağlama |
+| `test_monitoring.py` | 9 | İzleme sınırları, yeni port alarmı ve webhook, zamanlayıcı, SPF / DMARC / CAA, keşif API'si |
+| `test_pricing.py` | 8 | Bölgeye göre para birimi, Türkiye'nin en ucuz olması, yalnızca IP'den bölge, Cloudflare başlıkları |
 | `test_plugins.py` | 6 | HTTP başlık ve TLS eklentileri, eklenti yükleyici |
+| `test_email_domain.py` | 5 | Kurumsal e-postayla alan adı, kişisel / kamu alan adlarının reddi, alt alan adı kapsamı |
 | `test_insights.py` | 4 | Panel istatistikleri, aktivite takvimi, tarama karşılaştırma |
-| `test_plans.py` | 12 | Plan kataloğu, kota ve port sınırları, eklenti kilidi, dakikalık sınır, ödeme/iptal, süre dolumu, API kilidi, hedef doğrulama |
-| `test_admin.py` | 7 | Erişim kontrolü, hesap askıya alma, denetim kaydı, rol yükseltme güvenliği |
-| `test_monitoring.py` | 9 | İzleme plan sınırları, yeni port alarmı ve webhook, plan düşünce duraklatma, zamanlayıcı, alarm kuralları, SPF / DMARC / CAA, alt alan adı etiketleri, keşif API'si |
-| `test_captcha.py` | 3 | Bal küpü, Turnstile zorunluluğu ve sunucu tarafı doğrulama, varsayılan kapalı |
-| `test_pricing.py` | 5 | Bölgeye göre para birimi, Türkiye'nin en ucuz olması, x,99 yuvarlama, ülke tespiti, ödemenin tespit edilen bölgeden alınması |
-| `test_intel.py` | 11 | ATT&CK eşlemesi ve saldırı zinciri, karne ve not tavanı, uyum, kural tabanlı analist, Claude hatasında yedeğe düşme, istem enjeksiyonu koruması, AI kotası ve önbelleği, paylaşım bağlantısı |
-
+| `test_captcha.py` | 4 | Bal küpü, Turnstile zorunluluğu ve sunucu tarafı doğrulama |
 ---
 
 ## 🧯 Sorun Giderme
@@ -1173,7 +1219,7 @@ crt.sh ve CertSpotter'a ulaşılamadı (internet yok, kurum güvenlik duvarı ya
 
 ## 🎓 Sunum Rehberi
 
-ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akış (ayrıntılı jüri dosyası: [docs/YARISMA.md](docs/YARISMA.md)):
+ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akış (ayrıntılı ve görselli jüri dosyası: [docs/teknofest-tubitak/](docs/teknofest-tubitak/)):
 
 | # | Adım | Ne söylenir? |
 |---|------|--------------|
@@ -1194,26 +1240,81 @@ ReconClaw'ı 7–8 dakikada etkileyici biçimde göstermek için önerilen akı�
 - *"Banner'a 'önceki talimatları unut' yazan bir sunucu taranırsa?"* → Banner'lar modele ayrı veri bloğunda ve "güvenilmez veri" olarak veriliyor; analist savunma odaklı talimatla sınırlı.
 - *"Kötüye kullanılırsa?"* → Hedef sahipliği doğrulama (DNS TXT / dosya), iç ağ engeli, plan bazlı kotalar, hız sınırı, denetim kaydı ve hesap askıya alma var. Araç yalnızca izinli hedefler içindir.
 - *"Parolalar nasıl saklanıyor?"* → Tuzlu scrypt; oturum anahtarlarının ve API anahtarlarının bile yalnızca SHA-256 özeti tutuluyor.
-- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 96 otomatik test her değişiklikte çalışıyor.
+- *"Kendi güvenliği nasıl?"* → ReconClaw kendi arayüzünü taradığında güvenlik başlıkları eksiksiz çıkıyor; 159 otomatik test her değişiklikte çalışıyor.
 
 ---
 
 ## 🛣️ Yol Haritası
 
-**✅ Tamamlananlar (v7.0 – v8.0)**
+**✅ Tamamlananlar (v7.0 – v9.1)**
 - [x] Zamanlanmış (periyodik) taramalar ve bildirim (Discord / Slack webhook)
 - [x] Yapay zekâ destekli analist (Claude) ve çevrimdışı kural tabanlı analist
 - [x] MITRE ATT&CK eşleştirme, ISO 27001 / KVKK uyum ön değerlendirmesi
 - [x] Pasif keşif: Sertifika Şeffaflığı, DNS, e-posta güvenliği
 - [x] Denetim kaydı, salt-okunur rapor paylaşımı
+- [x] Ödeme altyapısı (PayTR) ve yasal sayfalar *(canlı sitede satış, resmi görüş sürecine kadar kapalı)*
+- [x] E-posta doğrulama, kurumsal e-postayla alan adı yetkisi, alt alan adı kapsamı
+- [x] Canlı yayın: [reconclaw.com.tr](https://reconclaw.com.tr), Cloudflare, otomatik yayın (GitHub Actions)
 
-**🔭 Sıradaki adımlar**
-- [ ] Gerçek ödeme altyapısı (iyzico) ve e-fatura
-- [ ] İki adımlı doğrulama (TOTP)
-- [ ] Çoklu hedef / CIDR aralığı taraması ve UDP tarama
-- [ ] CVE veritabanı entegrasyonu (NVD / OSV) ve EPSS ile istismar olasılığı
-- [ ] Türkçe / İngilizce dil seçimi
-- [ ] SIEM entegrasyonu (syslog / Elastic), e-posta bildirimleri
+### 🔭 Planlanan güncellemeler (v10.0 – v11.0)
+
+> [!NOTE]
+> Bu bölüm **plandır; aşağıdaki özellikler henüz geliştirilmedi.** Kapsam ve sıra, kullanıcı geri bildirimine ve yasal sürece göre değişebilir. Ücretlendirme ile ilgili maddeler, ilgili mevzuat kapsamında beklenen resmi görüşe bağlıdır; olumsuz sonuçlanırsa ücretli planlar kaldırılır ve ürün ücretsiz / açık kaynak olarak sürer.
+
+```mermaid
+timeline
+    title ReconClaw yol haritası (planlanan)
+    v10.0 Bastion : Kurumsal hesaplar : Ekip ve roller : İki adımlı doğrulama
+    v10.1 Prism : Tasarım yenilemesi : Erişilebilirlik (WCAG) : Yeni logo ve favicon
+    v10.2 Forge : Hazırlık (staging) ortamı : Testli otomatik yayın
+    v10.5 Oracle : CVE veritabanı (NVD / OSV) : EPSS ve KEV önceliği
+    v11.0 Atlas : Çoklu hedef / CIDR : TR / EN dil : SIEM entegrasyonu
+```
+
+<details open>
+<summary><b>🏢 v10.0 Bastion: Kurumsal hesaplar</b></summary>
+
+ReconClaw'ın hedef kitlesi şirketler ve yetkilileri olduğu için ilk büyük adım kurumsal kullanım.
+
+- **Şirket çalışma alanı:** Bir şirket hesabı altında birden çok kullanıcı; doğrulanmış alan adları ve taramalar ekipçe paylaşılır.
+- **Şirket içi roller:** Şirket sahibi, güvenlik sorumlusu, salt-okunur denetçi.
+- **İki adımlı doğrulama (TOTP):** Google Authenticator / Microsoft Authenticator ile; kurumsal hesaplarda zorunlu kılınabilir.
+- **Alan adı yetkili listesi:** Bir alan adını hangi çalışanların tarayabileceğini şirket sahibi belirler.
+</details>
+
+<details>
+<summary><b>🎨 v10.1 Prism: Tasarım ve erişilebilirlik</b> <i>(ekip planı: Faz B)</i></summary>
+
+- Yerel olarak barındırılan **Inter** ve **JetBrains Mono** yazı tipleri, tablo rakamlarında titreşimsiz görünüm.
+- **WCAG** kontrast hedefleri: metinlerde en az 4.5:1, kenarlık ve etiketlerde en az 3:1 (karanlık ve kâğıt tema).
+- Mobilde yeterli dokunma alanı (PageSpeed erişilebilirlik uyarıları).
+- 16 px'te bile tanınan yeni **vektör pençe logosu** ve favicon paketi.
+</details>
+
+<details>
+<summary><b>🧪 v10.2 Forge: Hazırlık ortamı ve güvenli yayın</b> <i>(ekip planı: Faz S)</i></summary>
+
+- Canlı veriye dokunmadan ödeme, sosyal giriş ve zamanlayıcının denendiği ayrı **staging** ortamı (kendi veritabanı, test ödeme anahtarları, "STAGING" etiketi).
+- Otomatik yayından önce testlerin GitHub Actions'da çalışması; test geçmezse yayın durur.
+- Tek komutla geri alma notu.
+</details>
+
+<details>
+<summary><b>🔮 v10.5 Oracle: Zafiyet zekâsı</b></summary>
+
+- Yerleşik imza tablosu yerine **NVD / OSV** CVE veritabanıyla sürüm eşleştirme.
+- **EPSS** (istismar olasılığı) ve **CISA KEV** (aktif istismar edilen açıklar) ile önceliklendirme.
+- AI Analist'in yine yalnızca tarama kanıtındaki CVE'leri kullanması: çift katmanlı deterministik yapı korunur.
+</details>
+
+<details>
+<summary><b>🌍 v11.0 Atlas: Ölçek ve entegrasyon</b></summary>
+
+- **Çoklu hedef / CIDR** taraması (yalnızca doğrulanmış ağlarda) ve **UDP** tarama.
+- **Türkçe / İngilizce** arayüz.
+- **SIEM** entegrasyonu (syslog, Elastic) ve e-posta bildirimleri.
+- Büyük kurulumlar için **PostgreSQL** desteği.
+</details>
 
 ---
 
